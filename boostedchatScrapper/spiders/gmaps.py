@@ -82,10 +82,10 @@ class GmapsSpider(CrawlSpider):
         try:
             resp_meta["is_booking_available"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//a[contains(@class,"A1zNzb")]').get_attribute("href")
             if resp_meta["is_booking_available"]:
-                yield SeleniumRequest(
-                        url = resp_meta["is_booking_available"],
-                        callback = self.parse_booking_site
-                    )
+                resp_meta["booking_header"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"XVS7ef")]')]
+                resp_meta["booking_time"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"BRcyT JaMq2b")]')]
+                resp_meta["booking_price"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"BRcyT JaMq2b")]/span')]
+                resp_meta["booking_provider"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"NGLLDf")]/span')]
         except Exception as error:
             print(error)
 
@@ -99,10 +99,8 @@ class GmapsSpider(CrawlSpider):
         time.sleep(5)
         reviews_url = response.request.meta['driver'].current_url
         if reviews_url:
-            yield SeleniumRequest(
-                    url = reviews_url,
-                    callback = self.parse_reviews
-                )
+            resp_meta["review_names"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"d4r55")]')]
+            resp_meta["review_content"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//span[contains(@class,"wiI7pd")]')]
             
         try:
             response.request.meta['driver'].get(response.url)
@@ -113,11 +111,9 @@ class GmapsSpider(CrawlSpider):
 
         time.sleep(5)
         about_url = response.request.meta['driver'].current_url
-        if resp_meta["name"]:
-            yield SeleniumRequest(
-                    url = about_url,
-                    callback = self.parse_about
-                )
+        if about_url:
+            resp_meta["tag_name"] =  [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//h2[contains(@class,"iL3Qke")]')]
+            resp_meta["tag_detail"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//li[contains(@class,"hpLkke")]/span')]
         item["resp_meta"] = resp_meta
         yield resp_meta
 
