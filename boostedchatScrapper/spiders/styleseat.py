@@ -2,9 +2,13 @@ import logging
 import scrapy
 import time
 import re
+import math
+
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.http import HtmlResponse
+from dask import delayed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from selenium.webdriver.common.by import By
 from boostedchatScrapper.items import StyleSeatItem
 from urllib.parse import urlparse, parse_qs
@@ -18,8 +22,11 @@ class StyleseatSpider(CrawlSpider):
     name = "styleseat"
     allowed_domains = ["www.styleseat.com"]
     base_url = "https://www.styleseat.com"
-    start_urls = ["https://www.styleseat.com/m/search/wilmington-nc/natural-hair"]
-    start_url = "https://www.styleseat.com/m/v/barberpaul"
+    start_urls = [
+        "https://www.styleseat.com/m/v/gerard",
+        "https://www.styleseat.com/m/v/barberpaul",
+    ]
+    start_url = "https://www.styleseat.com/m/v/gerard"
 
     rules = (Rule(LinkExtractor(allow=r"Items/"), callback="parse", follow=True),)
 
@@ -28,25 +35,41 @@ class StyleseatSpider(CrawlSpider):
         # urls = generate_styleseat_links(self.start_urls[0])
         # for url in urls:
         #     page  = generate_html(url)
+        threads = []
+        # with ThreadPoolExecutor(max_workers=10) as executor:
+        #     for url in self.start_urls:
+        #         requests = SeleniumRequest(
+        #             url = url,
+        #             callback = self.parse
+        #         )
+        #         threads.append(
+        #             executor.submit(
+        #                 requests, url, self.parse
+        #             )
+        #         )
 
-        url = self.start_url
-        yield SeleniumRequest(
-                url = url,
-                callback = self.parse
-            )
+        #     for t in as_completed(threads):
+        #         yield t.result()
+                
+        for url in self.start_urls:
+            yield SeleniumRequest(
+                    url = url,
+                    callback = self.parse
+                )
 
     
 
 
     def parse(self, response):
-        styleseat_item = StyleSeatItem()
+        # styleseat_item = StyleSeatItem()
         resp_meta = {}
         print("==================☁️☁️meta_driver☁️☁️===========")
         print(response.request.meta)
         print("==================☁️☁️meta_driver☁️☁️===========")
-        time.sleep(5)
-        styleseat_item["name"] = "styleseat"
+        time.sleep(10)
+        # styleseat_item["name"] = "styleseat"
         resp_meta["name"] = "styleseat"
+        import pdb;pdb.set_trace()
         resp_meta["secondary_name"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//h1[@data-testid="proName"]').text
         print(f"resp_meta------------------------------->{resp_meta}")
         resp_meta["logo_url"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[contains(@class,"avatar-icon")]').get_attribute("style")
@@ -59,9 +82,25 @@ class StyleseatSpider(CrawlSpider):
             print(error)
         resp_meta["businessName"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="proBusinessName"]').text
         resp_meta["ratings"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="rating-stars"]').text
-        resp_meta["serviceTitle"] = [CLEAN_STRING.sub("",elem.text) for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//h4[@data-testid="serviceTitle"]')]
-        resp_meta["serviceDetails"] = [CLEAN_STRING.sub("",elem.text) for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="serviceDetails"]')]
-        resp_meta["descriptionSection"] = [CLEAN_STRING.sub("",elem.text) for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="description_section"]')]
+        # //div[@data-testid="service-card"]
+        services = []
+        import pdb;pdb.set_trace()
+        for i,elem in enumerate(response.request.meta['driver'].find_elements(by=By.XPATH,value='//div[@data-testid="service-card"]')):
+            if i < 3:
+                try:
+                    service = {
+                        "serviceTitle":response.request.meta['driver'].find_elements(by=By.XPATH, value='//h4[@data-testid="serviceTitle"]')[i].text,
+                        "serviceDetails":response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="serviceDetails"]')[i].text,
+                        "descriptionSection":response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="description_section"]')[i].text
+                    }
+
+                    services.append(service)
+                except Exception as error:
+                    print(error)
+        print("==================☁️☁️services☁️☁️===========")
+        print(services)
+        print("==================☁️☁️services☁️☁️===========")
+        resp_meta["services"] = services
         print(f"resp_meta------------------------------->{resp_meta}")
         resp_meta['address'] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="address-component"]').text
         resp_meta['google_link_address'] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@class="css-1dbjc4n"]/a').get_attribute("href")
@@ -82,26 +121,28 @@ class StyleseatSpider(CrawlSpider):
         response.request.meta['driver'].get(response.url)   
         
         reviews = []
-        time.sleep(6)
+        time.sleep(10)
+        import pdb;pdb.set_trace()
         try:
         
             response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="tab-navigation-Reviews"]/div').click()
-            time.sleep(5)
+            time.sleep(7)
             # import pdb;pdb.set_trace()
-            for elem in response.request.meta['driver'].find_elements(by=By.XPATH,value='//div[@data-testid="review__review-container"]'):
-                try:
-                    review = {
-                        "reviews" : elem.find_element(by=By.XPATH, value='//div[@data-testid="review-star-summary"]').text,
-                        "clientPhotosNo" : elem.find_element(by=By.XPATH, value='//h3[@role="heading"]').text,    
-                        "review_text" : elem.find_element(by=By.XPATH, value='//div[@data-testid="review__review-text"]/div/div').text,
-                        "aboutClientAdjectives" : elem.find_element(by=By.XPATH, value='//div[@data-testid="review__about-provider"]').text,
-                        "aboutClientLocation" : elem.find_element(by=By.XPATH, value='//div[@data-testid="review__about-location"]').text,
-                        "reviewerNameAndDate" :elem.find_element(by=By.XPATH, value='//div[@data-testid="review__reviewer-name"]').text,
-                        "reviewServiceName" : elem.find_element(by=By.XPATH, value='//div[@data-testid="review__service-name"]').text,
-                    }
-                except Exception as error:
-                    print(error)
-                reviews.append(review)
+            for i,elem in enumerate(response.request.meta['driver'].find_elements(by=By.XPATH,value='//div[@data-testid="review__review-container"]')):
+                if i < 3:
+                    try:
+                        review = {
+                            "reviews" : response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="review-star-summary"]')[i].text,
+                            "clientPhotosNo" : response.request.meta['driver'].find_elements(by=By.XPATH, value='//h3[@role="heading"]')[i].text,    
+                            "review_text" : response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="review__review-text"]/div/div')[i].text,
+                            # "aboutClientAdjectives" : response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="review__about-provider"]')[i].text,
+                            # "aboutClientLocation" : response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="review__about-location"]')[i].text,
+                            "reviewerNameAndDate" :response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="review__reviewer-name"]')[i].text,
+                            "reviewServiceName" : response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="review__service-name"]')[i].text,
+                        }
+                    except Exception as error:
+                        print(error)
+                    reviews.append(review)
             print("==================☁️☁️client_adjectives☁️☁️===========")
             print(reviews)
             print("==================☁️☁️client_adjectives☁️☁️===========")
@@ -110,7 +151,7 @@ class StyleseatSpider(CrawlSpider):
 
         resp_meta['reviews'] = reviews
         response.request.meta['driver'].get(response.url)
-        time.sleep(5)
+        time.sleep(10)
         
         try:
             response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="tab-navigation-About"]/div').click()
@@ -134,12 +175,14 @@ class StyleseatSpider(CrawlSpider):
 
         if response.url:
             resp_meta["gallery_image_urls"] = [elem.get_attribute("src") for elem in response.request.meta['driver'].find_elements(by=By.TAG_NAME, value='img')]
-        
+        import pdb;pdb.set_trace() 
+        time_urls = None
         response.request.meta['driver'].get(response.url)
-        time.sleep(5)
+        time.sleep(10)
+        time
         try:
             response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="tab-navigation-Services"]/div').click()
-            time.sleep(5)
+            time.sleep(10)
             time_urls = [x.get_attribute("href") for x in response.request.meta['driver'].find_elements(by=By.XPATH, value='//a[@data-testid="bookButton"]')] 
             print("==================☁️☁️time_urls☁️☁️===========")
             print(time_urls)
@@ -147,62 +190,56 @@ class StyleseatSpider(CrawlSpider):
         except Exception as error:
             print(error)
 
-
-        # available_dates = []
-        # available_dates_slots = []
-        # available_dates_slots_booked = []
-        # unavailable_dates = []
-        # for i,url in enumerate(time_urls):
-        #     time.sleep(7)
-        #     response.request.meta['driver'].get(url)
-        #     time.sleep(7)
-        #     try:
-
-        #         available_dates.append([elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="sunshine-dot"]/../../../div')])
-        #         unavailable_dates.append([elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@style, "text-decoration-line: line-through;")]/../../../div')])
-        #         print("==================☁️☁️☁️☁️availabledates☁️☁️☁️☁️===========")
-        #         print(available_dates)
-        #         print("==================☁️☁️☁️☁️availabledates☁️☁️☁️☁️===========")
-        #         for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="sunshine-dot"]/../../../div'):
-        #             elem.click()
-        #             time.sleep(7)
-        #             available_dates_slots.append([el.text for el in response.request.meta['driver'].find_elements(by=By.XPATH,value='//button[@class="ss-button medium text-light"]')])
-        #             try:
-        #                 booked_elements = []
-        #                 for i in range(100):
-        #                     try:
-        #                         booked_elements.append(response.request.meta['driver'].find_element(by=By.XPATH,value=f'//div[@data-testid="bookedtimepill-{i}"]/div'))
-        #                     except Exception as error:
-        #                         print(error)
-        #                     for booked_element in booked_elements:
-        #                         try:
-        #                             available_dates_slots_booked.append(booked_element.text)
-        #                         except Exception as error:
-        #                             print(error)
-                                
-        #             except Exception as error:
-        #                 print(error)
-        #             print("==================☁️☁️☁️☁️available_dates_slots☁️☁️☁️☁️===========")
-        #             print(available_dates_slots)
-        #             print("==================☁️☁️☁️☁️available_dates_slots☁️☁️☁️☁️===========")
-        #             print("==================☁️☁️☁️☁️available_dates_slots_booked☁️☁️☁️☁️===========")
-        #             print(available_dates_slots_booked)
-        #             print("==================☁️☁️☁️☁️available_dates_slots_booked☁️☁️☁️☁️===========")
-        #             time.sleep(5)
-        #             response.request.meta['driver'].get(url)
-        #             time.sleep(7)
+        date_slots = []
+        for url in time_urls[0:1]:
+            time.sleep(7)
+            response.request.meta['driver'].get(url)
+            time.sleep(7)
+            try:
+                import pdb;pdb.set_trace() 
+                for available_date in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="sunshine-dot"]/../../../div'):
+                    available_date.click()
+                    time.sleep(7)
+                    try:
+                        date_slot = {
+                            "date": available_date.text,
+                            "available":[el.text for el in available_date.find_elements(by=By.XPATH,value='//button[@class="ss-button medium text-light"]') if el.text != "Notify"],
+                            "booked":[el.text for el in available_date.find_elements(by=By.XPATH,value=f'//div[contains(@data-testid,"bookedtimepill")]/div')]
+                        }
+                        date_slots.append(date_slot)
+                    except Exception as error:
+                        print(error)
+                        
+                    time.sleep(5)
+                    response.request.meta['driver'].get(url)
+                    time.sleep(7)
 
 
-        #     except Exception as error:
-        #         print(error)
+            except Exception as error:
+                print(error)
 
-        # resp_meta["availableDates"] = available_dates
-        # resp_meta["availableDateSlots"] = available_dates_slots
-        # resp_meta["availableDateSlotsBooked"] = available_dates_slots_booked
-        # resp_meta["unavailableDates"] = unavailable_dates
+        print("==================☁️☁️date_slots☁️☁️===========")
+        print(date_slots)
+        print("==================☁️☁️date_slots☁️☁️===========")
 
+        resp_meta["date_slots"] = date_slots
 
-        styleseat_item["resp_meta"] = resp_meta
+        averages_one = []
+        try:
+            for date_slot in date_slots:
+                averages_one.append((len(date_slot["booked"])/(len(date_slot["booked"])+len(date_slot["available"])))*100)
+
+            average = math.ceil(sum(averages_one)/len(averages_one))
+
+            if average > 70:
+                resp_meta["calendar_availability"] = "Fully Booked Calendar"
+            elif average > 34 and average < 70:
+                resp_meta["calendar_availability"] = "Some Calendar Availability"
+            elif average < 34:
+                resp_meta["calendar_availability"] = "Empty Calendar"
+        except Exception as error:
+            print(error)
+        # styleseat_item["resp_meta"] = resp_meta
         yield resp_meta
         
 

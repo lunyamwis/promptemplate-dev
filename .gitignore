@@ -163,5 +163,6 @@ log.html
 output.xml
 report.html
 
-dialogflow.json
-dialogflow_token.json
+*.json
+
+boostedchatScrapper/*.json
