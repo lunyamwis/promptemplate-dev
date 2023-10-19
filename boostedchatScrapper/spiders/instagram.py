@@ -1,13 +1,27 @@
 import time
+import json
+import sys
+import os
+current_dir = os.getcwd()
+
+# Add the current directory to sys.path
+sys.path.append(current_dir)
+import concurrent.futures
 from .helpers.instagram_login_helper import login_user
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
+from kafka import KafkaProducer
+
+producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
 class InstagramSpider:
     name = 'instagram'
 
+    def send_scrape_task(self, username):
+        task = {'task_type': 'scrape_followers', 'username': username}
+        producer.send('scrapingtasks', value=task)
 
-
+    
     def get_users(self, query):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
         users = client.search_users(query)
@@ -36,41 +50,34 @@ class InstagramSpider:
         client = login_user(username='nyambanemartin', password='nyambane1996-')
         user_id = client.user_id_from_username(username=username)
         return client.get_account_family_v1(target_user_id=user_id)
-        
-    def get_followers(self,username):
-
-        # Log in to your Instagram account
+    
+   
+    def get_followers(self, username):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
-
-        # Get the followers of a specific user
         user_info = client.user_info_by_username(username)
         user_id = user_info.pk
 
-        # Define batch size
-        batch_size = 5  # You can adjust this based on your needs
+        batch_size = 100  # Adjust this based on your needs
 
-        followers = None
-
-        # Loop to retrieve followers in batches
-        for offset in range(0, int(user_info.follower_count), batch_size):
+        def process_followers(offset):
+            print(f'Retrieving followers {offset+1} to {offset + batch_size}...')
             end_offset = min(offset + batch_size, int(user_info.follower_count))
             print(f'Retrieving followers {offset+1} to {end_offset}...')
-
-            # Retrieve followers for the current batch
-            followers = client.user_followers(user_info.pk, amount=batch_size)
-
-            # Process the followers in this batch
-            for follower in followers:
-                # import pdb;pdb.set_trace()
-                print(f'Username: {followers[follower].username}, Full Name: {followers[follower].full_name}, ID: {followers[follower].pk}')
+            # Loop to retrieve followers in batches
+            _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
+            followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
+            # print(followers)
+            # TODO: save followers to database
             
-            if offset == batch_size:
-                batch_size*=2
-
+        # Use ThreadPoolExecutor for parallel processing
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            offsets = range(0, int(user_info.follower_count), batch_size)
+            
+            executor.map(process_followers, offsets)
             # Optional: Add a delay if needed to prevent hitting rate limits
-            time.sleep(5)  # Add a delay of 2 seconds between batches
+            time.sleep(2)  # Add a delay of 2 seconds between batches
 
-        return followers
+            
 
     def get_action_button_info(self, username):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
@@ -133,3 +140,9 @@ class InstagramSpider:
 
     
 
+def send_scrape_task(username):
+        task = {'task_type': 'scrape_followers', 'username': username}
+        producer.send('scrapingtasks', value=task)
+
+
+send_scrape_task('Si_thegroomer')
