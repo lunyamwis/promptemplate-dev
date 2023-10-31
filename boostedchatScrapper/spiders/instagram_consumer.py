@@ -6,7 +6,7 @@ import json
 
 consumer = KafkaConsumer('scrapingtasks', bootstrap_servers=['localhost:9092'], value_deserializer=lambda m: json.loads(m.decode('utf-8')))
 instagram_spider = InstagramSpider()
-import pdb;pdb.set_trace()
+# import pdb;pdb.set_trace()
 print(consumer)
 
 for message in consumer:

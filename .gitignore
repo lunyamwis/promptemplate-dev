@@ -164,5 +164,6 @@ output.xml
 report.html
 
 *.json
+.env
 
 boostedchatScrapper/*.json

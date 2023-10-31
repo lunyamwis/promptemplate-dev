@@ -68,9 +68,9 @@ def login_user(username=os.getenv("IG_USERNAME"), password=os.getenv("IG_PASSWOR
     """
 
     cl = Client()
-    # cl.set_proxy(
-    #     f"https://{os.getenv('PROXY_USERNAME')};country=KE;city=Nairobi:{os.getenv('PROXY_PASSWORD')}@premium.residential.proxyrack.net:10000"
-    # )
+    cl.set_proxy(
+        f"https://{os.getenv('PROXY_USERNAME')};country=KE;city=Nairobi:{os.getenv('PROXY_PASSWORD')}@premium.residential.proxyrack.net:10000"
+    )
     cl.challenge_code_handler = challenge_code_handler(username, 1)
     cl.delay_range = [1, 3]
     max_attempts = 5
