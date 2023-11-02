@@ -66,6 +66,22 @@ class InstagramSpider:
         user_id = client.user_id_from_username(username=username)
         return client.get_account_family_v1(target_user_id=user_id)
     
+    def handle_outsourced(self,username):
+        client = login_user(username='nyambanemartin', password='nyambane1996-')
+        user_info = client.user_info_by_username(username)
+        instagram_accounts_ = self.connection.execute("SELECT id FROM instagram_account;")
+        instagram_accounts = instagram_accounts_.fetchall()
+        for i, instagram_account in enumerate(instagram_accounts):
+            try:
+                self.connection.execute(f"""
+                    INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
+                    VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
+                    'instagram','{json.dumps(user_info.dict(), default=bytes_encoder)}','{instagram_account[0]}'
+                    )
+
+                """)
+            except Exception as error:
+                print(error)
    
     def get_followers(self, username):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
@@ -73,16 +89,82 @@ class InstagramSpider:
         user_id = user_info.pk
 
         batch_size = 100  # Adjust this based on your needs
+        def process_similar_accounts(offset):
+            # Loop to retrieve followers in batches
+            # _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
+            # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
+            # followers = client.user_followers(user_id=user_id,amount=batch_size)
+            followers = client.fbsearch_suggested_profiles(user_id=user_id)
+
+
+            # # print(followers)
+            # # TODO: save followers to database
+            # # import pdb;pdb.set_trace()
+            for follower in followers:
+                print(follower['username'])
+
+                # Assuming 'igname' is the variable containing the Instagram name you want to insert
+                igname = follower['username']
+
+                # Check if igname already exists in the table
+                name = 'on_hold'
+                get_on_hold_status = self.connection.execute("SELECT id FROM instagram_statuscheck WHERE name = %s", (name,))
+                get_on_hold_status_id = get_on_hold_status.fetchone()
+
+                check_instagram_accounts = self.connection.execute("SELECT id FROM instagram_account WHERE igname = %s", (igname,))
+                existing_id = check_instagram_accounts.fetchone()
+                inserted_id = None
+
+                if existing_id:
+                    print(f"The igname '{igname}' already exists with ID {existing_id[0]}. Skipping insertion.")
+                else:
+                    # Perform the INSERT operation
+                    try:
+                        insert_record_return_id = self.connection.execute(f"""
+                            INSERT INTO instagram_account (
+                                deleted_at, id, created_at, updated_at, email, phone_number,
+                                profile_url, status_id, igname, full_name, assigned_to,
+                                dormant_profile_created, confirmed_problems, rejected_problems
+                            )
+                            VALUES (
+                                DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
+                                '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
+                                '{get_on_hold_status_id[0]}', '{igname}', '{follower['full_name']}', 'Robot',
+                                DEFAULT, DEFAULT, DEFAULT
+                            )
+                            RETURNING id;
+                            
+                        """)
+                    except Exception as error:
+                        print(error)
+
+                    inserted_id = insert_record_return_id.fetchone()[0]
+                    print(f"Inserted new record with ID {inserted_id}.")
+
+
+                if inserted_id:
+                    try:
+                        self.connection.execute(f"""
+                            INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
+                            VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
+                            'instagram','{json.dumps(user_info.dict(), default=bytes_encoder)}','{inserted_id}'
+                            )
+
+                        """)
+                    except Exception as error:
+                        print(error)
 
         def process_followers(offset):
             # Loop to retrieve followers in batches
             # _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
             # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
             followers = client.user_followers(user_id=user_id,amount=batch_size)
-            
-            # print(followers)
-            # TODO: save followers to database
-            # import pdb;pdb.set_trace()
+            # followers = client.fbsearch_suggested_profiles(user_id=user_id)
+
+
+            # # print(followers)
+            # # TODO: save followers to database
+            # # import pdb;pdb.set_trace()
             for follower in followers:
                 print(followers[follower].username)
 
@@ -126,12 +208,11 @@ class InstagramSpider:
 
 
                 if inserted_id:
-                    enriched_data=self.get_enriched_ig_data(followers[follower].username)
                     try:
                         self.connection.execute(f"""
                             INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
                             VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                            'instagram','{json.dumps(dict(enriched_data), default=bytes_encoder)}','{inserted_id}'
+                            'instagram','{json.dumps(user_info.dict(), default=bytes_encoder)}','{inserted_id}'
                             )
 
                         """)
