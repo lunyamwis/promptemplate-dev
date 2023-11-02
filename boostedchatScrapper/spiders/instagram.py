@@ -19,6 +19,12 @@ from sqlalchemy import create_engine
 # insta_spider.get_followers('colorswithchemistry')
 
 # producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+def bytes_encoder(o):
+    if isinstance(o, bytes):
+        return o.decode('utf-8')  # Or encode to base64, etc.
+    raise TypeError
+
+
 
 class InstagramSpider:
     name = 'instagram'
@@ -79,31 +85,58 @@ class InstagramSpider:
             # import pdb;pdb.set_trace()
             for follower in followers:
                 print(followers[follower].username)
-                enriched_data=self.get_enriched_ig_data(followers[follower].username)
-                print(enriched_data)
-                try:
-                    self.connection.execute(f"""
-                                            
-                        DECLARE @new_uuid VARCHAR(36) = CONVERT(VARCHAR(36), NEWID());
-                        INSERT INTO instagram_account ( deleted_at,id,created_at,updated_at,email,phone_number,profile_url,
-                                            status_id,igname,full_name,assigned_to,dormant_profile_created,confirmed_problems,rejected_problems) 
-                                            OUTPUT INSERTED.id
-                                            VALUES (DEFAULT,@new_uuid,'{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',DEFAULT,DEFAULT,DEFAULT,
-                                            DEFAULT,'{followers[follower].username}','{followers[follower].full_name}','Robot',DEFAULT,DEFAULT,DEFAULT);
-                        DECLARE @inserted_id VARCHAR(36); -- Define the variable
-                        SET @inserted_id = ( -- Use parentheses to ensure it's treated as a single value
-                            SELECT TOP 1 id
-                            FROM instagram_account -- Replace with the actual table name
-                            ORDER BY created_at DESC -- Use an appropriate ordering to get the latest inserted ID
-                        );
-                        INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
-                        VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                        'instagram','{json.dumps(enriched_data)}',@inserted_id
-                        )
 
-                    """)
-                except Exception as error:
-                    print(error)
+                # Assuming 'igname' is the variable containing the Instagram name you want to insert
+                igname = followers[follower].username
+
+                # Check if igname already exists in the table
+                name = 'on_hold'
+                get_on_hold_status = self.connection.execute("SELECT id FROM instagram_statuscheck WHERE name = %s", (name,))
+                get_on_hold_status_id = get_on_hold_status.fetchone()
+
+                check_instagram_accounts = self.connection.execute("SELECT id FROM instagram_account WHERE igname = %s", (igname,))
+                existing_id = check_instagram_accounts.fetchone()
+                inserted_id = None
+
+                if existing_id:
+                    print(f"The igname '{igname}' already exists with ID {existing_id[0]}. Skipping insertion.")
+                else:
+                    # Perform the INSERT operation
+                    try:
+                        insert_record_return_id = self.connection.execute(f"""
+                            INSERT INTO instagram_account (
+                                deleted_at, id, created_at, updated_at, email, phone_number,
+                                profile_url, status_id, igname, full_name, assigned_to,
+                                dormant_profile_created, confirmed_problems, rejected_problems
+                            )
+                            VALUES (
+                                DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
+                                '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
+                                '{get_on_hold_status_id[0]}', '{igname}', '{followers[follower].full_name}', 'Robot',
+                                DEFAULT, DEFAULT, DEFAULT
+                            )
+                            RETURNING id;
+                            
+                        """)
+                    except Exception as error:
+                        print(error)
+
+                    inserted_id = insert_record_return_id.fetchone()[0]
+                    print(f"Inserted new record with ID {inserted_id}.")
+
+
+                if inserted_id:
+                    enriched_data=self.get_enriched_ig_data(followers[follower].username)
+                    try:
+                        self.connection.execute(f"""
+                            INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
+                            VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
+                            'instagram','{json.dumps(dict(enriched_data), default=bytes_encoder)}','{inserted_id}'
+                            )
+
+                        """)
+                    except Exception as error:
+                        print(error)
                 
         # Use ThreadPoolExecutor for parallel processing
         offsets = range(0, 1, 1)
