@@ -5,6 +5,9 @@ import sys
 import os
 current_dir = os.getcwd()
 
+
+
+
 # Add the current directory to sys.path
 sys.path.append(current_dir)
 import concurrent.futures
@@ -13,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 from kafka import KafkaProducer
 from collections import ChainMap
+from .constants import STYLISTS_WORDS
 from sqlalchemy import create_engine
 # from boostedchatScrapper.spiders.instagram import InstagramSpider
 # insta_spider = InstagramSpider()
@@ -22,6 +26,8 @@ from sqlalchemy import create_engine
 def bytes_encoder(o):
     if isinstance(o, bytes):
         return o.decode('utf-8')  # Or encode to base64, etc.
+    if isinstance(o, str):
+        return str.replace("'","")
     raise TypeError
 
 
@@ -68,22 +74,31 @@ class InstagramSpider:
     
     def handle_outsourced(self,username):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
-        user_info = client.user_info_by_username(username)
         instagram_accounts_ = self.connection.execute("SELECT id FROM instagram_account;")
+        instagram_names_ = self.connection.execute("SELECT igname FROM instagram_account;")
+        instagram_names = instagram_names_.fetchall()
         instagram_accounts = instagram_accounts_.fetchall()
         for i, instagram_account in enumerate(instagram_accounts):
+            print(f"{i}-> {instagram_account}")
             try:
+                try:
+                    user_info = client.user_info_by_username(instagram_names[i][0])
+                except Exception as error:
+                    user_info = {}
+                    print(error)
+                # import pdb;pdb.set_trace()
+                json_string = json.dumps(user_info.dict(), default=bytes_encoder)
                 self.connection.execute(f"""
                     INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
                     VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                    'instagram','{json.dumps(user_info.dict(), default=bytes_encoder)}','{instagram_account[0]}'
+                    'instagram','{json_string.replace("'", "")}','{instagram_account[0]}'
                     )
 
                 """)
             except Exception as error:
                 print(error)
    
-    def get_followers(self, username):
+    def get_users(self, username):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
         user_info = client.user_info_by_username(username)
         user_id = user_info.pk
@@ -250,18 +265,14 @@ class InstagramSpider:
         return len(dates_within_last_seven_days) > 0
     
 
-    def get_popularity(self, username):
-        # Log in to your Instagram account
-        client = login_user(username='nyambanemartin', password='nyambane1996-')
-
-        # Get the followers of a specific user
-        user_info = client.user_info_by_username(username)
-        return  {
-            "pro": user_info.follower_count > 5000,
-            "active": user_info.follower_count >= 500 and user_info.follower_count <= 5000,
-            "inactive": user_info.follower_count <= 500
-        }
-
+    def get_popularity(self, outsourced_data):
+        if outsourced_data['follower_count'] > 5000:
+            return "PRO"
+        elif outsourced_data['follower_count'] >= 500 and outsourced_data['follower_count'] <= 5000:
+            return "ACTIVE"
+        elif outsourced_data['follower_count'] <= 300:
+            return "INACTIVE"
+        
     def get_metrics_check(self, lst):
         return {
             "pro" : any(item > 50 for item in lst),
@@ -270,29 +281,50 @@ class InstagramSpider:
         }
         
 
+    def check_keywords(self,outsourced_data):
+        for i in STYLISTS_WORDS:
+            if i in str(outsourced_data['full_name']).lower():
+                return True
+            elif i in str(outsourced_data['category']).lower():
+                return True
+            elif i in str(outsourced_data['biography']).lower():
+                return True
+        
 
-    def get_is_social_media_active(self, username):
+    def enrich_outsourced_data(self, username):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
-        user_id = client.user_id_from_username(username=username)
-        user_medias = client.user_medias(user_id=user_id,amount=5)
-        days_check = self.get_dates_within_last_seven_days([media.taken_at for media in user_medias])
-        # comments_check = self.get_metrics_check([media.comment_count for media in user_medias])
-        # likes_check = self.get_metrics_check([media.like_count for media in user_medias])
-        popularity_check = self.get_popularity(username=username)
-        return {
-            "pro": days_check  and popularity_check['pro'],
-            "active": days_check and popularity_check['active'],
-            "inactive": days_check and popularity_check['inactive']
-        }
+        outsourced_data_ = self.connection.execute("SELECT results FROM instagram_outsourced;")
+        outsourced_dataset = outsourced_data_.fetchall()
+        outsourced_data_ids_ = self.connection.execute("SELECT id FROM instagram_outsourced;")
+        outsourced_data_ids = outsourced_data_ids_.fetchall()
+
+        for i, outsourced_data in enumerate(outsourced_dataset):
+            print(f"{i}->{outsourced_data[0]['username']}")
+            try:
+                user_medias = client.user_medias(user_id=outsourced_data[0]['pk'],amount=2)
+                days_check = self.get_dates_within_last_seven_days([media.taken_at for media in user_medias])
+                popularity_check = self.get_popularity(outsourced_data[0])
+                keywords_chck = self.check_keywords(outsourced_data[0])
+                checks =  {
+                    "is_posting_actively": days_check,
+                    "is_popular":popularity_check,
+                    "is_stylist": keywords_chck
+                }
+                enriched_outsourced_data = {**checks, **outsourced_data[0]}
+                try:
+                    json_string = json.dumps(enriched_outsourced_data, default=bytes_encoder)
+                    self.connection.execute(f"""
+                        UPDATE  instagram_outsourced SET results='{json_string.replace("'", "")}'
+                        WHERE instagram_outsourced.id='{outsourced_data_ids[i][0]}';
+                    """)
+                    print(f"updated record-------------{outsourced_data_ids[i][0]}")
+                except Exception as error:
+                    print(error)
+
+            except Exception as error:
+                print(error)
+
+
     
 
-    def get_enriched_ig_data(self,username):
-        client = login_user(username='nyambanemartin', password='nyambane1996-')
-        user_info = client.user_info_by_username(username)
-        enriched_data = {
-            "sm_active": self.get_is_social_media_active(username),
-            "book_button": self.get_action_button_info(username),
-            
-        }
-        return ChainMap(enriched_data, user_info.dict())
-        
+    
