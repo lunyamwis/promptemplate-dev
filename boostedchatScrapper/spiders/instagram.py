@@ -311,11 +311,11 @@ class InstagramSpider:
         return len(keyword_count) > 0
         
 
-    def enrich_outsourced_data(self, account_id=None, infinite=False, hour_index=1):
+    def enrich_outsourced_data(self, users=None, infinite=False, changing_index=None):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
         outsourced_data_ = None
         if infinite:
-            outsourced_data_ = self.connection.execute(f"SELECT id, results, account_id FROM instagram_outsourced where account_id = '{account_id}';")
+            outsourced_data_ = self.connection.execute(f"SELECT id, results, account_id FROM instagram_outsourced where account_id in {tuple(users)};")
         else:
             outsourced_data_ = self.connection.execute("SELECT id, results, account_id FROM instagram_outsourced where account_id in (select id from instagram_account where status_id is null);")
         outsourced_dataset = outsourced_data_.fetchall()
@@ -339,10 +339,11 @@ class InstagramSpider:
                 print(error)
 
 
-        def outsourcing_information():
-            now = datetime.now()
+        def outsourcing_information(changing_indice=None):
+            now = datetime.now(timezone.utc)
             hr = now.hour
-            hour_idx = hour_index
+            hour_idx = 1
+            changing_idx = changing_indice
             end_prev_day = 20 - hr if hr < 20 else 12
             day_idx = 1 if hr < 20 else 2
             for i, outsourced_data in enumerate(outsourced_dataset):
@@ -385,17 +386,29 @@ class InstagramSpider:
                                     UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data['account_id']}';             
                                     """)
                             empty_dict= {}
-                            print(hour_idx)
-                            
-                            interval_id = None
+                            print(f"hour_indice==============>{hour_idx}")
+                            print(f"changing_indice===============>{changing_idx}")
+                            crontab_id = None
                             if hour_idx > end_prev_day:
                                 hour_idx += 11
                                 end_prev_day += 24
                                 day_idx += 1
-                            
-                            interval_id = self.connection.execute(f"""
-                                INSERT INTO django_celery_beat_intervalschedule (every, period) 
-                                VALUES ('{hour_idx}', 'hours') RETURNING id;
+
+                            time_to_be_executed = None
+                            if changing_idx:
+                                print(f"changing_indice_has_changed_to=================>{changing_idx + hour_idx}")
+                                time_to_be_executed = now + timedelta(hours=changing_idx + hour_idx)
+                            else:
+                                time_to_be_executed = now + timedelta(hours=hour_idx)
+
+                            hour_to_be_executed = time_to_be_executed.hour
+                            day_to_be_executed = time_to_be_executed.day
+                            month_to_be_executed = time_to_be_executed.month
+                            random_minute = random.randint(1,60)
+
+                            crontab_id = self.connection.execute(f"""
+                                INSERT INTO django_celery_beat_crontabschedule (minute, hour, day_of_week , day_of_month, month_of_year, timezone ) 
+                                VALUES ({random_minute},{hour_to_be_executed},'*',{day_to_be_executed},'{month_to_be_executed}', 'UTC') RETURNING id;
                             """)
                             hour_idx += 1
 
@@ -407,8 +420,8 @@ class InstagramSpider:
                                 )
                                 VALUES (
                                     'SendFirstCompliment-{outsourced_data['results']['username']}',
-                                    'instagram.tasks.send_first_compliment','{interval_id.fetchone()[0]}',NULL,
-                                    '{json.dumps([[outsourced_data['results']['username']]])}', '{empty_dict}', 'your_queue',
+                                    'instagram.tasks.send_first_compliment',NULL,'{crontab_id.fetchone()[0]}',
+                                    '{json.dumps([[outsourced_data['results']['username']]])}', '{empty_dict}', NULL,
                                     TRUE, NULL, 0, NOW(), 'Your task description', TRUE, '{empty_dict}'
                                 );
                             """)
@@ -420,7 +433,7 @@ class InstagramSpider:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             if outsourced_dataset:
-                executor.submit(outsourcing_information)
+                executor.submit(outsourcing_information, changing_index)
             else:
                 if not infinite:
                     for ig in ig_dataset:
@@ -428,20 +441,50 @@ class InstagramSpider:
         
 
     def insert_data_with_enriched_outsourced_data(self):
+        get_earliest_date = self.connection.execute("SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule ORDER BY id ASC LIMIT 1;").fetchone()
+        get_latest_date = self.connection.execute("SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule ORDER BY id DESC LIMIT 1;").fetchone()
+        now = datetime.now(timezone.utc)
+        latest_date = datetime(
+                            now.year, 
+                            int(get_latest_date[3]),  #month
+                            int(get_latest_date[2]), #day
+                            int(get_latest_date[1]), #hour
+                            int(get_latest_date[0]) #minute
+                        )
+        earliest_date = datetime(
+                            now.year, 
+                            int(get_earliest_date[3]),  #month
+                            int(get_earliest_date[2]), #day
+                            int(get_earliest_date[1]), #hour
+                            int(get_earliest_date[0]) #minute
+                        )
+        difference = latest_date - earliest_date
+        changing_idx = int((difference.total_seconds() / 60) / 60)
+        print(f"changing_indice===============>{changing_idx}")
+
         i = 0
         while True:
 
-            ig_data = self.connection.execute("SELECT id, igname FROM instagram_account WHERE qualified=TRUE;")
+            ig_data = self.connection.execute("SELECT id, igname FROM instagram_account WHERE qualified=TRUE ORDER BY RANDOM();")
             ig_dataset = ig_data.fetchall()
             print(f"Number_of_qualified_accounts-----------{len(ig_dataset)}")
             for j, user in enumerate(ig_dataset):
                 print(f"User-----{user['igname']}")
                 try:
                     new_users = self.get_ig_user_info(user['igname'])
+                    users = []
                     if new_users:
                         for _ in new_users:
                             for x, new_user in enumerate(_):
-                                self.enrich_outsourced_data(new_user, infinite=True,hour_index=195+x)
+                                users.append(new_user)
+
+                    if j == 0:
+                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx)
+
+                    if j > 1:
+                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx + len(users))
+                        print(f"changing_index_in_infinite_loop=================>{changing_idx + len(users)}")
+                    
                 except Exception as error:
                     print(error)
                 
