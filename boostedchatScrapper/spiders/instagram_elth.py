@@ -452,7 +452,7 @@ class InstagramSpider:
                             int(get_latest_date[0]) #minute
                         )
         earliest_date = datetime(
-                            now.year+1, 
+                            now.year, 
                             int(get_earliest_date[3]),  #month
                             int(get_earliest_date[2]), #day
                             int(get_earliest_date[1]), #hour
