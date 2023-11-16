@@ -482,7 +482,8 @@ class InstagramSpider:
                         self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx)
 
                     if j > 1:
-                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx + len(users))
+                        changing_idx += len(users)
+                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx)
                         print(f"changing_index_in_infinite_loop=================>{changing_idx + len(users)}")
                     
                 except Exception as error:
