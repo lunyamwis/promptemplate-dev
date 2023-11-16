@@ -452,7 +452,7 @@ class InstagramSpider:
                             int(get_latest_date[0]) #minute
                         )
         earliest_date = datetime(
-                            now.year, 
+                            now.year+1, 
                             int(get_earliest_date[3]),  #month
                             int(get_earliest_date[2]), #day
                             int(get_earliest_date[1]), #hour
@@ -480,11 +480,12 @@ class InstagramSpider:
 
                     if j == 0:
                         self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx)
-
+                        changing_idx += len(users)
+                        
                     if j > 1:
                         changing_idx += len(users)
                         self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx)
-                        print(f"changing_index_in_infinite_loop=================>{changing_idx + len(users)}")
+                        print(f"changing_index_in_infinite_loop=================>{changing_idx}")
                     
                 except Exception as error:
                     print(error)
