@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrompTemplate</title>
+</head>
+<body>
+    <h1>Prompt</h1>
+    <form action="/add" method="POST">
+        <label for="name">prompt Name:</label>
+        <input type="text" id="name" name="name" required>
+        <button type="submit">Add prompt</button>
+    </form>
+    <ul>
+        {% for prompt in prompts %}
+            <li>
+                {{ prompt.name }}
+                <a href="{{ url_for('update_prompt', prompt_id=prompt.id) }}">Update</a>
+                <a href="{{ url_for('delete', prompt_id=prompt.id) }}">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
