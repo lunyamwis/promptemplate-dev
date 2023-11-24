@@ -9,6 +9,7 @@
             {{ prompt.name }}
             {{ prompt.data }}
             {{ prompt.text_data }}
+            {{ query_info }}
             <a href="{% url 'update' prompt.id %}">Update</a>
             <a href="{% url 'delete' prompt.id %}">Delete</a>
         </li>

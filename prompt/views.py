@@ -1,9 +1,13 @@
-from django.shortcuts import render
+import json
 
+from django.shortcuts import render
+from django.db import connections
 # Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Prompt
+from .models import Prompt, Query
+from product.models import Company
 from .forms import PromptForm
+from helpers.db.connection import connect_to_external_database
 
 def index(request):
     prompts = Prompt.objects.all()
@@ -21,7 +25,28 @@ def add(request):
 
 def detail(request, prompt_id):
     prompt = get_object_or_404(Prompt,id = prompt_id)
-    return render(request, 'prompt/detail.html', {'prompt': prompt})
+    querying_info = []
+    queries = Query.objects.filter(prompt = prompt)
+    for query_ in queries:
+        company = get_object_or_404(Company, id = prompt.product.company.id)
+        
+        connect_to_external_database(company)
+        with connections[company.name].cursor() as cursor:
+
+            cursor.execute(query_.query)
+            
+            # Fetch results
+            results = cursor.fetchall()
+        
+        query_data = {
+            query_.name:results if results else query_.query
+        }
+        querying_info.append(query_data)
+
+    return render(request, 'prompt/detail.html', {
+                'prompt': prompt,
+                'query_info':querying_info
+            })
 
 def update(request, prompt_id):
     prompt = get_object_or_404(Prompt, pk=prompt_id)
