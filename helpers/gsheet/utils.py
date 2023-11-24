@@ -11,10 +11,46 @@ from .connection import get_creds
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = "1PZ6OZtj6BZyhxFJHwkH1ZD3TCN17RuwtXHz8vKGasc4"
-SAMPLE_RANGE_NAME = "problems_solutions!A2:E"
 
-def get_range():
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+
+def execute_gsheet_formula(cell_range, formula, spreadsheet_id=None):
+    creds = get_creds()
+    values = None
+    try:
+        service = build("sheets", "v4", credentials=creds)
+
+        # Specify the formula to write
+        value_input_option = 'USER_ENTERED'
+        formula_body = {
+            'values': [[formula]],
+            'range': cell_range,
+            'majorDimension': 'ROWS'
+        }
+
+        # Call the Sheets API to update the cell with the specified formula
+        request = service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=cell_range,
+            body=formula_body,
+            valueInputOption=value_input_option
+        )
+        response = request.execute()
+        values = get_range(response.get('updatedRange'), spreadsheet_id=spreadsheet_id)
+        
+        print(response)
+        print(f"Formula '{formula}' written to cell '{cell_range}'.")
+        print(values)
+
+    except HttpError as err:
+        print(err)
+    return values
+
+
+def get_range(cell_range, spreadsheet_id=None):
     creds = get_creds()
     values = None
     try:
@@ -24,7 +60,7 @@ def get_range():
         sheet = service.spreadsheets()
         result = (
             sheet.values()
-            .get(spreadsheetId=SAMPLE_SPREADSHEET_ID, range=SAMPLE_RANGE_NAME)
+            .get(spreadsheetId=spreadsheet_id, range=cell_range)
             .execute()
         )
         values = result.get("values", [])
@@ -34,9 +70,6 @@ def get_range():
             return
 
         print("Name, Major:")
-        for row in values:
-            # Print columns A and E, which correspond to indices 0 and 4.
-            print(f"{row[0]}, {row[4]}")
     except HttpError as err:
         print(err)
     return values

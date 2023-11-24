@@ -8,6 +8,15 @@ class Company(BaseModel):
     def __str__(self) -> str:
         return self.name
     
+class GsheetSetting(BaseModel):
+    name = models.CharField(max_length=255)
+    spreadsheet_id = models.CharField(max_length=255)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,
+                                null=True, blank=True)
+    def __str__(self) -> str:
+        return self.name
+
+    
 class DatabaseCredential(BaseModel):
     engine = models.CharField(max_length=255)
     database = models.CharField(max_length=255)
@@ -35,12 +44,20 @@ class Problem(BaseModel):
     name = models.CharField(max_length=255)
     product = models.ForeignKey(Product,on_delete=models.CASCADE, 
                                       null=True, blank=True)
+    gsheet_range = models.TextField()
     gsheet_formula = models.TextField()
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Solution(BaseModel):
     name = models.CharField(max_length=255)
+    gsheet_range = models.TextField()
     gsheet_formula = models.TextField()
     problem = models.ForeignKey(Problem,on_delete=models.CASCADE, 
                                       null=True, blank=True)
+    
+    def __str__(self) -> str:
+        return self.name
     
