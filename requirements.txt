@@ -1,3 +1,6 @@
 django-softdelete
 psycopg2
 psycopg2-binary
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib
