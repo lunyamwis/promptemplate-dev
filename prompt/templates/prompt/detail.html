@@ -10,6 +10,7 @@
             {{ prompt.data }}
             {{ prompt.text_data }}
             {{ query_info }}
+            steps: {{ prompt.product.steps }}
             problems: {{ problems }}
             solutions: {{ solutions }}
             <a href="{% url 'update' prompt.id %}">Update</a>

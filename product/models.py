@@ -39,6 +39,14 @@ class Product(BaseModel):
     
     def __str__(self) -> str:
         return self.name
+    
+    @property
+    def steps(self):
+        from prompt.models import Prompt
+        return Prompt.objects.filter(
+            product__id=self.id
+        ).count()
+
       
 class Problem(BaseModel):
     name = models.CharField(max_length=255)

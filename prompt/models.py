@@ -19,7 +19,7 @@ class Prompt(BaseModel):
                                       null=True, blank=True)
     product = models.ForeignKey(Product,on_delete=models.CASCADE, 
                                       null=True, blank=True)
-    
+    index = models.IntegerField(default=0)
     
 
     def __str__(self):

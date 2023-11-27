@@ -30,23 +30,26 @@ def detail(request, prompt_id):
     querying_info = []
     queries = Query.objects.filter(prompt = prompt)
     company = get_object_or_404(Company, id = prompt.product.company.id)
-    sheet = GsheetSetting.objects.get(company=company)
+    sheet = GsheetSetting.objects.filter(company=company).last()
     # getting problems
     problems = Problem.objects.filter(product= prompt.product)
     problem_values = []
-    for problem in problems:
-        problem_values.append(execute_gsheet_formula(problem.gsheet_range,
-                                                     problem.gsheet_formula,
-                                                     spreadsheet_id=sheet.spreadsheet_id))
+    if problems.exists():
+        for problem in problems:
+            problem_values.append(execute_gsheet_formula(problem.gsheet_range,
+                                                        problem.gsheet_formula,
+                                                        spreadsheet_id=sheet.spreadsheet_id))
 
     # getting solutions
     solution_values = []
     for problem in problems:
+
         solutions = Solution.objects.filter(problem=problem)
-        for solution in solutions:
-            solution_values.append(execute_gsheet_formula(solution.gsheet_range,
-                                                          solution.gsheet_formula,
-                                                          spreadsheet_id=sheet.spreadsheet_id))
+        if solutions.exists():
+            for solution in solutions:
+                solution_values.append(execute_gsheet_formula(solution.gsheet_range,
+                                                            solution.gsheet_formula,
+                                                            spreadsheet_id=sheet.spreadsheet_id))
 
     
     # getting queries
