@@ -4,6 +4,7 @@ from base.models import BaseModel
 
 class Company(BaseModel):
     name = models.CharField(max_length=255)
+    index = models.IntegerField(default=1)
 
     def __str__(self) -> str:
         return self.name
