@@ -32,50 +32,9 @@ def add(request):
 def detail(request, prompt_id):
     prompt = get_object_or_404(Prompt,id = prompt_id)
     querying_info = []
-    queries = Query.objects.filter(prompt = prompt)
-    company = get_object_or_404(Company, id = prompt.product.company.id)
-    sheet = GsheetSetting.objects.filter(company=company).last()
-    # getting problems
-    problems = Problem.objects.filter(product= prompt.product)
-    problem_values = []
-    if problems.exists():
-        for problem in problems:
-            problem_values.append(execute_gsheet_formula(problem.gsheet_range,
-                                                        problem.gsheet_formula,
-                                                        spreadsheet_id=sheet.spreadsheet_id))
-
-    # getting solutions
-    solution_values = []
-    for problem in problems:
-
-        solutions = Solution.objects.filter(problem=problem)
-        if solutions.exists():
-            for solution in solutions:
-                solution_values.append(execute_gsheet_formula(solution.gsheet_range,
-                                                            solution.gsheet_formula,
-                                                            spreadsheet_id=sheet.spreadsheet_id))
-
-    
-    # getting queries
-    for query_ in queries:
-        company = get_object_or_404(Company, id = prompt.product.company.id)
-        connect_to_external_database(company)
-        with connections[company.name].cursor() as cursor:
-            cursor.execute(query_.query)
-            results = cursor.fetchall()
-        
-        query_data = {
-            query_.name:results if results else query_.query
-        }
-        querying_info.append(query_data)
-    
-
     
     return render(request, 'prompt/detail.html', {
                 'prompt': prompt,
-                'query_info':querying_info,
-                'problems': problem_values,
-                'solutions': solution_values
             })
 
 def update(request, prompt_id):

@@ -9,10 +9,10 @@
             {{ prompt.name }}
             {{ prompt.data }}
             {{ prompt.text_data }}
-            {{ query_info }}
+            querying_info: {{prompt.querying_info}}
+            problems: {{prompt.get_problems}} 
+            solutions: {{prompt.get_solutions}}
             steps: {{ prompt.product.steps }}
-            problems: {{ problems }}
-            solutions: {{ solutions }}
             <a href="{% url 'update' prompt.id %}">Update</a>
             <a href="{% url 'delete' prompt.id %}">Delete</a>
         </li>
