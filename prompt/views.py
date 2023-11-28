@@ -1,18 +1,11 @@
-import json
-
 from django.shortcuts import render
-from django.db import connections
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-# Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Prompt, Query
-from product.models import Company, Problem, Solution, GsheetSetting
+from .models import Prompt
 from itertools import chain
 from .forms import PromptForm
-from helpers.db.connection import connect_to_external_database
-from helpers.gsheet.utils import execute_gsheet_formula
 
 
 def index(request):
