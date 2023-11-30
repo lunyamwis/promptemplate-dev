@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import render, redirect, get_object_or_404
+from product.models import Product, Company
 from .models import Prompt
 from itertools import chain
 from .forms import PromptForm
@@ -24,7 +25,6 @@ def add(request):
 
 def detail(request, prompt_id):
     prompt = get_object_or_404(Prompt,id = prompt_id)
-    querying_info = []
     
     return render(request, 'prompt/detail.html', {
                 'prompt': prompt,
@@ -46,15 +46,18 @@ def delete(request, prompt_id):
     prompt.delete()
     return redirect('index')
 
-class GetPrompt(APIView):
+
+
+class getPrompt(APIView):
+    
     def post(self, request):
         data = request.data
-        prompt_index = data.get("prompt_index")
-        company_index = data.get("company_index")
-        prompt = Prompt.objects.filter(index=int(prompt_index), product__company__index=int(company_index)).last()
+        company = Company.objects.get(name=data.get("company_name"))
+        product = Product.objects.get(name=data.get("product_name"), company=company)
+        prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
         prompt_data =  f"""{prompt.text_data}-{list(chain.from_iterable([prompt.querying_info, 
         prompt.get_problems, prompt.get_solutions] ) )}"""
-
+        
         return Response({
             "prompt": prompt_data,
             "steps": prompt.product.steps,
