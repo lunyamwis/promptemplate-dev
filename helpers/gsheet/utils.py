@@ -30,7 +30,7 @@ def execute_gsheet_formula(cell_range, formula, spreadsheet_id=None):
             valueInputOption=value_input_option
         )
         response = request.execute()
-        values = get_range(response.get('updatedRange'), spreadsheet_id=spreadsheet_id)
+        values = get_range(cell_range, spreadsheet_id=spreadsheet_id)
         
         print(response)
         print(f"Formula '{formula}' written to cell '{cell_range}'.")

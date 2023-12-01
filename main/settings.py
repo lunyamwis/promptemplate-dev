@@ -14,16 +14,24 @@ SECRET_KEY = 'django-insecure-jcfkm1q@7_i1)eq@2&emyb)ixr2do3ozt^ab!o^w-dbgq)ognj
 DEBUG = True
 ALLOWED_HOSTS = [
     # "*",
+    "34.74.147.25",
     "api.boostedchat.com",
     "127.0.0.1",
     "a69c-105-60-202-188.ngrok-free.app",
     "3e6a-62-8-92-218.ngrok-free.app",
     "3e6a-62-8-92-218.ngrok-fr",
     "api.booksy.us.boostedchat.com",
-    "ce2d-105-161-11-162.ngrok-free.app"
+    "ce2d-105-161-11-162.ngrok-free.app",
+    "ed48-196-105-37-1.ngrok-free.app"
 ]
-CSRF_TRUSTED_ORIGINS = ["https://api.boostedchat.com","https://api.booksy.us.boostedchat.com","https://a69c-105-60-202-188.ngrok-free.app",
-"https://3e6a-62-8-92-218.ngrok-free.app","https://3e6a-62-8-92-218.ngrok-fr","https://ce2d-105-161-11-162.ngrok-free.app"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://api.boostedchat.com",
+    "https://api.booksy.us.boostedchat.com",
+    "https://a69c-105-60-202-188.ngrok-free.app",
+    "https://3e6a-62-8-92-218.ngrok-free.app",
+    "https://3e6a-62-8-92-218.ngrok-fr",
+    "https://ce2d-105-161-11-162.ngrok-free.app"
+]
 
 # Application definition
 CSRF_COOKIE_SECURE = False

@@ -11,7 +11,8 @@ class ToneOfVoice(BaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField()
 
-    
+    def __str__(self) -> str:
+        return self.name
 
 
 class Prompt(BaseModel):
@@ -50,13 +51,12 @@ class Prompt(BaseModel):
     def get_problems(self):
         problems = Problem.objects.filter(product= self.product)
         sheet = GsheetSetting.objects.filter(company=self.product.company).last()
-    # getting problems
         problem_values = []
         if problems.exists():
             for problem in problems:
-                problem_values.append(execute_gsheet_formula(problem.gsheet_range,
+                problem_values.append({problem.name:execute_gsheet_formula(problem.gsheet_range,
                                                             problem.gsheet_formula,
-                                                            spreadsheet_id=sheet.spreadsheet_id))
+                                                            spreadsheet_id=sheet.spreadsheet_id)})
 
         return problem_values
 
@@ -71,9 +71,9 @@ class Prompt(BaseModel):
             solutions = Solution.objects.filter(problem=problem)
             if solutions.exists():
                 for solution in solutions:
-                    solution_values.append(execute_gsheet_formula(solution.gsheet_range,
+                    solution_values.append({solution.name:execute_gsheet_formula(solution.gsheet_range,
                                                                 solution.gsheet_formula,
-                                                                spreadsheet_id=sheet.spreadsheet_id))
+                                                                spreadsheet_id=sheet.spreadsheet_id)})
         return solution_values
 
 

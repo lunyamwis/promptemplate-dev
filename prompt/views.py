@@ -47,16 +47,37 @@ def delete(request, prompt_id):
     return redirect('index')
 
 
-
-class getPrompt(APIView):
+class saveResponse(APIView):
     
     def post(self, request):
         data = request.data
         company = Company.objects.get(name=data.get("company_name"))
         product = Product.objects.get(name=data.get("product_name"), company=company)
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
-        prompt_data =  f"""{prompt.text_data}-{list(chain.from_iterable([prompt.querying_info, 
-        prompt.get_problems, prompt.get_solutions] ) )}"""
+        prompt.data = data
+        prompt.save()
+        
+        return Response({
+            "success":True,
+        }, status=status.HTTP_200_OK)
+
+class getPrompt(APIView):
+    
+    def post(self, request):
+        # import pdb;pdb.set_trace()
+        data = request.data
+        company = Company.objects.get(name=data.get("company_name"))
+        product = Product.objects.get(name=data.get("product_name"), company=company)
+        prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
+        prompt_data =  f"""
+                {prompt.text_data}-
+                    Tone of voice: {prompt.tone_of_voice.description}
+                    {list(chain.from_iterable([
+                    prompt.querying_info, 
+                    prompt.get_problems, 
+                    prompt.get_solutions]))}
+                    --{prompt.data}
+        """
         
         return Response({
             "prompt": prompt_data,
