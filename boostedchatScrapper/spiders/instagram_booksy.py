@@ -363,7 +363,8 @@ class InstagramSpider:
                     checks =  {
                         "is_posting_actively": days_check,
                         "is_popular":popularity_check,
-                        "is_stylist": keywords_chck
+                        "is_stylist": keywords_chck,
+                        "book_button": outsourced_data['results'].pop("external_url")
                     }
                     enriched_outsourced_data = {**checks, **outsourced_data['results']}
                     
