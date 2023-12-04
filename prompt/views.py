@@ -73,7 +73,8 @@ class getPrompt(APIView):
                 {prompt.text_data}-
                     Tone of voice: {prompt.tone_of_voice.description}
                     
-                    --{prompt.data}
+                    Conversation so far: {data.get("conversations")}
+                    More information about the user: {data.get("outsourced")}
         """
         
         return Response({
