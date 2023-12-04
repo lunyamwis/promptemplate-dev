@@ -14,6 +14,7 @@ SECRET_KEY = 'django-insecure-jcfkm1q@7_i1)eq@2&emyb)ixr2do3ozt^ab!o^w-dbgq)ognj
 DEBUG = True
 ALLOWED_HOSTS = [
     # "*",
+    "34.138.81.48",
     "34.74.147.25",
     "api.boostedchat.com",
     "127.0.0.1",
