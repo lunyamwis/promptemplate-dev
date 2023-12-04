@@ -72,9 +72,7 @@ class getPrompt(APIView):
         prompt_data =  f"""
                 {prompt.text_data}-
                     Tone of voice: {prompt.tone_of_voice.description}
-                    {list(chain.from_iterable([
-                    prompt.querying_info
-                    ]))}
+                    
                     --{prompt.data}
         """
         
