@@ -73,9 +73,8 @@ class getPrompt(APIView):
                 {prompt.text_data}-
                     Tone of voice: {prompt.tone_of_voice.description}
                     {list(chain.from_iterable([
-                    prompt.querying_info, 
-                    prompt.get_problems, 
-                    prompt.get_solutions]))}
+                    prompt.querying_info
+                    ]))}
                     --{prompt.data}
         """
         
