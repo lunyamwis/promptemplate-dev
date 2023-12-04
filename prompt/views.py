@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import render, redirect, get_object_or_404
 from product.models import Product, Company
-from .models import Prompt
+from .models import Prompt, Problem, Solution
 from itertools import chain
 from .forms import PromptForm
 
@@ -72,9 +72,12 @@ class getPrompt(APIView):
         prompt_data =  f"""
                 {prompt.text_data}-
                     Tone of voice: {prompt.tone_of_voice.description}
+
+                    {"Problems: " + list(Problem.objects.all()) if prompt.index > 2 else ""}
+                    {"Solutions: " + list(Solution.objects.all()) if prompt.index > 2 else ""}
                     
-                    Conversation so far: {data.get("conversations")}
-                    More information about the user: {data.get("outsourced")}
+                    Conversation so far: {data.get("conversations", "")}
+                    More information about the user: {data.get("outsourced", "")}
         """
         
         return Response({
