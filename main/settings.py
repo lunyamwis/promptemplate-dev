@@ -22,6 +22,7 @@ ALLOWED_HOSTS = [
     "3e6a-62-8-92-218.ngrok-free.app",
     "3e6a-62-8-92-218.ngrok-fr",
     "api.booksy.us.boostedchat.com",
+    "promptemplate.boostedchat.com",
     "ce2d-105-161-11-162.ngrok-free.app",
     "ed48-196-105-37-1.ngrok-free.app"
 ]
@@ -31,7 +32,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://a69c-105-60-202-188.ngrok-free.app",
     "https://3e6a-62-8-92-218.ngrok-free.app",
     "https://3e6a-62-8-92-218.ngrok-fr",
-    "https://ce2d-105-161-11-162.ngrok-free.app"
+    "https://ce2d-105-161-11-162.ngrok-free.app",
+    "http://promptemplate.boostedchat.com"
 ]
 
 # Application definition
