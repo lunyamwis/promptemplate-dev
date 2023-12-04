@@ -37,9 +37,8 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Application definition
-CSRF_COOKIE_SECURE = False
 
-CSRF_COOKIE_DOMAIN = "https://api.booksy.us.boostedchat.com"
+CSRF_COOKIE_DOMAIN = "http://promptemplate.boostedchat.com"
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
