@@ -79,7 +79,7 @@ class getPrompt(APIView):
                         Confirmed Problems: { prompt.data if prompt.index >= 3 else ""}
                         
                         Conversation so far: {data.get("conversations", "")}
-                        More information about the user: {data.get("outsourced", "")}
+                        More information about the user: {data.get("outsourced", "") if prompt.index == 1 else ""}
                     """
         
         return Response({
