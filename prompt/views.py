@@ -73,10 +73,10 @@ class getPrompt(APIView):
                 {prompt.text_data}-
                     Tone of voice: {prompt.tone_of_voice.description}
 
-                    {"Problems: " + list(Problem.objects.all()) if prompt.index >= 2 else ""}
-                    {"Solutions: " + list(Solution.objects.all()) if prompt.index >= 2 else ""}
+                    Problems: {list(Problem.objects.all()) if prompt.index >= 2 else ""}
+                    Solutions: {list(Solution.objects.all()) if prompt.index >= 3 else ""}
 
-                    {"Confirmed Problems/Status: " + prompt.data if prompt.index >= 3 else ""}
+                    Confirmed Problems/Status: { prompt.data if prompt.index >= 3 else ""}
                     
                     Conversation so far: {data.get("conversations", "")}
                     More information about the user: {data.get("outsourced", "")}
