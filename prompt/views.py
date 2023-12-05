@@ -70,17 +70,17 @@ class getPrompt(APIView):
         product = Product.objects.get(name=data.get("product_name"), company=company)
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
         prompt_data =  f"""
-                {prompt.text_data}-
-                    Tone of voice: {prompt.tone_of_voice.description}
+                        {prompt.text_data}-
+                        Tone of voice: {prompt.tone_of_voice.description}
 
-                    Problems: {list(Problem.objects.all()) if prompt.index >= 2 else ""}
-                    Solutions: {list(Solution.objects.all()) if prompt.index >= 3 else ""}
+                        Problems: {list(Problem.objects.all()) if prompt.index == 2 else ""}
+                        Solutions: {list(Solution.objects.all()) if prompt.index == 3 else ""}
 
-                    Confirmed Problems/Status: { prompt.data if prompt.index >= 3 else ""}
-                    
-                    Conversation so far: {data.get("conversations", "")}
-                    More information about the user: {data.get("outsourced", "")}
-        """
+                        Confirmed Problems: { prompt.data if prompt.index >= 3 else ""}
+                        
+                        Conversation so far: {data.get("conversations", "")}
+                        More information about the user: {data.get("outsourced", "")}
+                    """
         
         return Response({
             "prompt": prompt_data,
