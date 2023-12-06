@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 from kafka import KafkaProducer
 from collections import ChainMap
 from .constants import STYLISTS_WORDS
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 # from boostedchatScrapper.spiders.instagram import InstagramSpider
 # insta_spider = InstagramSpider()
 # insta_spider.get_followers('colorswithchemistry')
@@ -75,11 +75,11 @@ class InstagramSpider:
     
     def handle_outsourced(self,username):
         client = login_user(username='nyambanemartin', password='nyambane1996-')
-        instagram_accounts_ = self.connection.execute("SELECT id FROM instagram_account;")
-        instagram_names_ = self.connection.execute("SELECT igname FROM instagram_account;")
+        instagram_accounts_ = self.connection.execute(text("SELECT id FROM instagram_account;"))
+        instagram_names_ = self.connection.execute(text("SELECT igname FROM instagram_account;"))
         instagram_names = instagram_names_.fetchall()
         instagram_accounts = instagram_accounts_.fetchall()
-        for i, instagram_account in enumerate(instagram_accounts):
+        for i, instagram_account in enumerate(instagram_accounts_.fetchall()):
             print(f"{i}-> {instagram_account}")
             try:
                 try:
@@ -89,13 +89,13 @@ class InstagramSpider:
                     print(error)
                 # import pdb;pdb.set_trace()
                 json_string = json.dumps(user_info.dict(), default=bytes_encoder)
-                self.connection.execute(f"""
+                self.connection.execute(text(f"""
                     INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
                     VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
                     'instagram','{json_string.replace("'", "")}','{instagram_account[0]}'
                     )
 
-                """)
+                """))
             except Exception as error:
                 print(error)
    
@@ -116,7 +116,6 @@ class InstagramSpider:
 
             # # print(followers)
             # # TODO: save followers to database
-            # # import pdb;pdb.set_trace()
             for i,follower in enumerate(followers):
                 print(follower['username'])
 
@@ -125,19 +124,19 @@ class InstagramSpider:
 
                 # Check if igname already exists in the table
                 name = 'on_hold'
-                get_on_hold_status = self.connection.execute("SELECT id FROM instagram_statuscheck WHERE name = %s", (name,))
-                get_on_hold_status_id = get_on_hold_status.fetchone()
+                # get_on_hold_status = self.connection.execute(text(f"SELECT id FROM instagram_statuscheck WHERE name = %s", (name,)))
+                # get_on_hold_status_id = get_on_hold_status.fetchone()
 
-                check_instagram_accounts = self.connection.execute("SELECT id FROM instagram_account WHERE igname = %s", (igname,))
+                check_instagram_accounts = self.connection.execute(text(f"SELECT id FROM instagram_account WHERE igname = '{igname}'"))
                 existing_id = check_instagram_accounts.fetchone()
                 inserted_id = None
 
                 if existing_id:
-                    print(f"The igname '{igname}' already exists with ID {existing_id[0]}. Skipping insertion.")
+                    print(f"The igname '{igname}' already exists with ID {existing_id}. Skipping insertion.")
                 else:
                     # Perform the INSERT operation
                     try:
-                        insert_record_return_id = self.connection.execute(f"""
+                        insert_record_return_id = self.connection.execute(text(f"""
                             INSERT INTO instagram_account (
                                 deleted_at, id, created_at, updated_at, email, phone_number,
                                 profile_url, status_id, igname, full_name, assigned_to,
@@ -151,27 +150,32 @@ class InstagramSpider:
                             )
                             RETURNING id;
                             
-                        """) # implement algorithm for checking timecap
+                        """)) # implement algorithm for checking timecap
+                        self.connection.commit()
+                        print("--------------------INSERRTED----------------------")
                     except Exception as error:
                         print(error)
 
                     inserted_id = insert_record_return_id.fetchone()[0]
-                    print(f"Inserted new record with ID {inserted_id}.")
                     inserted_ids.append(inserted_id)
 
                 if inserted_id:
+                    print(f"Inserted new record with ID {inserted_id}.")
                     try:
-                        get_igname = self.connection.execute(f"""
+                        # insert_ = inserted_id.fetchone()[0]
+                        get_igname = self.connection.execute(text(f"""
                             select igname from instagram_account where id='{inserted_id}';
-                        """)
+                        """))
                         user_information = client.user_info_by_username(get_igname.fetchone()[0])
-                        self.connection.execute(f"""
+                        self.connection.execute(text(f"""
                             INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
                             VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
                             'instagram','{json.dumps(user_information.dict(), default=bytes_encoder)}','{inserted_id}'
                             )
 
-                        """)
+                        """))
+                        self.connection.commit()
+                        print("--------------------INSERRTED OUTSOURCED----------------------")
                     except Exception as error:
                         print(error)
 
@@ -196,10 +200,10 @@ class InstagramSpider:
 
                 # Check if igname already exists in the table
                 name = 'on_hold'
-                get_on_hold_status = self.connection.execute("SELECT id FROM instagram_statuscheck WHERE name = %s", (name,))
+                get_on_hold_status = self.connection.execute(text("SELECT id FROM instagram_statuscheck WHERE name = %s", (name,)))
                 get_on_hold_status_id = get_on_hold_status.fetchone()
 
-                check_instagram_accounts = self.connection.execute("SELECT id FROM instagram_account WHERE igname = %s", (igname,))
+                check_instagram_accounts = self.connection.execute(text("SELECT id FROM instagram_account WHERE igname = %s", (igname,)))
                 existing_id = check_instagram_accounts.fetchone()
                 inserted_id = None
 
@@ -208,7 +212,7 @@ class InstagramSpider:
                 else:
                     # Perform the INSERT operation
                     try:
-                        insert_record_return_id = self.connection.execute(f"""
+                        insert_record_return_id = self.connection.execute(text(f"""
                             INSERT INTO instagram_account (
                                 deleted_at, id, created_at, updated_at, email, phone_number,
                                 profile_url, status_id, igname, full_name, assigned_to,
@@ -222,7 +226,7 @@ class InstagramSpider:
                             )
                             RETURNING id;
                             
-                        """)
+                        """))
                     except Exception as error:
                         print(error)
 
@@ -232,13 +236,13 @@ class InstagramSpider:
 
                 if inserted_id:
                     try:
-                        self.connection.execute(f"""
+                        self.connection.execute(text(f"""
                             INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
                             VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
                             'instagram','{json.dumps(user_info.dict(), default=bytes_encoder)}','{inserted_id}'
                             )
 
-                        """)
+                        """))
                     except Exception as error:
                         print(error)
 
@@ -315,11 +319,18 @@ class InstagramSpider:
         client = login_user(username='nyambanemartin', password='nyambane1996-')
         outsourced_data_ = None
         if infinite:
-            outsourced_data_ = self.connection.execute(f"SELECT id, results, account_id FROM instagram_outsourced where account_id in {tuple(users)};")
+            # import pdb;pdb.set_trace()
+            outsourced_data_ = self.connection.execute(text(f"SELECT id, results, account_id FROM instagram_outsourced where account_id in {tuple(users)};"))
         else:
-            outsourced_data_ = self.connection.execute("SELECT id, results, account_id FROM instagram_outsourced where account_id in (select id from instagram_account where status_id is null);")
-        outsourced_dataset = outsourced_data_.fetchall()
-        ig_data_ = self.connection.execute("SELECT id, igname FROM instagram_account;")
+            outsourced_data_ = self.connection.execute(text("""
+                    SELECT id, results, account_id 
+                    FROM instagram_outsourced 
+                    where account_id in (select id from instagram_account where status_id is null);
+            """)
+            )
+        # import pdb;pdb.set_trace()
+        outsourced_dataset = True
+        ig_data_ = self.connection.execute(text("SELECT id, igname FROM instagram_account;"))
         ig_dataset = ig_data_.fetchall()
         
 
@@ -327,13 +338,13 @@ class InstagramSpider:
 
             try:
                 user_info = client.user_info_by_username(igname)
-                self.connection.execute(f"""
+                self.connection.execute(text(f"""
                     INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id,hour_to_be_executed)
                     VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
                     'instagram','{json.dumps(user_info.dict(), default=bytes_encoder)}','{inserted_id}','0'
                     )
 
-                """)
+                """))
                 print(f"inserted outsourced record for -------------{inserted_id}")
             except Exception as error:
                 print(error)
@@ -341,22 +352,23 @@ class InstagramSpider:
 
         def outsourcing_information(changing_indice=None):
             now = datetime.now(timezone.utc)
+            # hr = now.hour - 6
             hr = now.hour
             hour_idx = 1
             changing_idx = changing_indice
             end_prev_day = 20 - hr if hr < 20 else 12
             day_idx = 1 if hr < 20 else 2
-            for i, outsourced_data in enumerate(outsourced_dataset):
-                print(f"{i}->{outsourced_data['results']['username']}")
+            for i, outsourced_data in enumerate(outsourced_data_.fetchall()):
+                print(f"{i}->{outsourced_data[1]['username']}")
                 try:
-                    user_medias = client.user_medias(user_id=outsourced_data['results']['pk'],amount=2)
+                    user_medias = client.user_medias(user_id=outsourced_data[1]['pk'],amount=2)
                     days_check = self.get_dates_within_last_seven_days([media.taken_at for media in user_medias])
-                    popularity_check = self.get_popularity(outsourced_data['results'])
-                    keywords_chck = self.check_keywords(outsourced_data['results'])
+                    popularity_check = self.get_popularity(outsourced_data[1])
+                    keywords_chck = self.check_keywords(outsourced_data[1])
                     try:
-                        outsourced_data['results'].pop("is_posting_actively")
-                        outsourced_data['results'].pop("is_popular")
-                        outsourced_data['results'].pop("is_stylist")
+                        outsourced_data[1].pop("is_posting_actively")
+                        outsourced_data[1].pop("is_popular")
+                        outsourced_data[1].pop("is_stylist")
                     except Exception as error:
                         print(error)
 
@@ -364,17 +376,18 @@ class InstagramSpider:
                         "is_posting_actively": days_check,
                         "is_popular":popularity_check,
                         "is_stylist": keywords_chck,
-                        "book_button": outsourced_data['results'].pop("external_url")
+                        "book_button": outsourced_data[1].get("external_url")
                     }
-                    enriched_outsourced_data = {**checks, **outsourced_data['results']}
+                    enriched_outsourced_data = {**checks, **outsourced_data[1]}
                     
                     try:
                         json_string = json.dumps(enriched_outsourced_data, default=bytes_encoder)
-                        self.connection.execute(f"""
+                        self.connection.execute(text(f"""
                             UPDATE  instagram_outsourced SET results='{json_string.replace("'", "")}'
-                            WHERE instagram_outsourced.id='{outsourced_data['id']}';
-                        """)
-                        print(f"updated record-------------{outsourced_data['id']}")
+                            WHERE instagram_outsourced.id='{outsourced_data[0]}';
+                        """))
+                        self.connection.commit()
+                        print(f"updated record-------------{outsourced_data[0]}")
                     except Exception as error:
                         print(error)
 
@@ -383,9 +396,10 @@ class InstagramSpider:
                         is_private = enriched_outsourced_data.get('is_private', False)
                         is_popular = enriched_outsourced_data.get('is_popular', '')
                         if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO'):
-                            self.connection.execute(f"""
-                                    UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data['account_id']}';             
-                                    """)
+                            self.connection.execute(text(f"""
+                                    UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data[2]}';             
+                                    """))
+                            self.connection.commit()
                             empty_dict= {}
                             print(f"hour_indice==============>{hour_idx}")
                             print(f"changing_indice===============>{changing_idx}")
@@ -407,25 +421,26 @@ class InstagramSpider:
                             month_to_be_executed = time_to_be_executed.month
                             random_minute = random.randint(1,60)
 
-                            crontab_id = self.connection.execute(f"""
+                            crontab_id = self.connection.execute(text(f"""
                                 INSERT INTO django_celery_beat_crontabschedule (minute, hour, day_of_week , day_of_month, month_of_year, timezone ) 
                                 VALUES ({random_minute},{hour_to_be_executed},'*',{day_to_be_executed},'{month_to_be_executed}', 'UTC') RETURNING id;
-                            """)
+                            """))
                             hour_idx += 1
 
-                            
-                            self.connection.execute(f"""
+                            self.connection.execute(text(f"""
                                 INSERT INTO django_celery_beat_periodictask (
                                     name, task, interval_id, crontab_id, args, kwargs, queue, enabled, last_run_at, total_run_count,
                                     date_changed, description, one_off, headers
                                 )
                                 VALUES (
-                                    'SendFirstCompliment-{outsourced_data['results']['username']}',
+                                    'SendFirstCompliment-{outsourced_data[1]['username']}',
                                     'instagram.tasks.send_first_compliment',NULL,'{crontab_id.fetchone()[0]}',
-                                    '{json.dumps([[outsourced_data['results']['username']]])}', '{empty_dict}', NULL,
+                                    '{json.dumps([[outsourced_data[1]['username']]])}', '{empty_dict}', NULL,
                                     TRUE, NULL, 0, NOW(), 'Your task description', TRUE, '{empty_dict}'
                                 );
-                            """)
+                            """))
+                            self.connection.commit()
+                            print("=================Inserted cronjob===================")
                     except Exception as error:
                         print(error)
 
@@ -433,6 +448,7 @@ class InstagramSpider:
                     print(error)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            # import pdb;pdb.set_trace()
             if outsourced_dataset:
                 executor.submit(outsourcing_information, changing_index)
             else:
@@ -442,8 +458,8 @@ class InstagramSpider:
         
 
     def insert_data_with_enriched_outsourced_data(self):
-        get_earliest_date = self.connection.execute("SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule ORDER BY id ASC LIMIT 1;").fetchone()
-        get_latest_date = self.connection.execute("SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule ORDER BY id DESC LIMIT 1;").fetchone()
+        get_earliest_date = self.connection.execute(text("SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule ORDER BY id ASC LIMIT 1;")).fetchone()
+        get_latest_date = self.connection.execute(text("SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule ORDER BY id DESC LIMIT 1;")).fetchone()
         now = datetime.now(timezone.utc)
         latest_date = datetime(
                             now.year, 
@@ -462,17 +478,17 @@ class InstagramSpider:
         difference = latest_date - earliest_date
         changing_idx = int((difference.total_seconds() / 60) / 60)
         print(f"changing_indice===============>{changing_idx}")
-
         i = 0
         while True:
 
-            ig_data = self.connection.execute("SELECT id, igname FROM instagram_account WHERE qualified=TRUE ORDER BY RANDOM();")
+            ig_data = self.connection.execute(text("SELECT id, igname FROM instagram_account WHERE qualified=TRUE ORDER BY RANDOM();"))
             ig_dataset = ig_data.fetchall()
             print(f"Number_of_qualified_accounts-----------{len(ig_dataset)}")
+            # import pdb;pdb.set_trace()
             for j, user in enumerate(ig_dataset):
-                print(f"User-----{user['igname']}")
+                print(f"User-----{user[1]}")
                 try:
-                    new_users = self.get_ig_user_info(user['igname'])
+                    new_users = self.get_ig_user_info(user[1])
                     users = []
                     if new_users:
                         for _ in new_users:
