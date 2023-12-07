@@ -325,7 +325,7 @@ class InstagramSpider:
             outsourced_data_ = self.connection.execute(text("""
                     SELECT id, results, account_id 
                     FROM instagram_outsourced 
-                    where account_id in (select id from instagram_account where status_id is null);
+                    where account_id in (select id from instagram_account where status_id is null) ORDER BY RANDOM();
             """)
             )
         # import pdb;pdb.set_trace()
@@ -386,8 +386,8 @@ class InstagramSpider:
                             UPDATE  instagram_outsourced SET results='{json_string.replace("'", "")}'
                             WHERE instagram_outsourced.id='{outsourced_data[0]}';
                         """))
-                        self.connection.commit()
                         print(f"updated record-------------{outsourced_data[0]}")
+                        self.connection.commit()
                     except Exception as error:
                         print(error)
 
