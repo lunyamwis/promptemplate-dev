@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -54,29 +55,46 @@ class saveResponse(APIView):
         company = Company.objects.get(name=data.get("company_name"))
         product = Product.objects.get(name=data.get("product_name"), company=company)
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
-        prompt.data = data
+        prompt.data = data.get("confirmed_problems")
         prompt.save()
         
         return Response({
             "success":True,
         }, status=status.HTTP_200_OK)
 
+
 class getPrompt(APIView):
     
     def post(self, request):
-        # import pdb;pdb.set_trace()
         data = request.data
         company = Company.objects.get(name=data.get("company_name"))
         product = Product.objects.get(name=data.get("product_name"), company=company)
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
+        problems = []
+
+
+        for key in data.get("outsourced").keys():
+            if key in data.get("checklist"):
+                get_problems = Problem.objects.filter(
+                    product=product,
+                    **{"outsourced__{}__icontains".format(key): data.get("outsourced").get(key)}
+                )
+                if get_problems.exists():
+                    problems.append([problem.name for problem in get_problems])
+                all_problems = Problem.objects.all()
+                problems.append([problem.name for problem in all_problems if all(val == "any" for val in problem.outsourced.values())])
+
+
         prompt_data =  f"""
                         {prompt.text_data}-
                         Tone of voice: {prompt.tone_of_voice.description}
 
-                        Problems: {list(Problem.objects.all()) if prompt.index == 2 else ""}
-                        Solutions: {list(Solution.objects.all()) if prompt.index == 3 else ""}
+                        Problems: {problems if prompt.index == 2 else ""}
 
-                        Confirmed Problems: { prompt.data if prompt.index >= 3 else ""}
+                        Confirmed Problems: { prompt.data.get("confirmed_problems") if prompt.index >= 3 else ""}
+                        
+                        
+                        Solutions: {list(Solution.objects.filter(problem__name__in=prompt.data.get("confirmed_problems"))) if prompt.index == 3 else ""}
                         
                         Conversation so far: {data.get("conversations", "")}
                         More information about the user: {data.get("outsourced", "") if prompt.index == 1 else ""}

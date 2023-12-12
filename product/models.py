@@ -55,6 +55,7 @@ class Problem(BaseModel):
                                       null=True, blank=True)
     gsheet_range = models.TextField()
     gsheet_formula = models.TextField()
+    outsourced = models.JSONField(default=dict)
 
     def __str__(self) -> str:
         return self.name
