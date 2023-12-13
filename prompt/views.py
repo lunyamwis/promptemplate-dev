@@ -52,7 +52,7 @@ def delete(request, prompt_id):
 class saveResponse(APIView):
     
     def post(self, request):
-        data = json.loads(request.data)
+        data = request.data
         company = Company.objects.get(name=data.get("company_name"))
         product = Product.objects.get(name=data.get("product_name"), company=company)
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")) + 1, product=product).last()
