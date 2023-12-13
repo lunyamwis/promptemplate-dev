@@ -55,7 +55,7 @@ class saveResponse(APIView):
         data = request.data
         company = Company.objects.get(name=data.get("company_name"))
         product = Product.objects.get(name=data.get("product_name"), company=company)
-        prompt = Prompt.objects.filter(index=int(data.get("prompt_index") + 1), product=product).last()
+        prompt = Prompt.objects.filter(index=int(data.get("prompt_index")) + 1, product=product).last()
         prompt.data = data
         prompt.save()
         
