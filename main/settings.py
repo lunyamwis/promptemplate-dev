@@ -29,7 +29,6 @@ ALLOWED_HOSTS = [
     "promptemplate.boostedchat.com",
     "ce2d-105-161-11-162.ngrok-free.app",
     "ed48-196-105-37-1.ngrok-free.app",
-    "903bc2d2bce3:8000"
 ]
 CSRF_TRUSTED_ORIGINS = [
     "https://api.boostedchat.com",
