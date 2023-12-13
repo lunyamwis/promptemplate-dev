@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render
 from django.db.models import Q
 from rest_framework import status
@@ -71,13 +72,14 @@ class getPrompt(APIView):
         product = Product.objects.get(name=data.get("product_name"), company=company)
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
         problems = []
+        outsourced_data = json.loads(data.get("outsourced"))
 
 
-        for key in data.get("outsourced").keys():
+        for key in outsourced_data.keys():
             if key in data.get("checklist"):
                 get_problems = Problem.objects.filter(
                     product=product,
-                    **{"outsourced__{}__icontains".format(key): data.get("outsourced").get(key)}
+                    **{"outsourced__{}__icontains".format(key): outsourced_data.get(key)}
                 )
                 if get_problems.exists():
                     problems.append([problem.name for problem in get_problems])
