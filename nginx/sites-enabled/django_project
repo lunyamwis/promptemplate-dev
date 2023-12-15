@@ -6,7 +6,7 @@ server {
         allow all;
     }
 
-    location /static/ {
+    location /usr/src/static {
         root /usr/src/static;
     }
     
