@@ -7,7 +7,7 @@ server {
     }
 
     location /static {
-        root /usr/src/static;
+        alias /www/static;
     }
     
 
