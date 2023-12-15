@@ -15,7 +15,7 @@ CSRF_COOKIE_SECURE = False  # Set to True if using HTTPS
 CSRF_COOKIE_HTTPONLY = True
 
 
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = [
     # "*",
     "34.138.81.48",
