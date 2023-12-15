@@ -17,6 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 
+
+admin.site.site_header = "Scripting Microservice Management"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('prompt.urls')),

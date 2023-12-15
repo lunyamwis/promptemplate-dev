@@ -13,7 +13,6 @@ SECRET_KEY = 'django-insecure-jcfkm1q@7_i1)eq@2&emyb)ixr2do3ozt^ab!o^w-dbgq)ognj
 # SECURITY WARNING: don't run with debug turned on in production!
 CSRF_COOKIE_SECURE = True
 
-CSRF_COOKIE_AGE = 31449600
 
 DEBUG = True
 ALLOWED_HOSTS = [
@@ -41,8 +40,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Application definition
-
-CSRF_COOKIE_DOMAIN = "http://promptemplate.boostedchat.com"
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -66,8 +63,8 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
