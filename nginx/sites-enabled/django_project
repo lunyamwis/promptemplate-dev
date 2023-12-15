@@ -7,8 +7,9 @@ server {
     }
 
     location /static/ {
-        alias /static;
+        alias /staticfiles/;
     }
+    
 
     location / {
         proxy_pass http://web:8000;
