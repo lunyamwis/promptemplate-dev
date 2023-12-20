@@ -6,6 +6,12 @@ from helpers.db.connection import connect_to_external_database
 from helpers.gsheet.utils import execute_gsheet_formula
 # Create your models here.
 
+class Role(BaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+
+    def __str__(self) -> str:
+        return self.name
 
 class ToneOfVoice(BaseModel):
     name = models.CharField(max_length=255)
@@ -20,6 +26,8 @@ class Prompt(BaseModel):
     data = models.JSONField(default=dict)
     text_data = models.TextField(default='')
     tone_of_voice = models.ForeignKey(ToneOfVoice,on_delete=models.CASCADE, 
+                                      null=True, blank=True)
+    role = models.ForeignKey(Role,on_delete=models.CASCADE, 
                                       null=True, blank=True)
     product = models.ForeignKey(Product,on_delete=models.CASCADE, 
                                       null=True, blank=True)
