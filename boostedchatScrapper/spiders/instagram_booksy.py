@@ -35,7 +35,7 @@ def bytes_encoder(o):
 
 class InstagramSpider:
     name = 'instagram'
-    db_url = "postgresql+psycopg2://postgres:boostedchatdb@localhost:5432/elthuk"
+    db_url = "postgresql+psycopg2://postgres:boostedchatdb@localhost:5432/booksyus"
     engine = create_engine(db_url)
     connection = engine.connect()
 
@@ -269,6 +269,28 @@ class InstagramSpider:
         return urlparse(url_info.external_url).netloc
     
 
+    def find_largest_count(self, data, count_type='like'):
+        """
+        Find the largest like count or like count from the given dataset.
+
+        Parameters:
+        - data: List of dictionaries containing 'like_count' and 'like_count' keys.
+        - count_type: Specify 'like' or 'like' to determine which count to find.
+
+        Returns:
+        - The largest count value.
+        """
+        if count_type not in ('comment', 'like'):
+            raise ValueError("Invalid count_type. Use 'comment' or 'like'.")
+
+        # Get the key based on count_type
+        count_key = f"{count_type}_count"
+
+        # Find the largest count using a lambda function
+        entry_with_largest_count = max(data, key=lambda x: x[count_key])
+
+        return entry_with_largest_count
+
     def get_dates_within_last_seven_days(self, date_list):
         today = datetime.now(timezone.utc)
         seven_days_ago = today - timedelta(days=7)
@@ -325,7 +347,7 @@ class InstagramSpider:
             outsourced_data_ = self.connection.execute(text("""
                     SELECT id, results, account_id 
                     FROM instagram_outsourced 
-                    where account_id in (select id from instagram_account where status_id is null) ORDER BY RANDOM();
+                    where account_id in (select id from instagram_account where status_id is null);
             """)
             )
         # import pdb;pdb.set_trace()
@@ -352,8 +374,8 @@ class InstagramSpider:
 
         def outsourcing_information(changing_indice=None):
             now = datetime.now(timezone.utc)
-            # hr = now.hour - 6
-            hr = now.hour
+            hr = now.hour - 6
+            # hr = now.hour
             hour_idx = 1
             changing_idx = changing_indice
             end_prev_day = 20 - hr if hr < 20 else 12
@@ -371,12 +393,25 @@ class InstagramSpider:
                         outsourced_data[1].pop("is_stylist")
                     except Exception as error:
                         print(error)
+                    
+                    media_components = []
+                    for media in user_medias:
+                        media_component = {
+                            "id" : media.id,
+                            "pk" : media.pk,
+                            "comment_count" : media.comment_count,
+                            "like_count" : media.like_count
+                        }
+                        media_components.append(media_component)
+                    
+                    media_id = self.find_largest_count(media_components, 'like')['id']
 
                     checks =  {
                         "is_posting_actively": days_check,
                         "is_popular":popularity_check,
                         "is_stylist": keywords_chck,
-                        "book_button": outsourced_data[1].get("external_url")
+                        "book_button": outsourced_data[1].get("external_url"),
+                        "media_id": media_id
                     }
                     enriched_outsourced_data = {**checks, **outsourced_data[1]}
                     
