@@ -3,7 +3,7 @@
 # source /root/.local/share/virtualenvs/brooks-insurance-*/bin/activate
 
 echo "<<<<<<<< Collect Staticfiles>>>>>>>>>"
-# python3 manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 
 
 sleep 5

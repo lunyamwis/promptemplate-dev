@@ -1,10 +1,13 @@
+import json
 from django.shortcuts import render
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import render, redirect, get_object_or_404
 from product.models import Product, Company
-from .models import Prompt, Problem, Solution
+from .factory import PromptFactory
+from .models import Prompt, Role
 from itertools import chain
 from .forms import PromptForm
 
@@ -53,7 +56,7 @@ class saveResponse(APIView):
         data = request.data
         company = Company.objects.get(name=data.get("company_name"))
         product = Product.objects.get(name=data.get("product_name"), company=company)
-        prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
+        prompt = Prompt.objects.filter(index=int(data.get("prompt_index")) + 1, product=product).last()
         prompt.data = data
         prompt.save()
         
@@ -61,22 +64,35 @@ class saveResponse(APIView):
             "success":True,
         }, status=status.HTTP_200_OK)
 
+
 class getPrompt(APIView):
     
     def post(self, request):
-        # import pdb;pdb.set_trace()
         data = request.data
         company = Company.objects.get(name=data.get("company_name"))
         product = Product.objects.get(name=data.get("product_name"), company=company)
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
+        outsourced_data = json.loads(data.get("outsourced"))
+        prompt_info = PromptFactory(
+            salesrep = data.get("salesrep","mike"),
+            outsourced_data=outsourced_data,
+            product = product,
+            prompt = prompt
+        )
+
+
         prompt_data =  f"""
                         {prompt.text_data}-
+                        Role: {get_object_or_404(Role, name=data.get("salesrep","mike")).name} -
+                        {get_object_or_404(Role, name=data.get("salesrep","mike")).description}
                         Tone of voice: {prompt.tone_of_voice.description}
 
-                        Problems: {list(Problem.objects.all()) if prompt.index == 2 else ""}
-                        Solutions: {list(Solution.objects.all()) if prompt.index == 3 else ""}
+                        Problems: {prompt_info.get_problems(data) if prompt.index == 2 else ""}
 
-                        Confirmed Problems: { prompt.data if prompt.index >= 3 else ""}
+                        Confirmed Problems: { prompt.data.get("confirmed_problems") if prompt.index >= 3 else ""}
+                        
+                        
+                        Solutions: {prompt_info.get_solutions() if prompt.index == 3 else ""}
                         
                         Conversation so far: {data.get("conversations", "")}
                         More information about the user: {data.get("outsourced", "") if prompt.index == 1 else ""}

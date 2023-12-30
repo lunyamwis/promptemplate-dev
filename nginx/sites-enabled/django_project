@@ -6,9 +6,10 @@ server {
         allow all;
     }
 
-    location /static/ {
-        alias /static;
+    location /static {
+        alias /www/static;
     }
+    
 
     location / {
         proxy_pass http://web:8000;

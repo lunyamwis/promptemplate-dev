@@ -11,11 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-jcfkm1q@7_i1)eq@2&emyb)ixr2do3ozt^ab!o^w-dbgq)ognj'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = False  # Set to True if using HTTPS
+CSRF_COOKIE_HTTPONLY = True
 
-CSRF_COOKIE_AGE = 31449600
 
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = [
     # "*",
     "34.138.81.48",
@@ -32,6 +32,7 @@ ALLOWED_HOSTS = [
     "ce2d-105-161-11-162.ngrok-free.app",
     "ed48-196-105-37-1.ngrok-free.app"
     "prompt",
+    "ed48-196-105-37-1.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -47,8 +48,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Application definition
-
-CSRF_COOKIE_DOMAIN = "http://promptemplate.boostedchat.com"
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -72,8 +71,8 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -145,6 +144,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = '/usr/src/app/static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
