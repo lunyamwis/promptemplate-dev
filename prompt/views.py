@@ -74,7 +74,7 @@ class getPrompt(APIView):
         prompt = Prompt.objects.filter(index=int(data.get("prompt_index")), product=product).last()
         outsourced_data = json.loads(data.get("outsourced"))
         prompt_info = PromptFactory(
-            salesrep = data.get("salesrep","mike"),
+            salesrep = data.get("salesrep","mike_bsky"),
             outsourced_data=outsourced_data,
             product = product,
             prompt = prompt
