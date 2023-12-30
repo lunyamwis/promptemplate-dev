@@ -83,8 +83,8 @@ class getPrompt(APIView):
 
         prompt_data =  f"""
                         {prompt.text_data}-
-                        Role: {get_object_or_404(Role, name=data.get("salesrep","mike")).name} -
-                        {get_object_or_404(Role, name=data.get("salesrep","mike")).description}
+                        Role: {get_object_or_404(Role, name=data.get("salesrep","mike_bsky")).name} -
+                        {get_object_or_404(Role, name=data.get("salesrep","mike_bsky")).description}
                         Tone of voice: {prompt.tone_of_voice.description}
 
                         Problems: {prompt_info.get_problems(data) if prompt.index == 2 else ""}
