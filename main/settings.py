@@ -21,15 +21,19 @@ ALLOWED_HOSTS = [
     "34.138.81.48",
     "34.74.147.25",
     "api.boostedchat.com",
+    "elth.uk.boostedchat.com",
     "127.0.0.1",
     "a69c-105-60-202-188.ngrok-free.app",
     "3e6a-62-8-92-218.ngrok-free.app",
     "3e6a-62-8-92-218.ngrok-fr",
     "api.booksy.us.boostedchat.com",
     "promptemplate.boostedchat.com",
+    "promptemplate.booksy.boostedchat.com",
     "ce2d-105-161-11-162.ngrok-free.app",
     "ed48-196-105-37-1.ngrok-free.app"
+    "prompt",
 ]
+
 CSRF_TRUSTED_ORIGINS = [
     "https://api.boostedchat.com",
     "https://api.booksy.us.boostedchat.com",
@@ -37,7 +41,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://3e6a-62-8-92-218.ngrok-free.app",
     "https://3e6a-62-8-92-218.ngrok-fr",
     "https://ce2d-105-161-11-162.ngrok-free.app",
-    "http://promptemplate.boostedchat.com"
+    "http://promptemplate.boostedchat.com",
+    "http://promptemplate.booksy.boostedchat.com",
+    "https://promptemplate.booksy.boostedchat.com",
 ]
 
 # Application definition
