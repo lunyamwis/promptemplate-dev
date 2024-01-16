@@ -167,3 +167,4 @@ report.html
 .env
 
 boostedchatScrapper/*.json
+*.csv

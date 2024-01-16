@@ -5,3 +5,6 @@ instagrapi
 Pillow
 kafka-python3
 kafka-python
+pandas
+django
+djangorestframework

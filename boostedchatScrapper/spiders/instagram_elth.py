@@ -461,7 +461,6 @@ class InstagramSpider:
         difference = latest_date - earliest_date
         changing_idx = int((difference.total_seconds() / 60) / 60)
         print(f"changing_indice===============>{changing_idx}")
-
         i = 0
         while True:
 
