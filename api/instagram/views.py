@@ -10,6 +10,7 @@ class InstagramScrapper(APIView):
         accounts = request.data.get("accounts",[])
         inst = InstagramSpider()
         for account in accounts:
+            print(account)
             try:
                 users = inst.get_ig_user_info(account)
                 try:

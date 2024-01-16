@@ -37,7 +37,7 @@ def bytes_encoder(o):
 
 class InstagramSpider:
     name = 'instagram'
-    db_url = "postgresql://postgres:boostedchat@34.74.147.250:5432/booksyus"
+    db_url = "postgresql://postgres:boostedchat@35.231.123.253:5432/booksyus"
     engine = create_engine(db_url)
     connection = engine.connect()
 
@@ -195,7 +195,7 @@ class InstagramSpider:
                     # Rollback the transaction to keep the database in a consistent state
                     self.connection.rollback()
             return inserted_ids
-            
+
         def process_followers_dry(cursor,username):
             rounds = 0
             while True:
