@@ -37,7 +37,7 @@ def bytes_encoder(o):
 
 class InstagramSpider:
     name = 'instagram'
-    db_url = "postgresql+psycopg2://postgres:boostedchatdb@localhost:5432/booksyus"
+    db_url = "postgresql://postgres:boostedchat@34.74.147.250:5432/booksyus"
     engine = create_engine(db_url)
     connection = engine.connect()
 
@@ -195,6 +195,21 @@ class InstagramSpider:
                     # Rollback the transaction to keep the database in a consistent state
                     self.connection.rollback()
             return inserted_ids
+            
+        def process_followers_dry(cursor,username):
+            rounds = 0
+            while True:
+                followers, cursor = client.user_followers_gql_chunk(client.user_id_from_username(username), max_amount=100,end_cursor=cursor)
+                print(len(followers))
+                data = []
+                count = 0
+                for follower in followers:
+                    data.append(client.user_info_by_username(follower.username).dict())
+                    print(f"{count+1}==================>{follower.username}")
+                df = pd.DataFrame(data)
+                df.to_csv('full_output.csv', mode='a', header=None, index=False)
+                print(f"{rounds+1}==================>{len(data)}")
+
 
         def process_followers(offset):
             # Loop to retrieve followers in batches
@@ -263,7 +278,7 @@ class InstagramSpider:
 
                     
                     
-                
+            
         # Use ThreadPoolExecutor for parallel processing
         offsets = range(0, 1, 1)
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
@@ -389,11 +404,11 @@ class InstagramSpider:
         
             
 
-        def outsourcing_information(changing_indice=None, accounts=48):
-            now = datetime.now(timezone.utc)
+        def outsourcing_information(changing_indice=None, accounts=24):
+            now = datetime.now(timezone.utc) + timedelta(hours=49)
             hr = now.hour - 6
             # hr = now.hour
-            hour_idx = 12/accounts
+            hour_idx = None
             changing_idx = changing_indice
             end_prev_day = 20 - hr if hr < 20 else 12
             day_idx = 1 if hr < 20 else 2
@@ -401,9 +416,11 @@ class InstagramSpider:
             try:
                 salesreps = self.connection.execute(text(
                     """
-                    SELECT id FROM sales_rep_salesrep;
+                    SELECT id FROM sales_rep_salesrep WHERE available=True;
                     """
                 )).fetchall()
+                hour_idx = 12/(len(salesreps)*accounts)
+                print(f"no_salesreps=================={len(salesreps)}")
             except Exception as error:
                 print(error)
             for i, outsourced_data in enumerate(outsourced_data_.fetchall()):
@@ -463,11 +480,11 @@ class InstagramSpider:
                         is_stylist = enriched_outsourced_data.get('is_stylist', False)
                         is_private = enriched_outsourced_data.get('is_private', False)
                         is_popular = enriched_outsourced_data.get('is_popular', '')
-                        if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO'):
-                            
-                            self.connection.execute(text(f"""
-                                    UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data[2]}';             
-                                    """))
+                        # if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO'):
+                        if True:
+                            # self.connection.execute(text(f"""
+                            #         UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data[2]}';             
+                            #         """))
                             # perform round robin task here below
                             salesrep = salesreps[i % len(salesreps)]
                             salesrep_id = salesrep[0]
@@ -499,13 +516,13 @@ class InstagramSpider:
                             hour_to_be_executed = time_to_be_executed.hour
                             day_to_be_executed = time_to_be_executed.day
                             month_to_be_executed = time_to_be_executed.month
-                            random_minute = random.randint(1,60)
+                            random_minute = time_to_be_executed.minute
 
                             crontab_id = self.connection.execute(text(f"""
                                 INSERT INTO django_celery_beat_crontabschedule (minute, hour, day_of_week , day_of_month, month_of_year, timezone ) 
                                 VALUES ({random_minute},{hour_to_be_executed},'*',{day_to_be_executed},'{month_to_be_executed}', 'UTC') RETURNING id;
                             """))
-                            hour_idx += 12/accounts
+                            hour_idx += 12/(len(salesreps)*accounts)
 
                             self.connection.execute(text(f"""
                                 INSERT INTO django_celery_beat_periodictask (
