@@ -480,11 +480,11 @@ class InstagramSpider:
                         is_stylist = enriched_outsourced_data.get('is_stylist', False)
                         is_private = enriched_outsourced_data.get('is_private', False)
                         is_popular = enriched_outsourced_data.get('is_popular', '')
-                        # if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO'):
-                        if True:
-                            # self.connection.execute(text(f"""
-                            #         UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data[2]}';             
-                            #         """))
+                        if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO'):
+                        # if True:
+                            self.connection.execute(text(f"""
+                                    UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data[2]}';             
+                                    """))
                             # perform round robin task here below
                             salesrep = salesreps[i % len(salesreps)]
                             salesrep_id = salesrep[0]
