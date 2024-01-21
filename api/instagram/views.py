@@ -12,15 +12,15 @@ class InstagramScrapper(APIView):
         inst = InstagramSpider()
         # inst.insert_data_with_enriched_outsourced_data(accounts,followers)
         inst.enrich_outsourced_data()
-        # for account in accounts:
-        #     print(account.lower())
-        #     try:
-        #         users = inst.get_ig_user_info(account.lower(),followers)
-        #         try:
-        #             inst.enrich_outsourced_data(tuple(users[0]),infinite= True)
-        #         except Exception as error:
-        #             print(error)
-        #     except Exception as error:
-        #         print(error)
+        for account in accounts:
+            print(account.lower())
+            try:
+                users = inst.get_ig_user_info(account.lower(),followers)
+                try:
+                    inst.enrich_outsourced_data(tuple(users[0]),infinite= True)
+                except Exception as error:
+                    print(error)
+            except Exception as error:
+                print(error)
 
         return Response({"success":True},status=status.HTTP_200_OK)

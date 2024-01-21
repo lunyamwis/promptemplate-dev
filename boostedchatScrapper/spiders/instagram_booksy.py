@@ -217,7 +217,7 @@ class InstagramSpider:
             # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
             # followers = client.user_followers(user_id=user_id,amount=batch_size)
             inserted_ids = []
-            followers = client.user_followers(user_id=user_id,amount=10)
+            followers = client.user_followers(user_id=user_id)
 
 
             # # print(followers)
@@ -387,7 +387,7 @@ class InstagramSpider:
             if i in str(outsourced_data['biography']).lower():
                 keyword_count.append(True)
         
-        return len(keyword_count) > 2
+        return len(keyword_count) > 0
         
 
     def enrich_outsourced_data(self, users=None, infinite=False, changing_index=None):
@@ -400,7 +400,7 @@ class InstagramSpider:
             outsourced_data_ = self.connection.execute(text("""
                     SELECT id, results, account_id 
                     FROM instagram_outsourced 
-                    where account_id in (select id from instagram_account where status_id is null);
+                    where account_id in (select id from instagram_account where status_id is null ORDER BY RANDOM());
             """)
             )
         # import pdb;pdb.set_trace()

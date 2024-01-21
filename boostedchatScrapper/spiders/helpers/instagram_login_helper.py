@@ -69,7 +69,7 @@ def login_user(username=os.getenv("IG_USERNAME"), password=os.getenv("IG_PASSWOR
 
     cl = Client()
     cl.set_proxy(
-        f"https://{os.getenv('PROXY_USERNAME')};country=KE;city=Nairobi:{os.getenv('PROXY_PASSWORD')}@premium.residential.proxyrack.net:10000"
+        f"https://lunyamwi;country=KE;city=Nairobi:8213ae-6228c7-550488-c480ad-0f7eb4@premium.residential.proxyrack.net:10000"
     )
     cl.challenge_code_handler = challenge_code_handler(username, 1)
     cl.delay_range = [1, 3]
