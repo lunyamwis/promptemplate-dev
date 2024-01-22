@@ -151,13 +151,14 @@ class InstagramSpider:
                                 INSERT INTO instagram_account (
                                     deleted_at, id, created_at, updated_at, email, phone_number,
                                     profile_url, status_id, igname, full_name, assigned_to,
-                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index
+                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index,
+                                    linked_to
                                 )
                                 VALUES (
                                     DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
                                     '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
                                     DEFAULT, '{igname}', '{follower['full_name'].replace("'","")}', 'Robot',
-                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1
+                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1,'{user_info.username}'
                                 )
                                 RETURNING id;
                                 
@@ -375,19 +376,19 @@ class InstagramSpider:
         
 
     def check_keywords(self,outsourced_data):
-        keyword_count = []
+        keywords = []
         for i in STYLISTS_WORDS:
             if i in str(outsourced_data['full_name']).lower():
-                keyword_count.append(True)
-            
+               
+                keywords.append(i)
             
             if i in str(outsourced_data['category']).lower():
-                keyword_count.append(True)
+                keywords.append(i)
             
             if i in str(outsourced_data['biography']).lower():
-                keyword_count.append(True)
+                keywords.append(i)
         
-        return len(keyword_count) > 0
+        return len(keywords) > 2
         
 
     def enrich_outsourced_data(self, users=None, infinite=False, changing_index=None):
@@ -429,7 +430,7 @@ class InstagramSpider:
 
         def outsourcing_information(changing_indice=None, accounts=24):
             try:
-                now = datetime.now(timezone.utc) + timedelta(days=1)
+                now = datetime.now(timezone.utc)
                 hr = now.hour - 6
                 # hr = now.hour
                 hour_idx = None
@@ -458,6 +459,7 @@ class InstagramSpider:
                             outsourced_data[1].pop("is_posting_actively")
                             outsourced_data[1].pop("is_popular")
                             outsourced_data[1].pop("is_stylist")
+                            outsourced_data[1].pop("qualified_keywords")
                         except Exception as error:
                             print(error)
                         
@@ -484,7 +486,8 @@ class InstagramSpider:
                             "is_popular":popularity_check,
                             "is_stylist": keywords_chck,
                             "book_button": has_book_button,
-                            "media_id": media_id
+                            "media_id": media_id,
+                            "qualified_keywords":keywords_chck
                         }
                         enriched_outsourced_data = {**checks, **outsourced_data[1]}
                         
