@@ -59,3 +59,7 @@ STYLISTS_WORDS = [
 'dandruff',
 'scalp problems',
 ]
+
+STYLISTS_NEGATIVE_WORDS=[
+    "booksy", "Supplier", "Supply", "supplies", "manufacturer", "wholesaler", "shipping", "dentist ", "Massage Therapist", "Therapist", "onlyfans" 
+]
