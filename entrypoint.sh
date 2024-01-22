@@ -23,7 +23,7 @@ echo "<<<<<<<<<<<<<<<<<<<< START Celery >>>>>>>>>>>>>>>>>>>>>>>>"
 celery -A api worker --loglevel=info &
 
 # # start celery beat
-celery -A api beat --loglevel=info &
+# celery -A api beat --loglevel=info &
 
 sleep 5
 echo "<<<<<<<<<<<<<<<<<<<< START API >>>>>>>>>>>>>>>>>>>>>>>>"
