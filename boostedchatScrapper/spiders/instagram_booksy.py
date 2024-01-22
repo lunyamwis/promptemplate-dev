@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 from kafka import KafkaProducer
 from collections import ChainMap
-from .constants import STYLISTS_WORDS
+from .constants import STYLISTS_WORDS,STYLISTS_NEGATIVE_WORDS
 from sqlalchemy import create_engine, text
 # from boostedchatScrapper.spiders.instagram import InstagramSpider
 # insta_spider = InstagramSpider()
@@ -151,13 +151,14 @@ class InstagramSpider:
                                 INSERT INTO instagram_account (
                                     deleted_at, id, created_at, updated_at, email, phone_number,
                                     profile_url, status_id, igname, full_name, assigned_to,
-                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index
+                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index,
+                                    linked_to
                                 )
                                 VALUES (
                                     DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
                                     '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
                                     DEFAULT, '{igname}', '{follower['full_name'].replace("'","")}', 'Robot',
-                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1
+                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1,'{user_info.username}'
                                 )
                                 RETURNING id;
                                 
@@ -375,19 +376,37 @@ class InstagramSpider:
         
 
     def check_keywords(self,outsourced_data):
-        keyword_count = []
+        keywords = []
         for i in STYLISTS_WORDS:
             if i in str(outsourced_data['full_name']).lower():
-                keyword_count.append(True)
-            
+               
+                keywords.append(i)
             
             if i in str(outsourced_data['category']).lower():
-                keyword_count.append(True)
+                keywords.append(i)
             
             if i in str(outsourced_data['biography']).lower():
-                keyword_count.append(True)
+                keywords.append(i)
         
-        return len(keyword_count) > 0
+        return keywords
+
+    def check_negative_keywords(self,outsourced_data):
+        keywords = []
+        for i in STYLISTS_NEGATIVE_WORDS:
+            if i in str(outsourced_data['external_url']).lower():
+                keywords.append(i)
+
+            if i in str(outsourced_data['full_name']).lower():
+               
+                keywords.append(i)
+            
+            if i in str(outsourced_data['category']).lower():
+                keywords.append(i)
+            
+            if i in str(outsourced_data['biography']).lower():
+                keywords.append(i)
+        
+        return keywords
         
 
     def enrich_outsourced_data(self, users=None, infinite=False, changing_index=None):
@@ -429,7 +448,7 @@ class InstagramSpider:
 
         def outsourcing_information(changing_indice=None, accounts=24):
             try:
-                now = datetime.now(timezone.utc) + timedelta(days=1)
+                now = datetime.now(timezone.utc)
                 hr = now.hour - 6
                 # hr = now.hour
                 hour_idx = None
@@ -453,11 +472,13 @@ class InstagramSpider:
                         user_medias = client.user_medias(user_id=outsourced_data[1]['pk'],amount=2)
                         days_check = self.get_dates_within_last_seven_days([media.taken_at for media in user_medias])
                         popularity_check = self.get_popularity(outsourced_data[1])
-                        keywords_chck = self.check_keywords(outsourced_data[1])
+                        keywords_chck = self.check_keywords(outsourced_data[1]) 
+                        keywords_negative_chck = self.check_negative_keywords(outsourced_data[1])
                         try:
                             outsourced_data[1].pop("is_posting_actively")
                             outsourced_data[1].pop("is_popular")
                             outsourced_data[1].pop("is_stylist")
+                            outsourced_data[1].pop("qualified_keywords")
                         except Exception as error:
                             print(error)
                         
@@ -482,9 +503,11 @@ class InstagramSpider:
                         checks =  {
                             "is_posting_actively": days_check,
                             "is_popular":popularity_check,
-                            "is_stylist": keywords_chck,
+                            "is_stylist": True if len(keywords_chck) > 2 else False,
                             "book_button": has_book_button,
-                            "media_id": media_id
+                            "media_id": media_id,
+                            "qualified_keywords":keywords_chck if keywords_chck else "",
+                            "disqualified_keywords": keywords_negative_chck if keywords_negative_chck else ""
                         }
                         enriched_outsourced_data = {**checks, **outsourced_data[1]}
                         
@@ -504,7 +527,7 @@ class InstagramSpider:
                             is_stylist = enriched_outsourced_data.get('is_stylist', False)
                             is_private = enriched_outsourced_data.get('is_private', False)
                             is_popular = enriched_outsourced_data.get('is_popular', '')
-                            if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO') and "booksy" not in ext_url.lower():
+                            if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO') and len(keywords_negative_chck) == 0:
                             # if True:
                                 self.connection.execute(text(f"""
                                         UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data[2]}';             
