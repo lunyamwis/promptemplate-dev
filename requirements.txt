@@ -8,5 +8,6 @@ kafka-python
 pandas
 django
 djangorestframework
+django-celery-beat
 celery
 redis

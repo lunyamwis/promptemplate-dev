@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-utr163745j!iq*)7h-+g6_!y+z$mkmcx3x2ouv$gq$8-42)yn+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["34.28.104.255","127.0.0.1"]
+ALLOWED_HOSTS = ["34.28.104.255","127.0.0.1","0.0.0.0"]
 CSRF_TRUSTED_ORIGINS = ["http://34.28.104.255"]
 
 # Application definition
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api.instagram',
     'rest_framework',
+    'django_celery_beat'
 ]
 
 MIDDLEWARE = [
