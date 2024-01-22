@@ -20,10 +20,10 @@ echo " "
 echo "<<<<<<<<<<<<<<<<<<<< START Celery >>>>>>>>>>>>>>>>>>>>>>>>"
 
 # # start Celery worker
-celery -A setup worker --loglevel=info &
+celery -A api worker --loglevel=info &
 
 # # start celery beat
-celery -A setup beat --loglevel=info &
+celery -A api beat --loglevel=info &
 
 sleep 5
 echo "<<<<<<<<<<<<<<<<<<<< START API >>>>>>>>>>>>>>>>>>>>>>>>"
