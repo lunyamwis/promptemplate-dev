@@ -217,7 +217,7 @@ class InstagramSpider:
             # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
             # followers = client.user_followers(user_id=user_id,amount=batch_size)
             inserted_ids = []
-            followers = client.user_followers(user_id=user_id)
+            followers = client.user_followers(user_id=user_id, amount=1000)
 
 
             # # print(followers)
