@@ -1,4 +1,5 @@
 from celery import shared_task
+import pandas as pd
 from boostedchatScrapper.spiders.instagram_booksy import InstagramSpider
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 
