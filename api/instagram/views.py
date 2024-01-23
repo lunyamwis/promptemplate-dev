@@ -18,6 +18,6 @@ class InstagramScrapper(APIView):
 class InstagramMoxieCsv(APIView):
     def post(self, request):
         client = login_user(username='darwinokuku',password='DarwinOkuku1*')
-        followers, cursor = client.user_followers_gql_chunk(client.user_id_from_username(request.data.get('username')), max_amount=100,end_cursor=cursor)
+        _, cursor = client.user_followers_gql_chunk(client.user_id_from_username(request.data.get('username')), max_amount=100)
         process_followers_dry.delay(client,cursor,request.data.get('username'))
         return Response({"success":True},status=status.HTTP_200_OK)
