@@ -197,20 +197,7 @@ class InstagramSpider:
                     self.connection.rollback()
             return inserted_ids
 
-        def process_followers_dry(cursor,username):
-            rounds = 0
-            while True:
-                followers, cursor = client.user_followers_gql_chunk(client.user_id_from_username(username), max_amount=100,end_cursor=cursor)
-                print(len(followers))
-                data = []
-                count = 0
-                for follower in followers:
-                    data.append(client.user_info_by_username(follower.username).dict())
-                    print(f"{count+1}==================>{follower.username}")
-                df = pd.DataFrame(data)
-                df.to_csv('full_output.csv', mode='a', header=None, index=False)
-                print(f"{rounds+1}==================>{len(data)}")
-
+        
 
         def process_followers(offset):
             # Loop to retrieve followers in batches
