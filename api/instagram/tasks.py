@@ -21,7 +21,8 @@ def scrap_instagram(accounts,followers):
 
 
 @shared_task()
-def process_followers_dry(client, cursor, username):
+def process_followers_dry(cursor, username):
+    client = login_user(username='matisti96', password='luther1996-')
     rounds = 0
     while True:
         followers, cursor = client.user_followers_gql_chunk(client.user_id_from_username(username), max_amount=100,end_cursor=cursor)
