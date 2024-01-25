@@ -9,5 +9,9 @@ pandas
 django
 djangorestframework
 django-celery-beat
+django-softdelete
 celery
 redis
+numpy
+pytz
+psycopg2-binary

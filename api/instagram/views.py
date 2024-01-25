@@ -6,6 +6,27 @@ from .tasks import scrap_instagram,process_followers_dry
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 
 # Create your views here.
+# views.py
+
+from rest_framework import viewsets
+from .models import Score, QualificationAlgorithm, Scheduler, LeadSource
+from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer
+
+class ScoreViewSet(viewsets.ModelViewSet):
+    queryset = Score.objects.all()
+    serializer_class = ScoreSerializer
+
+class QualificationAlgorithmViewSet(viewsets.ModelViewSet):
+    queryset = QualificationAlgorithm.objects.all()
+    serializer_class = QualificationAlgorithmSerializer
+
+class SchedulerViewSet(viewsets.ModelViewSet):
+    queryset = Scheduler.objects.all()
+    serializer_class = SchedulerSerializer
+
+class LeadSourceViewSet(viewsets.ModelViewSet):
+    queryset = LeadSource.objects.all()
+    serializer_class = LeadSourceSerializer
 
 class InstagramScrapper(APIView):
     def post(self,request):
