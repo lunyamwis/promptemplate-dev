@@ -12,5 +12,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('scrapNewUsers/', views.InstagramScrapper.as_view()),
     path('scrapMoxie/', views.InstagramMoxieCsv.as_view()),
+    path('airflow/', views.AirflowIntegration.as_view()),
 ]
 
