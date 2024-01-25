@@ -21,7 +21,7 @@ class Score(BaseModel):
     name = models.CharField(max_length=255)
     criterion = models.IntegerField(choices=CRITERIA, default=0)
     measure = models.IntegerField(choices=MEASURES, default=0)
-    linear_scale_capacity = models.IntegerField()
+    linear_scale_capacity = models.IntegerField(blank=True, null=True)
     
 
 class QualificationAlgorithm(BaseModel):
@@ -58,5 +58,5 @@ class LeadSource(BaseModel):
     account_usernames = ArrayField(models.CharField(max_length=50), blank=True, null=True)
     photo_links = ArrayField(models.URLField(), blank=True, null=True)
     hashtags = ArrayField(models.CharField(max_length=50), blank=True, null=True)
-    google_maps_search_keywords = models.TextField()
+    google_maps_search_keywords = models.TextField(blank=True, null=True)
     enrich_with_url_in_bio = models.BooleanField(default=True)
