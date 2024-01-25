@@ -1,8 +1,8 @@
 from django.shortcuts import render
+import requests
 from django.http import JsonResponse
 from django.conf import settings
-from airflow.operators.http_operator import SimpleHttpOperator
-from airflow.models import DAG
+from requests.auth import HTTPBasicAuth  # Import HTTPBasicAuth for basic authentication
 from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -43,51 +43,45 @@ class InstagramScrapper(APIView):
 # airflow_integration/views.py
 class AirflowIntegration(APIView):
     def post(self,request):
+        # airflow_integration/views.py
+        api_url = f'{settings.AIRFLOW_API_BASE_URL}/dags'
+
+        # Define your DAG configuration
+        dag_config = {
+            "dag_id": "dag_test",
+            "schedule_interval": "0 0 * * *",
+            "default_args": {
+                "owner": "airflow",
+                "start_date": "2024-01-01",
+                "email_on_failure": False,
+                "email_on_retry": False,
+                "retries": 1,
+                "retry_delay": "5 minutes",
+            },
+            "tasks": [
+                {"task_id": "start_task", "operator": "dummy_operator.DummyOperator", "depends_on_past": False},
+                # Add more tasks as needed
+            ],
+        }
+        username = "admin"
+        password = "t2bwES9GP64thhsz"
+
+        # Use basic authentication with the provided username and password
+        auth = HTTPBasicAuth(username, password)
+
 
         try:
-            # Specify the DAG ID you want to create
-            dag_id = 'my_dag'
+            # Make the POST request with basic authentication
+            response = requests.post(api_url, json=dag_config, auth=auth)
 
-            # Instantiate a DAG
-            dag = DAG(
-                dag_id=dag_id,
-                schedule_interval=timedelta(days=1),  # Set the schedule interval for daily execution
-                default_args={
-                    'owner': 'airflow',
-                    'depends_on_past': False,
-                    'start_date': datetime(2024, 1, 1),
-                    'email_on_failure': False,
-                    'email_on_retry': False,
-                    'retries': 1,
-                    'retry_delay': timedelta(minutes=5),
-                }
-            )
+            if response.status_code == 200:
+                data = response.json()
+                return JsonResponse(data, safe=False)
+            else:
+                return JsonResponse({'error': f'Failed to create Airflow DAG. Status code: {response.status_code}'}, status=500)
 
-            # Create tasks using SimpleHttpOperator
-            start_task = SimpleHttpOperator(
-                task_id='start_task',
-                http_conn_id='my_http_connection',  # Specify the connection ID configured in Airflow for the API endpoint
-                method='POST',
-                endpoint='/dags',
-                data={"key":"value"},  # Convert DAG configuration to JSON and send it in the request body
-                headers={"Content-Type": "application/json"},
-                response_check=lambda response: True if response.status_code == 200 else False,
-                dag=dag,
-            )
-
-            # Add more tasks as needed
-
-            # Set task dependencies
-            start_task
-
-            # Trigger the DAG run by executing the first task
-            start_task.execute(context={})
-
-            return Response({'success': 'Airflow DAG creation initiated successfully'}, status=200)
-
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
-
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({'error': f'Request failed. Error: {str(e)}'}, status=500)
 
 
 class InstagramMoxieCsv(APIView):

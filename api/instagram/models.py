@@ -38,8 +38,10 @@ class Scheduler(BaseModel):
     name = models.CharField(max_length=255)
     timezone = models.CharField(max_length=63, choices=TIMEZONE_CHOICES, default='UTC')
     outreach_capacity = models.IntegerField()
-    outreach_starttime = models.DateTimeField()
-    outreach_endtime = models.DateTimeField()
+    outreach_starttime = models.TimeField()
+    outreach_endtime = models.TimeField()
+    scrapper_starttime = models.DateTimeField()
+    scrapper_endtime = models.DateTimeField(null=True,blank=True)
 
 
 
@@ -60,3 +62,4 @@ class LeadSource(BaseModel):
     hashtags = ArrayField(models.CharField(max_length=50), blank=True, null=True)
     google_maps_search_keywords = models.TextField(blank=True, null=True)
     enrich_with_url_in_bio = models.BooleanField(default=True)
+    is_infinite_loop = models.BooleanField(default=True)
