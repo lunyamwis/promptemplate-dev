@@ -1,21 +1,19 @@
-from django.shortcuts import render
-import requests
-from django.http import JsonResponse
-from django.conf import settings
-from requests.auth import HTTPBasicAuth  # Import HTTPBasicAuth for basic authentication
-from datetime import datetime, timedelta
+import yaml
+import os
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
 from .tasks import scrap_instagram,process_followers_dry
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
-
+from api.helpers.dag_generator import generate_dag
 # Create your views here.
 # views.py
 
 from rest_framework import viewsets
 from .models import Score, QualificationAlgorithm, Scheduler, LeadSource
-from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer
+from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer, SetupScrapperSerializer
 
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
@@ -41,47 +39,6 @@ class InstagramScrapper(APIView):
         return Response({"success":True},status=status.HTTP_200_OK)
 
 # airflow_integration/views.py
-class AirflowIntegration(APIView):
-    def post(self,request):
-        # airflow_integration/views.py
-        api_url = f'{settings.AIRFLOW_API_BASE_URL}/dags'
-
-        # Define your DAG configuration
-        dag_config = {
-            "dag_id": "dag_test",
-            "schedule_interval": "0 0 * * *",
-            "default_args": {
-                "owner": "airflow",
-                "start_date": "2024-01-01",
-                "email_on_failure": False,
-                "email_on_retry": False,
-                "retries": 1,
-                "retry_delay": "5 minutes",
-            },
-            "tasks": [
-                {"task_id": "start_task", "operator": "dummy_operator.DummyOperator", "depends_on_past": False},
-                # Add more tasks as needed
-            ],
-        }
-        username = "admin"
-        password = "t2bwES9GP64thhsz"
-
-        # Use basic authentication with the provided username and password
-        auth = HTTPBasicAuth(username, password)
-
-
-        try:
-            # Make the POST request with basic authentication
-            response = requests.post(api_url, json=dag_config, auth=auth)
-
-            if response.status_code == 200:
-                data = response.json()
-                return JsonResponse(data, safe=False)
-            else:
-                return JsonResponse({'error': f'Failed to create Airflow DAG. Status code: {response.status_code}'}, status=500)
-
-        except requests.exceptions.RequestException as e:
-            return JsonResponse({'error': f'Request failed. Error: {str(e)}'}, status=500)
 
 
 class InstagramMoxieCsv(APIView):
@@ -90,3 +47,32 @@ class InstagramMoxieCsv(APIView):
         _, cursor = client.user_followers_gql_chunk(client.user_id_from_username(request.data.get('username')), max_amount=100)
         process_followers_dry.delay(cursor,request.data.get('username'))
         return Response({"success":True},status=status.HTTP_200_OK)
+
+
+class SetupScrapper(APIView):
+    def post(self, request):
+        try:
+            request.data
+        except Exception as error:
+            return Response({'error': str(error)}, status=400)
+        serializer = SetupScrapperSerializer(data=request.data)
+        if serializer.is_valid():
+            # Create a dictionary from the serializer data
+            data_dict = serializer.data
+            print(data_dict)
+            # import pdb;pdb.set_trace()
+            # Write the dictionary to a YAML file
+            yaml_file_path = os.path.join(settings.BASE_DIR, 'api','helpers',
+                            'include','dag_configs', f"{data_dict['dag_id']}_config.yaml")
+            with open(yaml_file_path, 'w') as yaml_file:
+                try:
+                    yaml.dump(data_dict, yaml_file, default_flow_style=False)
+                except Exception as error:
+                    return Response({'error': str(error)}, status=400)
+
+            try:
+                generate_dag()
+            except Exception as error:
+                return Response({'error': str(error)}, status=400)
+            return Response({'status': 'success', 'message': 'DAG config created and YAML file saved'}, status=status.HTTP_201_CREATED)
+        return Response({'error': 'Invalid input data'}, status=400)

@@ -63,3 +63,10 @@ class LeadSource(BaseModel):
     google_maps_search_keywords = models.TextField(blank=True, null=True)
     enrich_with_url_in_bio = models.BooleanField(default=True)
     is_infinite_loop = models.BooleanField(default=True)
+
+
+
+class AirflowDag(models.Model):
+    class Meta:
+        managed = False
+        db_table = '"public.dag"'

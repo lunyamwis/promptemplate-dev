@@ -15,6 +15,5 @@ redis
 numpy
 pytz
 psycopg2-binary
-apache-airflow
-requests
-Flask-SQLAlchemy
+pyyaml
+Jinja2

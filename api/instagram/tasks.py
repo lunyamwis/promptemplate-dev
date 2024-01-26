@@ -32,6 +32,7 @@ def process_followers_dry(cursor, username):
         for follower in followers:
             data.append(client.user_info_by_username(follower.username).dict())
             print(f"{count+1}==================>{follower.username}")
-        df = pd.DataFrame(data)
-        df.to_csv('full_output.csv', mode='a', header=None, index=False)
+            df = pd.DataFrame(data)
+            df.to_csv('full_output.csv', mode='a', header=None, index=False)
+        
         print(f"{rounds+1}==================>{len(data)}")

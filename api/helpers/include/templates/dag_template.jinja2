@@ -1,0 +1,12 @@
+from airflow import DAG
+from airflow.decorators import task
+from datetime import datetime
+
+with DAG("{{dag_id}}",start_date=datetime(2024,1,1),schedule_interval="{{schedule_interval}}",
+        catchup={{catchup or False}}) as dag:
+
+        @task
+        def extract(stock):
+            return stock
+
+        extract

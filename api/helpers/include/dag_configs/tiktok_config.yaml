@@ -1,0 +1,5 @@
+!!python/object/apply:builtins.dict
+- catchup: false
+  dag_id: tiktok
+  input: 231
+  schedule_interval: '@daily'

@@ -39,3 +39,10 @@ class LeadSourceSerializer(serializers.ModelSerializer):
             "hashtags":{"required": False, "allow_null": True},
             "google_maps_search_keywords":{"required": False, "allow_null": True}
         }
+
+
+class SetupScrapperSerializer(serializers.Serializer):
+    dag_id = serializers.CharField()
+    schedule_interval = serializers.CharField()
+    catchup = serializers.BooleanField()
+    input = serializers.IntegerField()

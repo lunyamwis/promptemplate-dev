@@ -9,7 +9,7 @@ python3 manage.py collectstatic --noinput
 sleep 5
 echo "<<<<<<<< Database Setup and Migrations Starts >>>>>>>>>"
 # Run database migrations
-# python3 manage.py makemigrations
+python3 manage.py makemigrations &
 python3 manage.py migrate &
 
 sleep 5
@@ -26,11 +26,6 @@ celery -A api worker --loglevel=info &
 celery -A api beat --loglevel=info &
 
 sleep 5
-
-echo "<<<<<<<<<<<<<<<<<<< START AIRFLOW >>>>>>>>>>>>>>>>>>>>>>>>"
-airflow webserver &
-
-airflow scheduler &
 
 echo "<<<<<<<<<<<<<<<<<<<< START API >>>>>>>>>>>>>>>>>>>>>>>>"
 python manage.py runserver 0.0.0.0:8000
