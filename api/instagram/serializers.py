@@ -42,7 +42,9 @@ class LeadSourceSerializer(serializers.ModelSerializer):
 
 
 class SetupScrapperSerializer(serializers.Serializer):
-    dag_id = serializers.CharField()
-    schedule_interval = serializers.CharField()
-    catchup = serializers.BooleanField()
-    input = serializers.IntegerField()
+    qualification_algorithm = serializers.CharField()
+    schedule = serializers.CharField()
+    source = serializers.ListField(child=serializers.CharField())
+    collect_as_csv = serializers.BooleanField()
+    make_infinite = serializers.BooleanField()
+    

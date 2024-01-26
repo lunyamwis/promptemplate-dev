@@ -5,10 +5,10 @@ from airflow.utils.dates import days_ago
 from datetime import timedelta
 
 dag = DAG(
-    "{{dag_id}}",
-    schedule_interval="{{schedule_interval}}",
+    "get_followers_csv",
+    schedule_interval="0 17 26 1 *",
     start_date=days_ago(1),
-    catchup={{catchup or False}},
+    catchup=False,
 )
 
 # Define the HTTP endpoint sensor
@@ -26,10 +26,10 @@ http_sensor_task = HttpSensor(
 http_task = SimpleHttpOperator(
     task_id='http_task',
     http_conn_id='your_http_connection',  # Specify the HTTP connection ID
-    endpoint='{{endpoint}}',  # Specify the endpoint to hit
+    endpoint='instagram/scrapFollowersOrSimilarAccounts/',  # Specify the endpoint to hit
     method='POST',  # Specify the HTTP method
     headers={},  # Add any headers if needed
-    data={{info}},  # Add any data if needed
+    data={'accounts': ['aesthetic_injector'], 'followers': 0},  # Add any data if needed
     log_response=True,  # Log the response in the Airflow UI
     dag=dag,
 )

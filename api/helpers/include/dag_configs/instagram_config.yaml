@@ -1,5 +1,0 @@
-!!python/object/apply:builtins.dict
-- catchup: false
-  dag_id: instagram
-  input: 231
-  schedule_interval: '@weekly'

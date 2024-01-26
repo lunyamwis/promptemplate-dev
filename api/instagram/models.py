@@ -26,9 +26,9 @@ class Score(BaseModel):
 
 class QualificationAlgorithm(BaseModel):
     name = models.CharField(max_length=255)
-    positive_keywords = models.TextField()
+    positive_keywords = ArrayField(models.CharField(max_length=50), blank=True, null=True)
     number_positive_keywords = models.IntegerField()
-    negative_keywords = models.TextField()
+    negative_keywords = ArrayField(models.CharField(max_length=50), blank=True, null=True)
     number_negative_keywords = models.IntegerField()
     score = models.ForeignKey(Score, on_delete=models.CASCADE, null=True, blank=True)
 
@@ -65,8 +65,3 @@ class LeadSource(BaseModel):
     is_infinite_loop = models.BooleanField(default=True)
 
 
-
-class AirflowDag(models.Model):
-    class Meta:
-        managed = False
-        db_table = '"public.dag"'

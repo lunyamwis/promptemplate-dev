@@ -1,0 +1,17 @@
+dag_id: get_followers
+endpoint: instagram/scrapFollowersOrSimilarAccounts/
+info:
+  accounts:
+  - Booksybiz
+  - Wahlpro
+  - Titanbarber
+  - Official cuts
+  - Unitedbyshorthair
+  - Behindthechair
+  - Ruelrockstar
+  - Underratedbarbers
+  - Humblythegreatest
+  - Arodpr23
+  - Phillipwolf
+  followers: 1
+schedule_interval: 0 17 26 1 *

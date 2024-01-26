@@ -4,21 +4,19 @@ from boostedchatScrapper.spiders.instagram_booksy import InstagramSpider
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 
 @shared_task()
-def scrap_instagram(accounts,followers):
+def scrap_followers_similar_accounts(accounts,followers):
     inst = InstagramSpider()
-    # inst.insert_data_with_enriched_outsourced_data(accounts,followers)
-    # for account in accounts:
-    #     print(account.lower())
-    #     try:
-    #         users = inst.get_ig_user_info(account.lower(),followers)
-    #         try:
-    #             inst.enrich_outsourced_data(tuple(users[0]),infinite= True)
-    #         except Exception as error:
-    #             print(error)
-    #     except Exception as error:
-    #         print(error)
-    inst.enrich_outsourced_data()
-
+    for account in accounts:
+        print(account.lower())
+        try:
+            users = inst.get_ig_user_info(account.lower(),followers)
+            try:
+                inst.enrich_outsourced_data(tuple(users[0]),infinite= True)
+            except Exception as error:
+                print(error)
+        except Exception as error:
+            print(error)
+    
 
 @shared_task()
 def process_followers_dry(cursor, username):
