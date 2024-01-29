@@ -25,6 +25,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "api.booksy.us.boostedchat.com",
+    "booksy.us.boostedchat.com",
     "promptemplate.boostedchat.com",
     "promptemplate.booksy.boostedchat.com",
     "ce2d-105-161-11-162.ngrok-free.app",
