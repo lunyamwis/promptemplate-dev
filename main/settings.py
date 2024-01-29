@@ -29,12 +29,13 @@ ALLOWED_HOSTS = [
     "promptemplate.boostedchat.com",
     "promptemplate.booksy.boostedchat.com",
     "ce2d-105-161-11-162.ngrok-free.app",
-    "ed48-196-105-37-1.ngrok-free.app"
+    "ed48-196-105-37-1.ngrok-free.app",
     "prompt",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://api.boostedchat.com",
+    "http://prompt",
     "https://api.booksy.us.boostedchat.com",
     "http://promptemplate.boostedchat.com",
     "http://promptemplate.booksy.boostedchat.com",
