@@ -23,30 +23,54 @@ ALLOWED_HOSTS = [
     "api.boostedchat.com",
     "elth.uk.boostedchat.com",
     "127.0.0.1",
-    "a69c-105-60-202-188.ngrok-free.app",
-    "3e6a-62-8-92-218.ngrok-free.app",
-    "3e6a-62-8-92-218.ngrok-fr",
+    "localhost",
     "api.booksy.us.boostedchat.com",
+    "booksy.us.boostedchat.com",
     "promptemplate.boostedchat.com",
     "promptemplate.booksy.boostedchat.com",
     "ce2d-105-161-11-162.ngrok-free.app",
     "ed48-196-105-37-1.ngrok-free.app",
     "prompt",
-    "ed48-196-105-37-1.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://api.boostedchat.com",
     "http://prompt",
     "https://api.booksy.us.boostedchat.com",
-    "https://a69c-105-60-202-188.ngrok-free.app",
-    "https://3e6a-62-8-92-218.ngrok-free.app",
-    "https://3e6a-62-8-92-218.ngrok-fr",
-    "https://ce2d-105-161-11-162.ngrok-free.app",
     "http://promptemplate.boostedchat.com",
     "http://promptemplate.booksy.boostedchat.com",
     "https://promptemplate.booksy.boostedchat.com",
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://34.121.32.131",
+    "https://34.121.32.131",
+    "http://104.197.153.127",
+    "https://104.197.153.127",
+    "http://app.boostedchat.com",
+    "http://promptemplate.booksy.boostedchat.com",
+    "https://promptemplate.booksy.boostedchat.com",
+]
+
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+)
+
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
 
 # Application definition
 INSTALLED_APPS = [
@@ -56,6 +80,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "corsheaders",
     'rest_framework',
     'softdelete',
     'product',
@@ -73,6 +98,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
