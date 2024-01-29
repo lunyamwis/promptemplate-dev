@@ -52,6 +52,7 @@ class GetFollowersToCSV(APIView):
 
 class SetupScrapper(APIView):
     def post(self, request):
+        
         try:
             request.data
         except Exception as error:
@@ -91,7 +92,7 @@ class SetupScrapper(APIView):
                         "endpoint": "instagram/scrapFollowersOrSimilarAccounts/",
                         "info":{
                             "accounts": source.account_usernames,
-                            "followers": source.criterion 
+                            "get_followers": source.criterion 
                         }
                     }
                 if collect_as_csv:
@@ -101,7 +102,7 @@ class SetupScrapper(APIView):
                         "endpoint": "instagram/scrapFollowersOrSimilarAccounts/",
                         "info":{
                             "accounts": source.account_usernames,
-                            "followers": source.criterion 
+                            "get_followers": source.criterion 
                         }
                     }
             # Write the dictionary to a YAML file

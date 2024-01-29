@@ -3,5 +3,5 @@ endpoint: instagram/scrapFollowersOrSimilarAccounts/
 info:
   accounts:
   - aesthetic_injector
-  followers: 0
-schedule_interval: 0 17 26 1 *
+  get_followers: 0
+schedule_interval: 10 10 29 1 *

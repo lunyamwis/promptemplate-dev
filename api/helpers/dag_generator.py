@@ -14,5 +14,6 @@ def generate_dag():
         if filename.endswith('yaml'):
             with open(f"{file_dir}/include/dag_configs/{filename}","r") as input_file:
                 inputs = yaml.unsafe_load(input_file)
+                
                 with open(f"/opt/airflow/dags/{inputs['dag_id']}.py","w") as f:
                     f.write(template.render(inputs))

@@ -5,6 +5,7 @@ from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_use
 
 @shared_task()
 def scrap_followers_similar_accounts(accounts,followers):
+    print(accounts)
     inst = InstagramSpider()
     for account in accounts:
         print(account.lower())
