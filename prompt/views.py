@@ -91,7 +91,7 @@ class getPrompt(APIView):
                         {prompt.text_data}-
                         Role: {get_object_or_404(Role, name=data.get("salesrep","mike_bsky")).name} -
                         {get_object_or_404(Role, name=data.get("salesrep","mike_bsky")).description}
-                        Tone of voice: {prompt.tone_of_voice.description}
+                        Tone Of Voice: get_object_or_404(Role, name=data.get("salesrep","mike_bsky")).tone_of_voice
 
                         Problems: {prompt_info.get_problems(data) if prompt.index == 2 else ""}
 
