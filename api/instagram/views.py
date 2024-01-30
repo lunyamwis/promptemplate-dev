@@ -1,12 +1,14 @@
 import yaml
 import os
+import pandas as pd
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from .tasks import scrap_followers_similar_accounts,process_followers_dry
+from .tasks import scrap_followers_or_similar_accounts,scrap_followers_into_csv
+from boostedchatScrapper.spiders.instagram_booksy import InstagramSpider
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
@@ -37,7 +39,9 @@ class GetFollowersOrSimilarAccounts(APIView):
     def post(self,request):
         accounts = request.data.get("accounts",[])
         followers = request.data.get("get_followers")
-        scrap_followers_similar_accounts.delay(accounts,followers)
+        positive_keywords = request.data.get("positive_keywords")
+        negative_keywords = request.data.get("negative_keywords")
+        scrap_followers_or_similar_accounts.delay(accounts,followers,positive_keywords,negative_keywords)
         return Response({"success":True},status=status.HTTP_200_OK)
 
 
@@ -45,8 +49,11 @@ class GetFollowersOrSimilarAccounts(APIView):
 class GetFollowersToCSV(APIView):
     def post(self, request):
         client = login_user(username='matisti96', password='luther1996-')
-        _, cursor = client.user_followers_gql_chunk(client.user_id_from_username(request.data.get('username')), max_amount=100)
-        process_followers_dry.delay(cursor,request.data.get('username'))
+        username = request.data.get('accounts')
+        user_id = client.user_id_from_username(''.join(username))
+        _, cursor = client.user_followers_gql_chunk(user_id, max_amount=3)
+        
+        scrap_followers_into_csv.delay(cursor,user_id)
         return Response({"success":True},status=status.HTTP_200_OK)
 
 
@@ -92,19 +99,22 @@ class SetupScrapper(APIView):
                         "endpoint": "instagram/scrapFollowersOrSimilarAccounts/",
                         "info":{
                             "accounts": source.account_usernames,
-                            "get_followers": source.criterion 
+                            "get_followers": source.criterion,
+                            "positive_keywords": qualification_algorithm.positive_keywords,
+                            "negative_keywords": qualification_algorithm.negative_keywords
                         }
                     }
                 if collect_as_csv:
                     data = {
                         "dag_id": source.name,
                         "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapFollowersOrSimilarAccounts/",
+                        "endpoint": "instagram/scrapFollowersToCSV/",
                         "info":{
                             "accounts": source.account_usernames,
                             "get_followers": source.criterion 
                         }
                     }
+                
             # Write the dictionary to a YAML file
             yaml_file_path = os.path.join(settings.BASE_DIR, 'api','helpers',
                             'include','dag_configs', f"{source.name}_config.yaml")

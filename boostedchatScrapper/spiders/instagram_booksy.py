@@ -362,9 +362,9 @@ class InstagramSpider:
         }
         
 
-    def check_keywords(self,outsourced_data):
+    def check_positive_keywords(self,outsourced_data, positive_keywords):
         keywords = []
-        for i in STYLISTS_WORDS:
+        for i in positive_keywords:
             if i in str(outsourced_data['full_name']).lower():
                
                 keywords.append(i)
@@ -377,9 +377,9 @@ class InstagramSpider:
         
         return keywords
 
-    def check_negative_keywords(self,outsourced_data):
+    def check_negative_keywords(self,outsourced_data, negative_keywords):
         keywords = []
-        for i in STYLISTS_NEGATIVE_WORDS:
+        for i in negative_keywords:
             if i in str(outsourced_data['external_url']).lower():
                 keywords.append(i)
 
@@ -396,7 +396,7 @@ class InstagramSpider:
         return keywords
         
 
-    def enrich_outsourced_data(self, users=None, infinite=False, changing_index=None):
+    def enrich_outsourced_data(self, users=None, infinite=False, changing_index=None, positive_keywords=None, negative_keywords=None):
         client = login_user(username='matisti96', password='luther1996-')
         outsourced_data_ = None
         if infinite:
@@ -459,8 +459,8 @@ class InstagramSpider:
                         user_medias = client.user_medias(user_id=outsourced_data[1]['pk'],amount=2)
                         days_check = self.get_dates_within_last_seven_days([media.taken_at for media in user_medias])
                         popularity_check = self.get_popularity(outsourced_data[1])
-                        keywords_chck = self.check_keywords(outsourced_data[1]) 
-                        keywords_negative_chck = self.check_negative_keywords(outsourced_data[1])
+                        keywords_chck = self.check_positive_keywords(outsourced_data[1],positive_keywords=positive_keywords) 
+                        keywords_negative_chck = self.check_negative_keywords(outsourced_data[1], negative_keywords = negative_keywords)
                         try:
                             outsourced_data[1].pop("is_posting_actively")
                             outsourced_data[1].pop("is_popular")
@@ -594,7 +594,7 @@ class InstagramSpider:
                         executor.submit(insert_information,ig['id'],ig['igname'])
         
 
-    def insert_data_with_enriched_outsourced_data(self,ig_users,followers):
+    def insert_data_with_enriched_outsourced_data(self,ig_users,followers,positive_keywords=None, negative_keywords=None):
         # get_earliest_crontab_id = self.connection.execute(text("SELECT crontab_id FROM django_celery_beat_periodictask ORDER BY id DESC limit 1;"))
         # get_earliest_date = self.connection.execute(text(f"SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule where id={get_earliest_crontab_id.fetchone()[0]};")).fetchone()
         get_latest_crontab_id = self.connection.execute(text("SELECT crontab_id FROM django_celery_beat_periodictask ORDER BY id DESC limit 1;"))
@@ -641,10 +641,12 @@ class InstagramSpider:
                                 users.append(new_user)
 
                     if j == 0:
-                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx)
+                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx,
+                                                    positive_keywords=positive_keywords,negative_keywords=negative_keywords)
 
                     if j > 1:
-                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx + len(users))
+                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx + len(users),
+                                                    positive_keywords=positive_keywords,negative_keywords=negative_keywords)
                         print(f"changing_index_in_infinite_loop=================>{changing_idx + len(users)}")
                         
                 except Exception as error:

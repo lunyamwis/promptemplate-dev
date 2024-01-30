@@ -19,7 +19,7 @@ http_task = SimpleHttpOperator(
     endpoint='instagram/scrapFollowersOrSimilarAccounts/',  # Specify the endpoint to hit
     method='POST',  # Specify the HTTP method
     headers={'Content-Type': 'application/json'}, # Add any headers if needed
-    data=json.dumps({'accounts': ['Booksybiz', 'Wahlpro', 'Titanbarber', 'Official cuts', 'Unitedbyshorthair', 'Behindthechair', 'Ruelrockstar', 'Underratedbarbers', 'Humblythegreatest', 'Arodpr23', 'Phillipwolf'], 'get_followers': 1}),  # Add any data if needed
+    data=json.dumps({'accounts': ['Booksybiz', 'Wahlpro', 'Titanbarber', 'Official cuts', 'Unitedbyshorthair', 'Behindthechair', 'Ruelrockstar', 'Underratedbarbers', 'Humblythegreatest', 'Arodpr23', 'Phillipwolf'], 'get_followers': 1, 'negative_keywords': ['booksy', 'Supplier', 'Supply', 'supplies', 'manufacturer', 'wholesaler', 'shipping', 'dentist', 'Massage Therapist', 'Therapist', 'onlyfans'], 'positive_keywords': ['hair', 'appointment', 'appointments', 'book', 'call', 'licensed', 'cutz', 'kutz', 'cuts', 'cut', 'hairstylist', 'salon', 'salons', 'educator', 'specialist', 'beauty', 'walk', 'text', 'dm', 'hair', 'stylist', 'colour', 'colouring', 'loreal', 'olaplex', 'hairspray', 'mousse', 'pomade', 'hair oil', 'hair serum', 'scissors', 'comb', 'brush', 'blow dryer', 'flat iron', 'curling iron', 'hair rollers', 'hair clips', 'hair ties', 'headbands', 'hair accessories', 'updos', 'braids', 'twists', 'buns', 'ponytails', 'curls', 'waves', 'volume', 'texture', 'shine', 'frizz control', 'breakage', 'dryness', 'oiliness', 'thinning', 'hair loss', 'dandruff', 'scalp problems']}),  # Add any data if needed
     log_response=True,  # Log the response in the Airflow UI
     dag=dag,
 )
