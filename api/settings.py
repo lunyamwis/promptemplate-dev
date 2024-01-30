@@ -83,11 +83,11 @@ AIRFLOW_API_BASE_URL = 'http://localhost:8080/api/v1'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DBNAME").strip(),
-        "USER": os.getenv("POSTGRES_USERNAME").strip(),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD").strip(),
-        "HOST": os.getenv("POSTGRES_HOST").strip(),
-        "PORT": 5432,
+        "NAME": os.getenv("POSTGRES_DBNAME_ETL").strip(),
+        "USER": os.getenv("POSTGRES_USERNAME_ETL").strip(),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD_ETL").strip(),
+        "HOST": os.getenv("POSTGRES_HOST_ETL").strip(),
+        "PORT": 5433,
     }
 }
 

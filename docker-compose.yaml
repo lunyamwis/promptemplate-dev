@@ -34,7 +34,7 @@ x-airflow-common:
     &airflow-common-depends-on
     redis:
       condition: service_healthy
-    postgres:
+    postgresetl:
       condition: service_healthy
 
 services:
@@ -52,13 +52,15 @@ services:
       - ./logs:/opt/airflow/logs
       - ./config:/opt/airflow/config
       - ./plugins:/opt/airflow/plugins
+    networks:
+      - booksy
       
     env_file: .env
     environment:
       DEBUG: "true"
     entrypoint: ["/bin/bash", "+x", "/entrypoint.sh"]
   
-  postgres:
+  postgresetl:
     image: postgres:latest
     container_name: postgres-etl-container
     environment:
@@ -68,13 +70,15 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5433"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       retries: 5
       start_period: 5s
     restart: always
+    networks:
+      - booksy
     
 
   nginx:
@@ -89,6 +93,8 @@ services:
     links:
       - web:web
     # command: ["/bin/sh", "-c", "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"] # Renew SSL certificates every 6 hours
+    networks:
+      - booksy
 
   certbot:
     image: certbot/certbot
@@ -96,6 +102,8 @@ services:
       - letsencrypt:/etc/letsencrypt
       - web-static:/static/
     command: certonly --non-interactive --agree-tos --nginx -m "tomek@boostedchat.com" -d "webhook.boostedchat.com"
+    networks:
+      - booksy
 
   redis:
     image: redis:latest
@@ -112,6 +120,8 @@ services:
       - "6379:6379"
     volumes:
       - redisdata:/data
+    networks:
+      - booksy
 
   airflow-webserver:
     <<: *airflow-common
@@ -129,6 +139,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+    - booksy
 
   airflow-scheduler:
     <<: *airflow-common
@@ -144,6 +156,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+    - booksy
 
   airflow-worker:
     <<: *airflow-common
@@ -167,6 +181,9 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    
+    networks:
+      - booksy
 
   airflow-triggerer:
     <<: *airflow-common
@@ -182,6 +199,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - booksy
 
   airflow-init:
     <<: *airflow-common
@@ -246,6 +265,8 @@ services:
     user: "0:0"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
+    networks:
+      - booksy
 
   airflow-cli:
     <<: *airflow-common
@@ -259,6 +280,8 @@ services:
       - bash
       - -c
       - airflow
+    networks:
+      - booksy
 
   # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up
   # or by explicitly targeted on the command line e.g. docker-compose up flower.
@@ -281,6 +304,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - booksy
 
   
 
@@ -290,3 +315,8 @@ volumes:
   redisdata:
   letsencrypt:
   postgres-data:
+
+
+networks:
+  booksy:
+    name: booksy-talk
