@@ -37,7 +37,7 @@ def bytes_encoder(o):
 
 class InstagramSpider:
     name = 'instagram'
-    db_url = "postgresql://postgres:boostedchat@34.75.173.2:5432/booksyus"
+    db_url = f"postgresql://{os.getenv('POSTGRES_USERNAME')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DBNAME')}"
     engine = create_engine(db_url)
     connection = engine.connect()
 

@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-utr163745j!iq*)7h-+g6_!y+z$mkmcx3x2ouv$gq$8-42)yn+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["34.28.104.255","127.0.0.1","0.0.0.0","localhost","web"]
+ALLOWED_HOSTS = ["34.28.104.255","127.0.0.1","0.0.0.0","localhost","web","booksy.us.boostedchat.com","scrapper.booksy.boostedchat.com",
+                "airflow.booksy.boostedchat.com"]
 CSRF_TRUSTED_ORIGINS = ["http://34.28.104.255"]
 
 # Application definition
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -87,7 +89,7 @@ DATABASES = {
         "USER": os.getenv("POSTGRES_USERNAME_ETL").strip(),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD_ETL").strip(),
         "HOST": os.getenv("POSTGRES_HOST_ETL").strip(),
-        "PORT": 5432,
+        "PORT": os.getenv("POSTGRES_PORT_ETL").strip(),
     }
 }
 
@@ -153,6 +155,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:9000",
     "http://localhost:9000",
     "http://localhost:5173",
+    "https://booksy.us.boostedchat.com",
 ]
 
 CORS_ALLOW_HEADERS = (
