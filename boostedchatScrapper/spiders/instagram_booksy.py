@@ -435,7 +435,7 @@ class InstagramSpider:
 
         def outsourcing_information(changing_indice=None, accounts=24):
             try:
-                now = datetime.now(timezone.utc) + timedelta(days=1)
+                now = datetime.now(timezone.utc)
                 hr = now.hour - 6
                 # hr = now.hour
                 hour_idx = None
