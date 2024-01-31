@@ -87,7 +87,7 @@ DATABASES = {
         "USER": os.getenv("POSTGRES_USERNAME_ETL").strip(),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD_ETL").strip(),
         "HOST": os.getenv("POSTGRES_HOST_ETL").strip(),
-        "PORT": 5433,
+        "PORT": 5432,
     }
 }
 
