@@ -8,7 +8,7 @@
 import os
 import json
 from itemadapter import ItemAdapter
-from snowflake.sqlalchemy import URL
+# from snowflake.sqlalchemy import URL
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 

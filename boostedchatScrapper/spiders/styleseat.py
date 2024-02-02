@@ -7,7 +7,6 @@ import math
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.http import HtmlResponse
-from dask import delayed
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from selenium.webdriver.common.by import By
 from boostedchatScrapper.items import StyleSeatItem

@@ -16,7 +16,7 @@ def generate_gmap_links(url,area):
     driver = setup_driver()
     driver.get(url)
     links = []
-    time.sleep(4)  # Wait for the page to load dynamically
+    time.sleep(7)  # Wait for the page to load dynamically
     search_box = driver.find_element(By.CSS_SELECTOR, '#searchboxinput')
     
     search_box.send_keys(area)  # Perform a search

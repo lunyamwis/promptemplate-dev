@@ -10,6 +10,7 @@ from .helpers.gmaps_dynamic_actions import generate_gmap_links
 from .helpers.utils import click_element,generate_html
 from ..http import SeleniumRequest
 from boostedchatScrapper.items import GmapsItem
+from .helpers.instagram_login_helper import login_user
 
 CLEAN_STRING = re.compile(r"[\']")
 
@@ -46,9 +47,23 @@ class GmapsSpider(CrawlSpider):
         item["name"] = "google_maps"
         resp_meta["name"] = "google_maps"
         resp_meta["title"] = CLEAN_STRING.sub("", response.request.meta['driver'].title)
+        time.sleep(4)
         resp_meta["main_image"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//button[contains(@class,"aoRNLd kn2E5e NMjTrf lvtCsd")]/img').get_attribute("src")
         resp_meta["business_name"] = CLEAN_STRING.sub("",response.request.meta['driver'].find_element(by=By.XPATH, value='//span[contains(@class,"a5H0ec")]/..').text)
         resp_meta["review"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[contains(@class,"F7nice")]/span[1]').text
+        ig_info = []
+        try:
+            client = login_user(username='stella.elth', password='martinnyambane1996-')
+            print(f"11111111111111111111111111111{resp_meta['business_name']}111111111111111111")
+            users = client.search_users_v1(resp_meta["business_name"],count=5)
+            for user in users:
+                user_data = client.user_info_by_username(user.username)
+                if user_data.public_phone_country_code == '1':
+                    ig_info.append(user_data.dict())
+        except Exception as error:
+            print("==************************************==we were incapable of acquiring their instagram information==*****************************==")
+
+        resp_meta["ig_info"] = ig_info
         print("==================☁️☁️resp_meta☁️☁️===========")
         print(f"resp_meta------------------------------->{resp_meta}")
         print("==================☁️☁️resp_meta☁️☁️===========")
@@ -80,6 +95,7 @@ class GmapsSpider(CrawlSpider):
         print("==================☁️☁️resp_meta☁️☁️===========")
         
         try:
+            
             resp_meta["is_booking_available"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//a[contains(@class,"A1zNzb")]').get_attribute("href")
             if resp_meta["is_booking_available"]:
                 resp_meta["booking_header"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"XVS7ef")]')]
@@ -87,7 +103,7 @@ class GmapsSpider(CrawlSpider):
                 resp_meta["booking_price"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"BRcyT JaMq2b")]/span')]
                 resp_meta["booking_provider"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"NGLLDf")]/span')]
         except Exception as error:
-            print(error)
+            print("no booking available")
 
         try:
             response.request.meta['driver'].get(response.url)
