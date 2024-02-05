@@ -3,6 +3,19 @@ import pandas as pd
 from boostedchatScrapper.spiders.instagram_booksy import InstagramSpider
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 
+
+
+
+@shared_task()
+def scrap_followers_or_similar_accounts_forever(followers,positive_keywords,negative_keywords):
+    inst = InstagramSpider()
+    try:
+        inst.insert_data_with_enriched_outsourced_data(followers=followers,
+                                                        positive_keywords=positive_keywords,
+                                                        negative_keywords=negative_keywords)
+    except Exception as error:
+        print(error)
+
 @shared_task()
 def scrap_followers_or_similar_accounts(accounts,followers,positive_keywords,negative_keywords):
     print(accounts)

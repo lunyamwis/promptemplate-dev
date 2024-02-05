@@ -12,6 +12,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('scrapFollowersOrSimilarAccounts/', views.GetFollowersOrSimilarAccounts.as_view()),
     path('scrapFollowersToCSV/', views.GetFollowersToCSV.as_view()),
+    path('scrapForever/', views.ExtractInfiniteLeads.as_view()),
     path('setup/', views.SetupScrapper.as_view()),
 ]
 
