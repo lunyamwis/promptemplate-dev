@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-utr163745j!iq*)7h-+g6_!y+z$mkmcx3x2ouv$gq$8-42)yn+
 DEBUG = True
 
 ALLOWED_HOSTS = ["34.28.104.255","127.0.0.1","0.0.0.0","localhost","web","booksy.us.boostedchat.com","scrapper.booksy.boostedchat.com",
-                "airflow.booksy.boostedchat.com"]
+                "airflow.booksy.boostedchat.com","jamel.boostedchat.com","scrapper.jamel.boostedchat.com",
+                "airflow.jamel.boostedchat.com"]
 CSRF_TRUSTED_ORIGINS = ["http://34.28.104.255"]
 
 # Application definition
@@ -156,6 +157,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:9000",
     "http://localhost:5173",
     "https://booksy.us.boostedchat.com",
+    "https://jamel.boostedchat.com"
 ]
 
 CORS_ALLOW_HEADERS = (
