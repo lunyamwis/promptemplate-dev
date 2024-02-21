@@ -7,14 +7,10 @@ from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_use
 
 
 @shared_task()
-def scrap_followers_or_similar_accounts_forever(followers,positive_keywords,negative_keywords):
+def scrap_followers_or_similar_accounts_forever():
     inst = InstagramSpider()
-    try:
-        inst.insert_data_with_enriched_outsourced_data(followers=followers,
-                                                        positive_keywords=positive_keywords,
-                                                        negative_keywords=negative_keywords)
-    except Exception as error:
-        print(error)
+    inst.enrich_outsourced_data()
+    
 
 @shared_task()
 def scrap_followers_or_similar_accounts(accounts,followers,positive_keywords,negative_keywords):

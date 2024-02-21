@@ -11,8 +11,24 @@ from instagrapi import Client
 from instagrapi.mixins.challenge import ChallengeChoice
 
 logger = logging.getLogger()
-
-
+accounts = { 
+    1:{
+        "username":"stella.elth",
+        "password":"martinnyambane1996-"
+    },
+    2:{
+        "username":"machakos_solaramairbnb",
+        "password":"Bironga2023"
+    },
+    3:{
+        "username":"wellnessforever2021",
+        "password":"Omariba1993@"
+    },
+    4:{
+        "username":"omaribacaleb",
+        "password":"Omariba1993@"
+    }
+}
 def change_password_handler(username):
     # Simple way to generate a random string
     chars = list("abcdefghijklmnopqrstuvwxyz1234567890!&£@#")
@@ -61,20 +77,28 @@ def challenge_code_handler(username, choice):
 
 
 
-def login_user(username=os.getenv("IG_USERNAME"), password=os.getenv("IG_PASSWORD")):
+def login_user():
     """
     Attempts to login to Instagram using either the provided session information
     or the provided username and password.
     """
-
+    
     cl = Client()
+    index = random.randint(1,len(accounts))
+    print(index)
+    before_ip = cl._send_public_request("https://api.ipify.org/")
     cl.set_proxy(
-        f"https://lunyamwi;country=KE;city=Nairobi:8213ae-6228c7-550488-c480ad-0f7eb4@premium.residential.proxyrack.net:10000"
+        # f"https://lunyamwi;country=KE;city=Nairobi:8213ae-6228c7-550488-c480ad-0f7eb4@premium.residential.proxyrack.net:10000"
+        "http://Sql8t2uRG3XRvQrO:wifi;ke;starlink;nairobi;nairobi@proxy.soax.com:9000"
+        # "http://NQkWIMtrprYfgFH5:mobile;ke;safaricom;;nairobi@proxy.soax.com:9000"
     )
-    cl.challenge_code_handler = challenge_code_handler(username, 1)
+    after_ip = cl._send_public_request("https://api.ipify.org/")
+    print(f"Before: {before_ip}")
+    print(f"After: {after_ip}")
+    # cl.challenge_code_handler = challenge_code_handler(accounts[index]['username'], 1)
     cl.delay_range = [1, 3]
-    max_attempts = 5
-    session_file_path = Path(f"{username}.json")
+    max_attempts = 3
+    session_file_path = Path(f"{accounts[index]['username']}.json")
     if os.path.exists(session_file_path):
         for attempt in range(1, max_attempts + 1):
             session = cl.load_settings(session_file_path)
@@ -96,11 +120,11 @@ def login_user(username=os.getenv("IG_USERNAME"), password=os.getenv("IG_PASSWOR
                     else:
                         print("All attempts failed, removing session file and logging in with username and password")
                         os.remove(session_file_path)
-                        cl.login(username, password)
+                        cl.login(username=accounts[index]['username'],password=accounts[index]['username'])
                         cl.dump_settings(session_file_path)
                         print("Session saved to file")
     else:
-        cl.login(username, password)
+        cl.login(username=accounts[index]['username'],password=accounts[index]['username'])
         print("Login with username and password")
         cl.dump_settings(session_file_path)
         print("Session saved to file")

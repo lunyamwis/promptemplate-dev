@@ -36,12 +36,17 @@ class LeadSourceViewSet(viewsets.ModelViewSet):
     serializer_class = LeadSourceSerializer
 
 
-class ExtractInfiniteLeads(APIView):
-    def post(self,request):
+class CleanDatabaseLeads(APIView):
+    def post(self, request):
         followers = request.data.get("get_followers")
         positive_keywords = request.data.get("positive_keywords")
         negative_keywords = request.data.get("negative_keywords")
         scrap_followers_or_similar_accounts_forever.delay(followers,positive_keywords,negative_keywords)
+        return Response({"success":True},status=status.HTTP_200_OK)
+
+class ExtractInfiniteLeads(APIView):
+    def post(self,request):
+        scrap_followers_or_similar_accounts_forever.delay()
         return Response({"success":True},status=status.HTTP_200_OK)
 
 class GetFollowersOrSimilarAccounts(APIView):
