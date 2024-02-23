@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api.instagram',
+    'api.scout',
     'api.helpers',
     'rest_framework',
     'django_celery_beat',

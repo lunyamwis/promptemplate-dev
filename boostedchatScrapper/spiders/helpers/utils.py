@@ -54,16 +54,16 @@ def interceptor(request):
 def setup_driver(driver_version='121.0.6167.184'):
 
 
-    SCRAPEOPS_API_KEY = os.getenv('SCRAPEOPS_API_KEY')
+    # SCRAPEOPS_API_KEY = os.getenv('SCRAPEOPS_API_KEY')
 
-    ## Define ScrapeOps Proxy Port Endpoint
-    proxy_options = {
-        'proxy': {
-            'http': f'http://scrapeops.headless_browser_mode=false:{SCRAPEOPS_API_KEY}@proxy.scrapeops.io:5353',
-            'https': f'http://scrapeops.headless_browser_mode=false:{SCRAPEOPS_API_KEY}@proxy.scrapeops.io:5353',
-            'no_proxy': 'localhost:127.0.0.1'
-        }
-    }
+    # ## Define ScrapeOps Proxy Port Endpoint
+    # proxy_options = {
+    #     'proxy': {
+    #         'http': f'http://scrapeops.headless_browser_mode=false:{SCRAPEOPS_API_KEY}@proxy.scrapeops.io:5353',
+    #         'https': f'http://scrapeops.headless_browser_mode=false:{SCRAPEOPS_API_KEY}@proxy.scrapeops.io:5353',
+    #         'no_proxy': 'localhost:127.0.0.1'
+    #     }
+    # }
 
     
     # options = webdriver.ChromeOptions()
@@ -75,8 +75,9 @@ def setup_driver(driver_version='121.0.6167.184'):
 
     
     try:
-        driver = webdriver.Chrome(options=option,
-                seleniumwire_options=proxy_options)
+        driver = webdriver.Chrome(options=option
+                # seleniumwire_options=proxy_options
+                )
     except Exception as err:
         print("your chrome version is not supported by the way")
         try:

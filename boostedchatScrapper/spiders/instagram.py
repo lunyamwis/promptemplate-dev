@@ -107,13 +107,15 @@ class InstagramSpider:
             except Exception as error:
                 print(error)
    
-    def get_ig_user_info(self, username, followers=False):
+    def get_ig_user_info(self, username, followers=False, similar_accounts=False, users=False):
         client = login_user()
         # import pdb;pdb.set_trace()
-        
-        # user_info = client.user_info_by_username(username)
-        # user_id = user_info.pk
-        user_id = 12345
+        user_info, user_id = None
+        if followers or similar_accounts and not users:
+            user_info = client.user_info_by_username(username)
+            user_id = user_info.pk
+
+        # user_id = 12345
 
         batch_size = 100  # Adjust this based on your needs
         def process_similar_accounts(offset):
@@ -203,7 +205,7 @@ class InstagramSpider:
 
         
 
-        def process_followers(offset):
+        def process_users(offset):
             # Loop to retrieve followers in batches
             # _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
             # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
@@ -288,6 +290,92 @@ class InstagramSpider:
                     # Rollback the transaction to keep the database in a consistent state
                     self.transaction.rollback()
             return inserted_ids
+
+        def process_followers(offset):
+            # Loop to retrieve followers in batches
+            # _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
+            # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
+            # followers = client.user_followers(user_id=user_id,amount=batch_size)
+            inserted_ids = []
+            followers = client.user_followers(user_id=user_id, amount=1000)
+            # followers = client.search_users_v1(username,count=2)
+
+            # # print(followers)
+            # # TODO: save followers to database
+            for i,follower in enumerate(followers):
+                print(followers[follower].username)
+
+                # Assuming 'igname' is the variable containing the Instagram name you want to insert
+                igname = followers[follower].username
+
+
+                # Check if igname already exists in the table
+                name = 'on_hold'
+                # get_on_hold_status = self.connection.execute(text(f"SELECT id FROM instagram_statuscheck WHERE name = %s", (name,)))
+                # get_on_hold_status_id = get_on_hold_status.fetchone()
+                try:
+                    check_instagram_accounts = self.connection.execute(text(f"SELECT id FROM instagram_account WHERE igname = '{igname}'"))
+                    # print('commiting')
+                    # import pdb;pdb.set_trace()
+                    
+                    existing_id = check_instagram_accounts.fetchone()
+                    inserted_id = None
+
+                    if existing_id:
+                        print(f"The igname '{igname}' already exists with ID {existing_id}. Skipping insertion.")
+                    else:
+                        # Perform the INSERT operation
+                        try:
+                            time.sleep(3)
+                            insert_record_return_id = self.connection.execute(text(f"""
+                                INSERT INTO instagram_account (
+                                    deleted_at, id, created_at, updated_at, email, phone_number,
+                                    profile_url, status_id, igname, full_name, assigned_to,
+                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index,
+                                    linked_to
+                                )
+                                VALUES (
+                                    DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
+                                    '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
+                                    DEFAULT, '{igname}', '{followers[follower].full_name.replace("'","")}', 'Robot',
+                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1,'thecut_api'
+                                )
+                                RETURNING id;
+                                
+                            """)) # implement algorithm for checking timecap
+                            print('commiting')
+                            print("--------------------INSERRTED----------------------")
+                        except Exception as error:
+                            print(error)
+
+                        inserted_id = insert_record_return_id.fetchone()[0]
+                        inserted_ids.append(inserted_id)
+                    # import pdb;pdb.set_trace()   
+                    if inserted_id:
+                        print(f"Inserted new record with ID {inserted_id}.")
+                        try:
+                            # insert_ = inserted_id.fetchone()[0]
+                            get_igname = self.connection.execute(text(f"""
+                                select igname from instagram_account where id='{inserted_id}';
+                            """))
+                            user_information = client.user_info_by_username(get_igname.fetchone()[0])
+                            self.connection.execute(text(f"""
+                                INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
+                                VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
+                                'instagram','{json.dumps(user_information.dict(), default=bytes_encoder)}','{inserted_id}'
+                                )
+
+                            """))
+                            print('commiting')
+                            print("--------------------INSERRTED OUTSOURCED----------------------")
+                        except Exception as error:
+                            print(error)
+                except Exception as err:
+                    print(f"Error during database operation: {err}")
+
+                    # Rollback the transaction to keep the database in a consistent state
+                    self.transaction.rollback()
+            return inserted_ids
             
                     
                     
@@ -298,8 +386,11 @@ class InstagramSpider:
             if followers:
                 results = list(executor.map(process_followers,offsets))
             
-            else:
+            elif similar_accounts:
                 results = list(executor.map(process_similar_accounts,offsets))
+
+            elif users:
+                results = list(executor.map(process_users,offsets))
                 
             # Optional: Add a delay if needed to prevent hitting rate limits
             print(results)

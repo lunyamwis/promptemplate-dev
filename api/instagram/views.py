@@ -8,7 +8,7 @@ from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from .tasks import scrap_followers_or_similar_accounts,scrap_followers_into_csv,scrap_followers_or_similar_accounts_forever
-from boostedchatScrapper.spiders.instagram_booksy import InstagramSpider
+from boostedchatScrapper.spiders.instagram import InstagramSpider
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression

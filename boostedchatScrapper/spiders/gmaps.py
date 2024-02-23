@@ -52,16 +52,17 @@ class GmapsSpider(CrawlSpider):
         resp_meta["business_name"] = CLEAN_STRING.sub("",response.request.meta['driver'].find_element(by=By.XPATH, value='//span[contains(@class,"a5H0ec")]/..').text)
         resp_meta["review"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[contains(@class,"F7nice")]/span[1]').text
         ig_info = []
-        try:
-            client = login_user(username='stella.elth', password='martinnyambane1996-')
-            print(f"11111111111111111111111111111{resp_meta['business_name']}111111111111111111")
-            users = client.search_users_v1(resp_meta["business_name"],count=5)
-            for user in users:
-                user_data = client.user_info_by_username(user.username)
-                if user_data.public_phone_country_code == '1':
-                    ig_info.append(user_data.dict())
-        except Exception as error:
-            print("==************************************==we were incapable of acquiring their instagram information==*****************************==")
+        #TODO: attach to process_users
+        # try:
+        #     client = login_user(username='stella.elth', password='martinnyambane1996-')
+        #     print(f"11111111111111111111111111111{resp_meta['business_name']}111111111111111111")
+        #     users = client.search_users_v1(resp_meta["business_name"],count=5)
+        #     for user in users:
+        #         user_data = client.user_info_by_username(user.username)
+        #         if user_data.public_phone_country_code == '1':
+        #             ig_info.append(user_data.dict())
+        # except Exception as error:
+        #     print("==************************************==we were incapable of acquiring their instagram information==*****************************==")
 
         resp_meta["ig_info"] = ig_info
         print("==================☁️☁️resp_meta☁️☁️===========")

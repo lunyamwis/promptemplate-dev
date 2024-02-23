@@ -56,10 +56,11 @@ class SeleniumMiddleware:
             driver_kwargs = {
                 f'options': driver_options
             }
-            # self.driver = driver_klass(service=ChromeService(ChromeDriverManager(
-            # latest_release_url='https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json',
-            # driver_version='116.0.5845.96').install()),**driver_kwargs)
-            self.driver = driver_klass(**driver_kwargs)
+            
+            self.driver = driver_klass(service=ChromeService(ChromeDriverManager(
+            latest_release_url='https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json',
+            driver_version='121.0.6167.184').install()),**driver_kwargs)
+            # self.driver = driver_klass(**driver_kwargs)
         # remote driver
 
         elif command_executor is not None:
