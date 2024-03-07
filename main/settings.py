@@ -18,6 +18,8 @@ CSRF_COOKIE_HTTPONLY = True
 
 DEBUG = True
 ALLOWED_HOSTS = [
+    f"{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"{os.environ.get('DOMAIN2', '')}.boostedchat.com",
     # "*",
     "34.138.81.48",
     "34.74.147.25",
@@ -35,6 +37,10 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"https://promptemplate.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"https://api.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    f"https://promptemplate.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
     "https://api.boostedchat.com",
     "http://prompt",
     "https://api.booksy.us.boostedchat.com",
@@ -44,6 +50,10 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"https://promptemplate.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"https://api.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    f"https://promptemplate.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
     "http://localhost:5173",
     "http://34.121.32.131",
     "https://34.121.32.131",
