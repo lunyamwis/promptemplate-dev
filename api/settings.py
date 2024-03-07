@@ -25,10 +25,26 @@ SECRET_KEY = 'django-insecure-utr163745j!iq*)7h-+g6_!y+z$mkmcx3x2ouv$gq$8-42)yn+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["34.28.104.255","127.0.0.1","0.0.0.0","localhost","web","booksy.us.boostedchat.com","scrapper.booksy.boostedchat.com",
-                "airflow.booksy.boostedchat.com","jamel.boostedchat.com","scrapper.jamel.boostedchat.com",
-                "airflow.jamel.boostedchat.com"]
-CSRF_TRUSTED_ORIGINS = ["http://34.28.104.255"]
+ALLOWED_HOSTS = [
+    f"{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    f"scrapper.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"airflow.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"scrapper.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    f"airflow.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    "34.28.104.255",
+    "127.0.0.1",
+    "0.0.0.0",
+    "localhost",
+    "web",
+    "booksy.us.boostedchat.com",
+    "scrapper.booksy.boostedchat.com",
+    "airflow.booksy.boostedchat.com",
+]
+CSRF_TRUSTED_ORIGINS = [
+    f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"https://api.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    "http://34.28.104.255"]
 
 # Application definition
 
@@ -40,7 +56,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api.instagram',
-    'api.scout',
     'api.helpers',
     'rest_framework',
     'django_celery_beat',
@@ -153,6 +168,8 @@ STATIC_ROOT = '/usr/src/app/static'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
+    f"https://{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"https://{os.environ.get('DOMAIN2', '')}.boostedchat.com",
     "http://localhost:8080",
     "http://127.0.0.1:9000",
     "http://localhost:9000",
