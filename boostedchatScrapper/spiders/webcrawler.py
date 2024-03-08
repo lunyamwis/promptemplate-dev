@@ -1,15 +1,25 @@
-from scrapy.spiders import CrawlSpider
+from scrapy import Spider
 from scrapy.http import Response, Request
 from typing import Iterable, Any
 
-class WebCrawler(CrawlSpider):
+class WebCrawlerSpider(Spider):
     name = "webcrawler"
-    allowed_domains = [""]
-    base_url = ""
-    start_urls = [""]
+    
+    start_urls = ["https://quotes.toscrape.com/"]
 
-    def start_requests(self) -> Iterable[Request]:
-        return super().start_requests()
+    def parse(self, response):
+        author_page_links = response.css(".author + a")
+        yield from response.follow_all(author_page_links, self.parse_author)
 
-    def parse(self, response: Response, **kwargs: Any) -> Any:
-        return super().parse(response, **kwargs)
+        pagination_links = response.css("li.next a")
+        yield from response.follow_all(pagination_links, self.parse)
+
+    def parse_author(self, response):
+        def extract_with_css(query):
+            return response.css(query).get(default="").strip()
+
+        yield {
+            "name": extract_with_css("h3.author-title::text"),
+            "birthdate": extract_with_css(".author-born-date::text"),
+            "bio": extract_with_css(".author-description::text"),
+        }

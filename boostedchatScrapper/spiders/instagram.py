@@ -5,6 +5,7 @@ import sys
 import os
 import re
 import random
+import logging
 import pandas as pd
 current_dir = os.getcwd()
 
@@ -20,7 +21,10 @@ from urllib.parse import urlparse
 from kafka import KafkaProducer
 from collections import ChainMap
 from .constants import STYLISTS_WORDS,STYLISTS_NEGATIVE_WORDS
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text,Table,MetaData,select,update
+from api.instagram.models import InstagramUser
+from api.scout.models import Scout,Device
+from django.db.models import Q
 # from boostedchatScrapper.spiders.instagram import InstagramSpider
 # insta_spider = InstagramSpider()
 # insta_spider.get_followers('colorswithchemistry')
@@ -41,735 +45,140 @@ class InstagramSpider:
     engine = create_engine(db_url)
     connection = engine.connect()
     transaction = connection.begin()
+    metadata = MetaData()
+    instagram_account_table = Table('instagram_account', metadata, autoload_with=engine)
+    instagram_outsourced_table = Table('instagram_outsourced',metadata, autoload_with=engine)
+    django_celery_beat_crontabschedule_table = Table('django_celery_beat_crontabschedule', metadata, autoload_with=engine)
+    django_celery_beat_periodictask_table = Table('django_celery_beat_periodictask', metadata, autoload_with=engine)
 
-    # def send_scrape_task(self, username):
-    #     task = {'task_type': 'scrape_followers', 'username': username}
-    #     producer.send('scrapingtasks', value=task)
-    def get_usernames(self, path, column):
-        df = pd.read_csv(path)
-        pattern = r'https://(?:www\.)?instagram\.com/([^/]+)'
-        df['username'] = df[column].str.extract(pattern, flags=re.IGNORECASE)
-        df['username'].fillna(df[column], inplace=True)
-        return list(df['username'])
-
-    def get_users(self, query):
-        client = login_user()
-        users = client.search_users_v1(query,count=5)
-        return users
     
-    def get_hashtag_users(self, query):
-        client = login_user()
-        hashtags = client.hashtag_medias_top_v1(query, amount=10)
-        return [hashtag.user.username for hashtag in hashtags]
 
+    
+    def store(self,users,source=1,linked_to='no_one',round=0):
+        for user in users:
+            InstagramUser.objects.create(username = user.username,info = user.dict(),source=source,linked_to=linked_to,round=round)
 
-    def get_similar_accounts(self, username):
+    def is_cursor_available(self):
+        is_cursor_available = InstagramUser.objects.filter(Q(username__isnull=True) & Q(cursor__isnull=False))
+        if is_cursor_available.exists():
+            cursor = is_cursor_available.latest('created_at')
+        return cursor
+
+    def scrap_followers(self,username,delay):
         client = login_user()
-        user_id = client.user_id_from_username(username=username)
+        user_info = client.user_info_by_username(''.join(username))
+        time.sleep(delay)
+        steps = user_info.follower_count/12
         
-        return client.fbsearch_suggested_profiles(user_id=user_id)
-        
-    
+        try:
+            followers,cursor = client.user_followers_gql_chunk(user_info.pk, max_amount=3)
+        except Exception as error:
+            InstagramUser.objects.create(cursor=cursor)
+            print(error)
 
-    def get_featured_accounts(self, username):
-        client = login_user()
-        user_id = client.user_id_from_username(username=username)
-        return client.featured_accounts_v1(target_user_id=user_id)
-
-    def get_family_accounts(self, username):
-        client = login_user()
-        user_id = client.user_id_from_username(username=username)
-        return client.get_account_family_v1(target_user_id=user_id)
-    
-    def handle_outsourced(self,username):
-        client = login_user()
-        instagram_accounts_ = self.connection.execute(text("SELECT id FROM instagram_account;"))
-        instagram_names_ = self.connection.execute(text("SELECT igname FROM instagram_account;"))
-        instagram_names = instagram_names_.fetchall()
-        instagram_accounts = instagram_accounts_.fetchall()
-        for i, instagram_account in enumerate(instagram_accounts_.fetchall()):
-            print(f"{i}-> {instagram_account}")
+        self.store(followers)
+        time.sleep(delay)
+        if self.is_cursor_available:
+            cursor = cursor
+        for i in range(steps-1):
+            time.sleep(random.randint(delay,delay*2))
             try:
-                try:
-                    user_info = client.user_info_by_username(instagram_names[i][0])
-                except Exception as error:
-                    user_info = {}
-                    print(error)
-                # import pdb;pdb.set_trace()
-                json_string = json.dumps(user_info.dict(), default=bytes_encoder)
-                self.connection.execute(text(f"""
-                    INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
-                    VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                    'instagram','{json_string.replace("'", "")}','{instagram_account[0]}'
-                    )
-
-                """))
+                followers, cursor = client.user_followers_gql_chunk(user_info.pk, max_amount=5,end_cursor=cursor)
             except Exception as error:
-                print(error)
+                InstagramUser.objects.create(cursor=cursor)
+            self.store(followers)
+
+    def scrap_users(self,query):
+        client = login_user()
+        time.sleep(random.randint(4,10))
+        users = client.search_users_v1(query,count=3)
+        self.store(users)
+       
    
-    def get_ig_user_info(self, username, followers=False, similar_accounts=False, users=False):
-        client = login_user()
-        # import pdb;pdb.set_trace()
-        user_info, user_id = None
-        if followers or similar_accounts and not users:
-            user_info = client.user_info_by_username(username)
-            user_id = user_info.pk
-
-        # user_id = 12345
-
-        batch_size = 100  # Adjust this based on your needs
-        def process_similar_accounts(offset):
-            # Loop to retrieve followers in batches
-            # _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
-            # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
-            # followers = client.user_followers(user_id=user_id,amount=batch_size)
-            inserted_ids = []
-            followers = client.fbsearch_suggested_profiles(user_id=user_id)
-            # followers = client.search_users_v1(username,count=5)
-
-            # # print(followers)
-            # # TODO: save followers to database
-            for i,follower in enumerate(followers):
-                print(follower['username'])
-
-                # Assuming 'igname' is the variable containing the Instagram name you want to insert
-                igname = follower['username']
-
-                # Check if igname already exists in the table
-                name = 'on_hold'
-                # get_on_hold_status = self.connection.execute(text(f"SELECT id FROM instagram_statuscheck WHERE name = %s", (name,)))
-                # get_on_hold_status_id = get_on_hold_status.fetchone()
-                try:
-                    check_instagram_accounts = self.connection.execute(text(f"SELECT id FROM instagram_account WHERE igname = '{igname}'"))
-                    # print('commiting')
-                    # import pdb;pdb.set_trace()
-                    
-                    existing_id = check_instagram_accounts.fetchone()
-                    inserted_id = None
-
-                    if existing_id:
-                        print(f"The igname '{igname}' already exists with ID {existing_id}. Skipping insertion.")
-                    else:
-                        # Perform the INSERT operation
-                        try:
-                            time.sleep(3)
-                            insert_record_return_id = self.connection.execute(text(f"""
-                                INSERT INTO instagram_account (
-                                    deleted_at, id, created_at, updated_at, email, phone_number,
-                                    profile_url, status_id, igname, full_name, assigned_to,
-                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index,
-                                    linked_to
-                                )
-                                VALUES (
-                                    DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
-                                    '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
-                                    DEFAULT, '{igname}', '{follower['full_name'].replace("'","")}', 'Robot',
-                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1,'test'
-                                )
-                                RETURNING id;
-                                
-                            """)) # implement algorithm for checking timecap
-                            print('commiting')
-                            print("--------------------INSERRTED----------------------")
-                        except Exception as error:
-                            print(error)
-
-                        inserted_id = insert_record_return_id.fetchone()[0]
-                        inserted_ids.append(inserted_id)
-
-                    if inserted_id:
-                        print(f"Inserted new record with ID {inserted_id}.")
-                        try:
-                            # insert_ = inserted_id.fetchone()[0]
-                            get_igname = self.connection.execute(text(f"""
-                                select igname from instagram_account where id='{inserted_id}';
-                            """))
-                            user_information = client.user_info_by_username(get_igname.fetchone()[0])
-                            self.connection.execute(text(f"""
-                                INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
-                                VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                                'instagram','{json.dumps(user_information.dict(), default=bytes_encoder)}','{inserted_id}'
-                                )
-
-                            """))
-                            print('commiting')
-                            print("--------------------INSERRTED OUTSOURCED----------------------")
-                        except Exception as error:
-                            print(error)
-                except Exception as err:
-                    print(f"Error during database operation: {err}")
-
-                    # Rollback the transaction to keep the database in a consistent state
-                    self.transaction.rollback()
-            return inserted_ids
-
-        
-
-        def process_users(offset):
-            # Loop to retrieve followers in batches
-            # _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
-            # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
-            # followers = client.user_followers(user_id=user_id,amount=batch_size)
-            inserted_ids = []
-            # followers = client.user_followers(user_id=user_id, amount=1000)
-            followers = client.search_users_v1(username,count=2)
-
-            # # print(followers)
-            # # TODO: save followers to database
-            for i,follower in enumerate(followers):
-                print(follower.username)
-
-                # Assuming 'igname' is the variable containing the Instagram name you want to insert
-                igname = follower.username
-
-
-                # Check if igname already exists in the table
-                name = 'on_hold'
-                # get_on_hold_status = self.connection.execute(text(f"SELECT id FROM instagram_statuscheck WHERE name = %s", (name,)))
-                # get_on_hold_status_id = get_on_hold_status.fetchone()
-                try:
-                    check_instagram_accounts = self.connection.execute(text(f"SELECT id FROM instagram_account WHERE igname = '{igname}'"))
-                    # print('commiting')
-                    # import pdb;pdb.set_trace()
-                    
-                    existing_id = check_instagram_accounts.fetchone()
-                    inserted_id = None
-
-                    if existing_id:
-                        print(f"The igname '{igname}' already exists with ID {existing_id}. Skipping insertion.")
-                    else:
-                        # Perform the INSERT operation
-                        try:
-                            time.sleep(3)
-                            insert_record_return_id = self.connection.execute(text(f"""
-                                INSERT INTO instagram_account (
-                                    deleted_at, id, created_at, updated_at, email, phone_number,
-                                    profile_url, status_id, igname, full_name, assigned_to,
-                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index,
-                                    linked_to
-                                )
-                                VALUES (
-                                    DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
-                                    '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
-                                    DEFAULT, '{igname}', '{follower.full_name.replace("'","")}', 'Robot',
-                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1,'thecut_api'
-                                )
-                                RETURNING id;
-                                
-                            """)) # implement algorithm for checking timecap
-                            print('commiting')
-                            print("--------------------INSERRTED----------------------")
-                        except Exception as error:
-                            print(error)
-
-                        inserted_id = insert_record_return_id.fetchone()[0]
-                        inserted_ids.append(inserted_id)
-                    # import pdb;pdb.set_trace()   
-                    if inserted_id:
-                        print(f"Inserted new record with ID {inserted_id}.")
-                        try:
-                            # insert_ = inserted_id.fetchone()[0]
-                            get_igname = self.connection.execute(text(f"""
-                                select igname from instagram_account where id='{inserted_id}';
-                            """))
-                            user_information = client.user_info_by_username(get_igname.fetchone()[0])
-                            self.connection.execute(text(f"""
-                                INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
-                                VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                                'instagram','{json.dumps(user_information.dict(), default=bytes_encoder)}','{inserted_id}'
-                                )
-
-                            """))
-                            print('commiting')
-                            print("--------------------INSERRTED OUTSOURCED----------------------")
-                        except Exception as error:
-                            print(error)
-                except Exception as err:
-                    print(f"Error during database operation: {err}")
-
-                    # Rollback the transaction to keep the database in a consistent state
-                    self.transaction.rollback()
-            return inserted_ids
-
-        def process_followers(offset):
-            # Loop to retrieve followers in batches
-            # _, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size)
-            # followers, cursor = client.user_followers_v1_chunk(user_id, max_amount=batch_size, max_id=cursor)
-            # followers = client.user_followers(user_id=user_id,amount=batch_size)
-            inserted_ids = []
-            followers = client.user_followers(user_id=user_id, amount=1000)
-            # followers = client.search_users_v1(username,count=2)
-
-            # # print(followers)
-            # # TODO: save followers to database
-            for i,follower in enumerate(followers):
-                print(followers[follower].username)
-
-                # Assuming 'igname' is the variable containing the Instagram name you want to insert
-                igname = followers[follower].username
-
-
-                # Check if igname already exists in the table
-                name = 'on_hold'
-                # get_on_hold_status = self.connection.execute(text(f"SELECT id FROM instagram_statuscheck WHERE name = %s", (name,)))
-                # get_on_hold_status_id = get_on_hold_status.fetchone()
-                try:
-                    check_instagram_accounts = self.connection.execute(text(f"SELECT id FROM instagram_account WHERE igname = '{igname}'"))
-                    # print('commiting')
-                    # import pdb;pdb.set_trace()
-                    
-                    existing_id = check_instagram_accounts.fetchone()
-                    inserted_id = None
-
-                    if existing_id:
-                        print(f"The igname '{igname}' already exists with ID {existing_id}. Skipping insertion.")
-                    else:
-                        # Perform the INSERT operation
-                        try:
-                            time.sleep(3)
-                            insert_record_return_id = self.connection.execute(text(f"""
-                                INSERT INTO instagram_account (
-                                    deleted_at, id, created_at, updated_at, email, phone_number,
-                                    profile_url, status_id, igname, full_name, assigned_to,
-                                    dormant_profile_created, confirmed_problems, rejected_problems,qualified,index,
-                                    linked_to
-                                )
-                                VALUES (
-                                    DEFAULT,'{str(uuid.uuid4())}', '{datetime.now(timezone.utc)}',
-                                    '{datetime.now(timezone.utc)}', DEFAULT, DEFAULT, DEFAULT,
-                                    DEFAULT, '{igname}', '{followers[follower].full_name.replace("'","")}', 'Robot',
-                                    DEFAULT, DEFAULT, DEFAULT, '{False}',1,'thecut_api'
-                                )
-                                RETURNING id;
-                                
-                            """)) # implement algorithm for checking timecap
-                            print('commiting')
-                            print("--------------------INSERRTED----------------------")
-                        except Exception as error:
-                            print(error)
-
-                        inserted_id = insert_record_return_id.fetchone()[0]
-                        inserted_ids.append(inserted_id)
-                    # import pdb;pdb.set_trace()   
-                    if inserted_id:
-                        print(f"Inserted new record with ID {inserted_id}.")
-                        try:
-                            # insert_ = inserted_id.fetchone()[0]
-                            get_igname = self.connection.execute(text(f"""
-                                select igname from instagram_account where id='{inserted_id}';
-                            """))
-                            user_information = client.user_info_by_username(get_igname.fetchone()[0])
-                            self.connection.execute(text(f"""
-                                INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id)
-                                VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                                'instagram','{json.dumps(user_information.dict(), default=bytes_encoder)}','{inserted_id}'
-                                )
-
-                            """))
-                            print('commiting')
-                            print("--------------------INSERRTED OUTSOURCED----------------------")
-                        except Exception as error:
-                            print(error)
-                except Exception as err:
-                    print(f"Error during database operation: {err}")
-
-                    # Rollback the transaction to keep the database in a consistent state
-                    self.transaction.rollback()
-            return inserted_ids
-            
-                    
-                    
-            
-        # Use ThreadPoolExecutor for parallel processing
-        offsets = range(0, 1, 1)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            if followers:
-                results = list(executor.map(process_followers,offsets))
-            
-            elif similar_accounts:
-                results = list(executor.map(process_similar_accounts,offsets))
-
-            elif users:
-                results = list(executor.map(process_users,offsets))
-                
-            # Optional: Add a delay if needed to prevent hitting rate limits
-            print(results)
-            time.sleep(2)  # Add a delay of 2 seconds between batches
-
-        return results
-            
-
-    def get_action_button_info(self, username):
-        client = login_user()
-        url_info = client.user_info_by_username(username)
-
-        return urlparse(url_info.external_url).netloc
-    
-
-    def find_largest_count(self, data, count_type='like'):
-        """
-        Find the largest like count or like count from the given dataset.
-
-        Parameters:
-        - data: List of dictionaries containing 'like_count' and 'like_count' keys.
-        - count_type: Specify 'like' or 'like' to determine which count to find.
-
-        Returns:
-        - The largest count value.
-        """
-        if count_type not in ('comment', 'like'):
-            raise ValueError("Invalid count_type. Use 'comment' or 'like'.")
-
-        # Get the key based on count_type
-        count_key = f"{count_type}_count"
-
-        # Find the largest count using a lambda function
-        entry_with_largest_count = max(data, key=lambda x: x[count_key])
-
-        return entry_with_largest_count
-
-    def get_dates_within_last_seven_days(self, date_list):
-        today = datetime.now(timezone.utc)
-        seven_days_ago = today - timedelta(days=7)
-        
-        dates_within_last_seven_days = []
-
-        for date in date_list:
-            if seven_days_ago <= date <= today:
-                dates_within_last_seven_days.append(date)
-        
-
-        return len(dates_within_last_seven_days) > 0
-    
-
-    def get_popularity(self, outsourced_data):
-        if outsourced_data['follower_count'] > 5000:
-            return "PRO"
-        elif outsourced_data['follower_count'] >= 500 and outsourced_data['follower_count'] <= 5000:
-            return "ACTIVE"
-        elif outsourced_data['follower_count'] <= 300:
-            return "INACTIVE"
-        
-    def get_metrics_check(self, lst):
-        return {
-            "pro" : any(item > 50 for item in lst),
-            "active" : any(item >= 20 and item <= 50 for item in lst) and not any(item >= 50 for item in lst),
-            "inactive" : any(item <= 20 for item in lst)
-        }
-        
-
-    def check_positive_keywords(self,outsourced_data, positive_keywords):
-        keywords = []
-        for i in positive_keywords:
-            if i in str(outsourced_data['full_name']).lower():
-               
-                keywords.append(i)
-            
-            if i in str(outsourced_data['category']).lower():
-                keywords.append(i)
-            
-            if i in str(outsourced_data['biography']).lower():
-                keywords.append(i)
-        
-        return keywords
-
-    def check_negative_keywords(self,outsourced_data, negative_keywords):
-        keywords = []
-        for i in negative_keywords:
-            if i in str(outsourced_data['external_url']).lower():
-                keywords.append(i)
-
-            if i in str(outsourced_data['full_name']).lower():
-               
-                keywords.append(i)
-            
-            if i in str(outsourced_data['category']).lower():
-                keywords.append(i)
-            
-            if i in str(outsourced_data['biography']).lower():
-                keywords.append(i)
-        
-        return keywords
-
-     
-     
-
-    def enrich_outsourced_data(self, users=None, infinite=False, changing_index=None, positive_keywords=None, negative_keywords=None):
-
-        client = login_user()
-        outsourced_data_ = None
-        if infinite:
-            # import pdb;pdb.set_trace()
-            outsourced_data_ = self.connection.execute(text(f"SELECT id, results, account_id FROM instagram_outsourced where account_id in {tuple(users) if len(users) > 1 else tuple(users) * 2};"))
+    def scrap_info(self,delay_before_requests,delay_after_requests,step,accounts,round):
+        scouts = Scout.objects.filter(available=True)
+        scout_index = 0
+        initial_scout = scouts[scout_index]
+        try:
+            client = login_user(initial_scout)
+        except Exception as error:
+            print("There was an error logging in")
+        try:
+            pointer_user = InstagramUser.objects.get(outsourced_id_pointer=True)
+        except InstagramUser.DoesNotExist:
+            pointer_user = None
+        instagram_users = None
+        if pointer_user:
+            instagram_users = InstagramUser.objects.filter(created_at__gt=pointer_user.created_at)
         else:
-            outsourced_data_ = self.connection.execute(text("""
-                    SELECT id, results, account_id 
-                    FROM instagram_outsourced 
-                    where account_id in (select id from instagram_account where status_id is null ORDER BY RANDOM());
-            """)
-            )
-        # import pdb;pdb.set_trace()
-        outsourced_dataset = True
-        ig_data_ = self.connection.execute(text("SELECT id, igname FROM instagram_account;"))
-        ig_dataset = ig_data_.fetchall()
-        
+            instagram_users = InstagramUser.objects.filter(round=round)
 
-
-
-        def insert_information(inserted_id,igname):
-
+        for i, user in enumerate(instagram_users, start=1):
+            time.sleep(random.randint(delay_before_requests,delay_before_requests+step))
             try:
-                user_info = client.user_info_by_username(igname)
-                self.connection.execute(text(f"""
-                    INSERT INTO instagram_outsourced (deleted_at,id,created_at,updated_at, source,results,account_id,hour_to_be_executed)
-                    VALUES (DEFAULT, '{str(uuid.uuid4())}','{datetime.now(timezone.utc)}','{datetime.now(timezone.utc)}',
-                    'instagram','{json.dumps(user_info.dict(), default=bytes_encoder)}','{inserted_id}','0'
-                    )
-
-                """))
-                print(f"inserted outsourced record for -------------{inserted_id}")
+                user.info = client.user_info_by_username(user.username)
             except Exception as error:
-                print(error)
-
-        
-            
-
-        def outsourcing_information(changing_indice=None, accounts=24, positive_keywords=None, negative_keywords=None):
-            try:
-                now = datetime.now(timezone.utc)
-                hr = now.hour - 6
-                # hr = now.hour
-                hour_idx = None
-                changing_idx = changing_indice
-                end_prev_day = 20 - hr if hr < 20 else 12
-                day_idx = 1 if hr < 20 else 2
-                salesreps = None
-                try:
-                    salesreps = self.connection.execute(text(
-                        """
-                        SELECT id FROM sales_rep_salesrep WHERE available=True;
-                        """
-                    )).fetchall()
-                    hour_idx = 12/(len(salesreps)*accounts)
-                    print(f"no_salesreps=================={len(salesreps)}")
-                except Exception as error:
-                    print(error)
-                for i, outsourced_data in enumerate(outsourced_data_.fetchall()):
-                    print(f"{i}->{outsourced_data[1]['username']}")
-                    # import pdb;pdb.set_trace()
-                    try:
-                        # user_medias = client.user_medias(user_id=outsourced_data[1]['pk'],amount=2)
-                        # days_check = self.get_dates_within_last_seven_days([media.taken_at for media in user_medias])
-                        popularity_check = self.get_popularity(outsourced_data[1])
-                        keywords_chck = None
-                        keywords_negative_chck = None
-
-                        if positive_keywords and negative_keywords:
-                            keywords_chck = self.check_positive_keywords(outsourced_data[1],positive_keywords=positive_keywords) 
-                            keywords_negative_chck = self.check_negative_keywords(outsourced_data[1], negative_keywords = negative_keywords)
-                        else:
-                            print("Note that we are using the default keywords please")
-                            keywords_chck = self.check_positive_keywords(outsourced_data[1],positive_keywords=STYLISTS_WORDS) 
-                            keywords_negative_chck = self.check_negative_keywords(outsourced_data[1], negative_keywords = STYLISTS_NEGATIVE_WORDS)
-                        try:
-                            # outsourced_data[1].pop("is_posting_actively")
-                            outsourced_data[1].pop("is_popular")
-                            outsourced_data[1].pop("is_stylist")
-                            outsourced_data[1].pop("qualified_keywords")
-                        except Exception as error:
-                            print(error)
-                        
-                        # media_components = []
-                        # for media in user_medias:
-                        #     media_component = {
-                        #         "id" : media.id,
-                        #         "pk" : media.pk,
-                        #         "comment_count" : media.comment_count,
-                        #         "like_count" : media.like_count
-                        #     }
-                        #     media_components.append(media_component)
-                        
-                        # media_id = self.find_largest_count(media_components, 'like')['id']
-                        ext_url = outsourced_data[1].get("external_url")
-                        # import pdb;pdb.set_trace()
-                        has_book_button = False
-                        if ext_url:
-                            service_providers = ["booksy", "styleseat", "squire", "thecut", "vagaro"]
-                            has_book_button = any(provider.lower() in ext_url.lower() for provider in service_providers)
-                        else:
-                            has_book_button = False
-                        checks =  {
-                            # "is_posting_actively": days_check,
-                            "is_popular":popularity_check,
-                            "is_stylist": True if len(keywords_chck) > 2 or has_book_button else False,
-                            "book_button": has_book_button,
-                            "media_id": "",
-                            "qualified_keywords":keywords_chck if keywords_chck else "",
-                            "disqualified_keywords": keywords_negative_chck if keywords_negative_chck else ""
-                        }
-                        enriched_outsourced_data = {**checks, **outsourced_data[1]}
-                        
-                        try:
-                            json_string = json.dumps(enriched_outsourced_data, default=bytes_encoder)
-                            self.connection.execute(text(f"""
-                                UPDATE  instagram_outsourced SET results='{json_string.replace("'", "")}'
-                                WHERE instagram_outsourced.id='{outsourced_data[0]}';
-                            """))
-                            print(f"updated record-------------{outsourced_data[0]}")
-                            print('commiting')
-                        except Exception as error:
-                            print(error)
-                            self.transaction.rollback()
-
-                        try:
-                            is_stylist = enriched_outsourced_data.get('is_stylist', False)
-                            is_private = enriched_outsourced_data.get('is_private', False)
-                            is_popular = enriched_outsourced_data.get('is_popular', '')
-                            if is_stylist and not is_private and (is_popular == 'ACTIVE' or is_popular == 'PRO') and len(keywords_negative_chck) == 0:
-                            # if True:
-                                self.connection.execute(text(f"""
-                                        UPDATE instagram_account SET qualified = TRUE WHERE id='{outsourced_data[2]}';             
-                                        """))
-                                # perform round robin task here below
-                                salesrep = salesreps[i % len(salesreps)]
-                                salesrep_id = salesrep[0]
-
-                                
-                                self.connection.execute(text(
-                                    f"""
-                                    INSERT INTO sales_rep_salesrep_instagram (salesrep_id, account_id) 
-                                    VALUES ('{salesrep_id}', '{outsourced_data[2]}')
-                                    """
-                                ))
-                                print('commiting')
-                                empty_dict= {}
-                                print(f"hour_indice==============>{hour_idx}")
-                                print(f"changing_indice===============>{changing_idx}")
-                                crontab_id = None
-                                if hour_idx > end_prev_day:
-                                    hour_idx += 11
-                                    end_prev_day += 24
-                                    day_idx += 1
-
-                                time_to_be_executed = None
-                                if changing_idx:
-                                    print(f"changing_indice_has_changed_to=================>{changing_idx + hour_idx}")
-                                    time_to_be_executed = now + timedelta(hours=changing_idx + hour_idx)
-                                else:
-                                    time_to_be_executed = now + timedelta(hours=hour_idx)
-
-                                hour_to_be_executed = time_to_be_executed.hour
-                                day_to_be_executed = time_to_be_executed.day
-                                month_to_be_executed = time_to_be_executed.month
-                                random_minute = time_to_be_executed.minute
-
-                                crontab_id = self.connection.execute(text(f"""
-                                    INSERT INTO django_celery_beat_crontabschedule (minute, hour, day_of_week , day_of_month, month_of_year, timezone ) 
-                                    VALUES ({random_minute},{hour_to_be_executed},'*',{day_to_be_executed},'{month_to_be_executed}', 'UTC') RETURNING id;
-                                """))
-                                hour_idx += 12/(len(salesreps)*accounts)
-
-                                self.connection.execute(text(f"""
-                                    INSERT INTO django_celery_beat_periodictask (
-                                        name, task, interval_id, crontab_id, args, kwargs, queue, enabled, last_run_at, total_run_count,
-                                        date_changed, description, one_off, headers
-                                    )
-                                    VALUES (
-                                        'SendFirstCompliment-{outsourced_data[1]['username']}',
-                                        'instagram.tasks.send_first_compliment',NULL,'{crontab_id.fetchone()[0]}',
-                                        '{json.dumps([[outsourced_data[1]['username']]])}', '{empty_dict}', NULL,
-                                        TRUE, NULL, 0, NOW(), 'Your task description', TRUE, '{empty_dict}'
-                                    );
-                                """))
-                                print('commiting')
-                                print("=================Inserted cronjob===================")
-                        except Exception as error:
-                            print(error)
-                            self.transaction.rollback()
-
-                    except Exception as error:
-                        print(error)
-                        # Rollback the transaction to keep the database in a consistent state
-                        self.transaction.rollback()
-            except Exception as error:
-
+                user.outsourced_id_pointer=True
+                user.save()
                 print(error)
             
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            # import pdb;pdb.set_trace()
-            if outsourced_dataset:
-                executor.submit(outsourcing_information, changing_index, 24, positive_keywords, negative_keywords)
-            else:
-                if not infinite:
-                    for ig in ig_dataset:
-                        executor.submit(insert_information,ig['id'],ig['igname'])
-        
-
-    def insert_data_with_enriched_outsourced_data(self,ig_users,followers,positive_keywords=None, negative_keywords=None):
-        # get_earliest_crontab_id = self.connection.execute(text("SELECT crontab_id FROM django_celery_beat_periodictask ORDER BY id DESC limit 1;"))
-        # get_earliest_date = self.connection.execute(text(f"SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule where id={get_earliest_crontab_id.fetchone()[0]};")).fetchone()
-        get_latest_crontab_id = self.connection.execute(text("SELECT crontab_id FROM django_celery_beat_periodictask ORDER BY id DESC limit 1;"))
-        get_latest_date = self.connection.execute(text(f"SELECT minute, hour, day_of_month, month_of_year FROM django_celery_beat_crontabschedule where id={get_latest_crontab_id.fetchone()[0]};")).fetchone()
-        now = datetime.now(timezone.utc) + timedelta(hours = 4)
-        latest_date = datetime(
-                            now.year, 
-                            int(get_latest_date[3]),  #month
-                            int(get_latest_date[2]), #day
-                            int(get_latest_date[1]), #hour
-                            int(get_latest_date[0]) #minute
-                        )
-        # earliest_date = datetime(
-        #                     now.year, 
-        #                     int(get_earliest_date[3]),  #month
-        #                     int(get_earliest_date[2]), #day
-        #                     int(get_earliest_date[1]), #hour
-        #                     int(get_earliest_date[0]) #minute
-        #                 )
-        difference = now - latest_date.replace(tzinfo=timezone.utc)
-        changing_idx = int((difference.total_seconds() / 60) / 60)
-        print(f"changing_indice===============>{changing_idx}")
-        i = 0
-        while True:
-
-            ig_dataset = None
-
-            if len(ig_users)>1:
-                ig_dataset = ig_users
-            else:
-                ig_data = self.connection.execute(text("SELECT id, igname FROM instagram_account WHERE qualified=TRUE ORDER BY RANDOM();"))
-                ig_dataset = ig_data.fetchall()
-            print(f"Number_of_qualified_accounts-----------{len(ig_dataset)}")
-            # import pdb;pdb.set_trace()
-            for j, user in enumerate(ig_dataset):
-                print(f"User-----{user[1],user}")
-                try:
-                    user = user.lower() if len(ig_users) > 1 else user[1]
-                    new_users = self.get_ig_user_info(user,followers=followers)
-                    users = []
-                    if new_users:
-                        for _ in new_users:
-                            for x, new_user in enumerate(_):
-                                users.append(new_user)
-
-                    if j == 0:
-                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx,
-                                                    positive_keywords=positive_keywords,negative_keywords=negative_keywords)
-
-                    if j > 1:
-                        self.enrich_outsourced_data(users, infinite=True, changing_index=changing_idx + len(users),
-                                                    positive_keywords=positive_keywords,negative_keywords=negative_keywords)
-                        print(f"changing_index_in_infinite_loop=================>{changing_idx + len(users)}")
-                        
-                except Exception as error:
-                    print(error)
-                
-                
-            
-            print(f"Iteration---------{i}")
-            
-            i += 1
-
-
+            if i % step == 0:
+                scout_index = (scout_index + 1) % len(scouts)
+                client = login_user(scouts[scout_index])
+            if i % accounts == 0:
+                time.sleep(random.randint(delay_after_requests,delay_after_requests+step))
 
     
 
+    def custom_insert(self,data,table,return_val):
+        record = None
+
+        with self.engine.connect() as connection:
+            try:
+                insert_statement = table.insert().values(data).returning(table.c.return_val)
+                result = connection.execute(insert_statement)
+                record = result.fetchone()
+            except Exception as error:
+                logging.warning(error)
+        return record
+
+    
+                
+
+    def qualify(self, client_info, keywords_to_check,time_to_begin_outreach):
+        keyword_found = any(
+            len(str(value)) > 1 and keyword.lower() in str(value).lower()
+            for value in client_info.values()
+            for keyword in keywords_to_check
+        )
+        if keyword_found:
+            with self.engine.connect() as connection:
+                crontab_data = {'minute':time_to_begin_outreach.minute,'hour':time_to_begin_outreach.hour,
+                                'day_of_week':'*','day_of_month':time_to_begin_outreach.day,
+                                'month_of_year':time_to_begin_outreach.month,'timezone':'UTC'}
+                crontab_statement = self.django_celery_beat_crontabschedule_table.insert().values(crontab_data).returning(self.django_celery_beat_crontabschedule_table.c.id)
+                result = connection.execute(crontab_statement)
+                crontab_id = result.fetchone()
+                if crontab_id:
+                    periodic_data = {'name':f"SendFirstCompliment-{client_info['username']}",'task':'instagram.tasks.send_first_compliment','crontab_id':crontab_id['id'],
+                                    'args':json.dumps([client_info['username']]),'kwargs':json.dumps({}),'enabled':True,'one_off':True,'total_run_count':0,'date_changed':datetime.now(),
+                                    'description':'test','headers':json.dumps({})}
+                    periodic_task_statement = self.django_celery_beat_periodictask_table.insert().values(periodic_data)
+                    connection.execute(periodic_task_statement)
+                    print(f"-----------------------------successfullyninsertedperiodictaskfor-----------{client_info['username']}-----------")
+
+
+    def insert_and_enrich(self,account_data,outsourced_data,keywords_to_check):
+        instagram_users = InstagramUser.objects.all()
+        hour = 0
+        for i,instagram_user in enumerate(instagram_users):
+            account = self.custom_insert(account_data.update({
+                            'igname':instagram_user.username,
+                            'full_name': instagram_user.info['full_name']
+                        }),self.instagram_account_table,'id')
+            outsourced = self.custom_insert(outsourced_data.update({
+                            'results':instagram_user,
+                            'account_id':account['id'] 
+                        }),self.instagram_outsourced_table,'results')
+            hour += 0.5
+            self.qualify(outsourced['results'],keywords_to_check, datetime.now()+timedelta(hours=hour))

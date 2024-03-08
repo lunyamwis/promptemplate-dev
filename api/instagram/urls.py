@@ -10,9 +10,10 @@ router.register(r'lead_sources', views.LeadSourceViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('scrapFollowersOrSimilarAccounts/', views.GetFollowersOrSimilarAccounts.as_view()),
-    path('scrapFollowersToCSV/', views.GetFollowersToCSV.as_view()),
-    path('scrapForever/', views.ExtractInfiniteLeads.as_view()),
+    path('scrapFollowers/', views.ScrapFollowers.as_view()),
+    path('scrapUsers/', views.ScrapUsers.as_view()),
+    path('scrapInfo/', views.ScrapInfo.as_view()),
+    path('insertAndEnrich/', views.InsertAndEnrich.as_view()),
     path('setup/', views.SetupScrapper.as_view()),
 ]
 

@@ -1,7 +1,7 @@
 from django.db import models
 from api.helpers.models import BaseModel
 from django.contrib.postgres.fields import ArrayField
-
+from api.scout.models import Scout
 import pytz
 
 # Create your models here.
@@ -68,4 +68,24 @@ class LeadSource(BaseModel):
 
 
 
+class InstagramUser(BaseModel):
+    SOURCE_CHOICES = (
+        (1, 'followers'),
+        (2, 'searching_users'),
+        (3, 'similar_accounts'),
+    )
+    username = models.CharField(max_length=255,null=True,blank=True)
+    info = models.JSONField(null=True,blank=True)
+    linked_to = models.CharField(max_length=50,null=True,blank=True)
+    source = models.IntegerField(choices=SOURCE_CHOICES,default=1)
+    round = models.IntegerField(null=True,blank=True)
+    scout = models.ForeignKey(Scout,on_delete=models.CASCADE,null=True,blank=True)
+    account_id = models.CharField(max_length=255,null=True,blank=True)
+    account_id_pointer = models.BooleanField(default=False)
+    outsourced_id = models.CharField(max_length=255,null=True,blank=True)
+    outsourced_id_pointer = models.BooleanField(default=False)
+    cursor = models.TextField(null=True,blank=True)
 
+    def __str__(self) -> str:
+
+        return self.username if self.username else 'cursor'
