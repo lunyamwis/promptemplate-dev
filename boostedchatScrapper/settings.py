@@ -9,6 +9,8 @@
 
 from shutil import which
 import os
+from django.core.wsgi import get_wsgi_application
+from django import setup
 
 BOT_NAME = "boostedchatScrapper"
 
@@ -101,3 +103,8 @@ FEED_EXPORT_ENCODING = "utf-8"
 
 SELENIUM_DRIVER_NAME = 'chrome'
 SELENIUM_DRIVER_ARGUMENTS=['-headless','--lang=en']  # '--headless' if using chrome instead of firefox
+
+
+DJANGO_SETTINGS_MODULE = os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings')
+application = get_wsgi_application()
+setup()

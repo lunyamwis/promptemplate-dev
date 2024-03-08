@@ -10,7 +10,6 @@ from .helpers.gmaps_dynamic_actions import generate_gmap_links
 from .helpers.utils import click_element,generate_html
 from ..http import SeleniumRequest
 from boostedchatScrapper.items import GmapsItem
-from .helpers.instagram_login_helper import login_user
 
 CLEAN_STRING = re.compile(r"[\']")
 
@@ -19,16 +18,19 @@ class GmapsSpider(CrawlSpider):
     allowed_domains = ["www.google.com"]
     base_url = "https://www.google.com/maps/"
     start_urls = [
-        "https://www.google.com/maps/"
+        "https://www.google.com/maps/search/"
 
     ]
 
     rules = (Rule(LinkExtractor(allow=r"Items/"), callback="parse", follow=True),)
-
+    
+    
     def start_requests(self):
         urls = generate_gmap_links(self.start_urls[0],"Barbers, Orlando, FL")
+
         for url in urls:
             page  = generate_html(url)
+            
             print("==================☁️☁️generated_url☁️☁️===========")
             print(page.current_url)
             print("==================☁️☁️generated_url☁️☁️===========")
@@ -53,28 +55,26 @@ class GmapsSpider(CrawlSpider):
         resp_meta["review"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[contains(@class,"F7nice")]/span[1]').text
         ig_info = []
         #TODO: attach to process_users
-        # try:
-        #     client = login_user(username='stella.elth', password='martinnyambane1996-')
-        #     print(f"11111111111111111111111111111{resp_meta['business_name']}111111111111111111")
-        #     users = client.search_users_v1(resp_meta["business_name"],count=5)
-        #     for user in users:
-        #         user_data = client.user_info_by_username(user.username)
-        #         if user_data.public_phone_country_code == '1':
-        #             ig_info.append(user_data.dict())
-        # except Exception as error:
-        #     print("==************************************==we were incapable of acquiring their instagram information==*****************************==")
-
-        resp_meta["ig_info"] = ig_info
+       
         print("==================☁️☁️resp_meta☁️☁️===========")
         print(f"resp_meta------------------------------->{resp_meta}")
         print("==================☁️☁️resp_meta☁️☁️===========")
         
         resp_meta["no_reviews"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[contains(@class,"F7nice")]/span[2]').text
         resp_meta["category"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//button[contains(@class,"DkEaL")]').text
-        resp_meta["review_names"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"d4r55")]')]
-        resp_meta["review_comments_given"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"MyEned")]/span')]
-        resp_meta["review_rating_given"] = [elem.get_attribute("aria-label") for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//span[contains(@class,"kvMYJc")]')]
-        resp_meta["review_time_given"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//span[contains(@class,"rsqaWe")]')]
+        reviews = []
+        for i,element in enumerate(response.request.meta['driver'].find_elements(by=By.XPATH, value="//div[@class='jJc9Ad ']")):
+            review = {
+
+                "author":response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"d4r55")]')[i].text,
+                "text":response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"MyEned")]/span')[i].text,
+                "rating":response.request.meta['driver'].find_elements(by=By.XPATH, value='//span[contains(@class,"kvMYJc")]')[i].get_attribute("aria-label"),
+                "time":response.request.meta['driver'].find_elements(by=By.XPATH, value='//span[contains(@class,"rsqaWe")]')[i].text
+            
+            }
+            reviews.append(review)
+
+        resp_meta['reviews'] = reviews
         resp_meta["address"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"rogA2c")]/div')]
         print("==================☁️☁️resp_meta☁️☁️===========")
         print(f"resp_meta------------------------------->{resp_meta}")
@@ -113,19 +113,7 @@ class GmapsSpider(CrawlSpider):
         except Exception as error:
             print(error)
         
-        time.sleep(5)
-        reviews_url = response.request.meta['driver'].current_url
-        if reviews_url:
-            resp_meta["review_names"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"d4r55")]')]
-            resp_meta["review_content"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//span[contains(@class,"wiI7pd")]')]
-            
-        try:
-            response.request.meta['driver'].get(response.url)
-            time.sleep(2)
-            response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[contains(@class,"Gpq6kf fontTitleSmall")]')[2].click()
-        except Exception as error:
-            print(error)
-
+     
         time.sleep(5)
         about_url = response.request.meta['driver'].current_url
         if about_url:

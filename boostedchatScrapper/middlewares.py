@@ -60,6 +60,7 @@ class SeleniumMiddleware:
             self.driver = driver_klass(service=ChromeService(ChromeDriverManager(
             latest_release_url='https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json',
             driver_version='121.0.6167.184').install()),**driver_kwargs)
+            # import pdb;pdb.set_trace()
             # self.driver = driver_klass(**driver_kwargs)
         # remote driver
 

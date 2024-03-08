@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'api.helpers',
     'rest_framework',
     'django_celery_beat',
-    'softdelete'
+    'softdelete',
+    'boostedchatScrapper'
 ]
 
 MIDDLEWARE = [

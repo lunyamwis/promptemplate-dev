@@ -68,7 +68,6 @@ class StyleseatSpider(CrawlSpider):
         time.sleep(10)
         # styleseat_item["name"] = "styleseat"
         resp_meta["name"] = "styleseat"
-        import pdb;pdb.set_trace()
         resp_meta["secondary_name"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//h1[@data-testid="proName"]').text
         print(f"resp_meta------------------------------->{resp_meta}")
         resp_meta["logo_url"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[contains(@class,"avatar-icon")]').get_attribute("style")
@@ -82,8 +81,8 @@ class StyleseatSpider(CrawlSpider):
         resp_meta["businessName"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="proBusinessName"]').text
         resp_meta["ratings"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="rating-stars"]').text
         # //div[@data-testid="service-card"]
+        time.sleep(7)
         services = []
-        import pdb;pdb.set_trace()
         for i,elem in enumerate(response.request.meta['driver'].find_elements(by=By.XPATH,value='//div[@data-testid="service-card"]')):
             if i < 3:
                 try:
@@ -121,7 +120,6 @@ class StyleseatSpider(CrawlSpider):
         
         reviews = []
         time.sleep(10)
-        import pdb;pdb.set_trace()
         try:
         
             response.request.meta['driver'].find_element(by=By.XPATH, value='//div[@data-testid="tab-navigation-Reviews"]/div').click()
@@ -174,7 +172,6 @@ class StyleseatSpider(CrawlSpider):
 
         if response.url:
             resp_meta["gallery_image_urls"] = [elem.get_attribute("src") for elem in response.request.meta['driver'].find_elements(by=By.TAG_NAME, value='img')]
-        import pdb;pdb.set_trace() 
         time_urls = None
         response.request.meta['driver'].get(response.url)
         time.sleep(10)
@@ -190,54 +187,54 @@ class StyleseatSpider(CrawlSpider):
             print(error)
 
         date_slots = []
-        for url in time_urls[0:1]:
-            time.sleep(7)
-            response.request.meta['driver'].get(url)
-            time.sleep(7)
-            try:
-                import pdb;pdb.set_trace() 
-                for available_date in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="sunshine-dot"]/../../../div'):
-                    available_date.click()
-                    time.sleep(7)
-                    try:
-                        date_slot = {
-                            "date": available_date.text,
-                            "available":[el.text for el in available_date.find_elements(by=By.XPATH,value='//button[@class="ss-button medium text-light"]') if el.text != "Notify"],
-                            "booked":[el.text for el in available_date.find_elements(by=By.XPATH,value=f'//div[contains(@data-testid,"bookedtimepill")]/div')]
-                        }
-                        date_slots.append(date_slot)
-                    except Exception as error:
-                        print(error)
+        # for url in time_urls[0:1]:
+        #     time.sleep(7)
+        #     response.request.meta['driver'].get(url)
+        #     time.sleep(7)
+        #     try:
+        #         import pdb;pdb.set_trace() 
+        #         for available_date in response.request.meta['driver'].find_elements(by=By.XPATH, value='//div[@data-testid="sunshine-dot"]/../../../div'):
+        #             available_date.click()
+        #             time.sleep(7)
+        #             try:
+        #                 date_slot = {
+        #                     "date": available_date.text,
+        #                     "available":[el.text for el in available_date.find_elements(by=By.XPATH,value='//button[@class="ss-button medium text-light"]') if el.text != "Notify"],
+        #                     "booked":[el.text for el in available_date.find_elements(by=By.XPATH,value=f'//div[contains(@data-testid,"bookedtimepill")]/div')]
+        #                 }
+        #                 date_slots.append(date_slot)
+        #             except Exception as error:
+        #                 print(error)
                         
-                    time.sleep(5)
-                    response.request.meta['driver'].get(url)
-                    time.sleep(7)
+        #             time.sleep(5)
+        #             response.request.meta['driver'].get(url)
+        #             time.sleep(7)
 
 
-            except Exception as error:
-                print(error)
+        #     except Exception as error:
+        #         print(error)
 
-        print("==================☁️☁️date_slots☁️☁️===========")
-        print(date_slots)
-        print("==================☁️☁️date_slots☁️☁️===========")
+        # print("==================☁️☁️date_slots☁️☁️===========")
+        # print(date_slots)
+        # print("==================☁️☁️date_slots☁️☁️===========")
 
-        resp_meta["date_slots"] = date_slots
+        # resp_meta["date_slots"] = date_slots
 
-        averages_one = []
-        try:
-            for date_slot in date_slots:
-                averages_one.append((len(date_slot["booked"])/(len(date_slot["booked"])+len(date_slot["available"])))*100)
+        # averages_one = []
+        # try:
+        #     for date_slot in date_slots:
+        #         averages_one.append((len(date_slot["booked"])/(len(date_slot["booked"])+len(date_slot["available"])))*100)
 
-            average = math.ceil(sum(averages_one)/len(averages_one))
+        #     average = math.ceil(sum(averages_one)/len(averages_one))
 
-            if average > 70:
-                resp_meta["calendar_availability"] = "Fully Booked Calendar"
-            elif average > 34 and average < 70:
-                resp_meta["calendar_availability"] = "Some Calendar Availability"
-            elif average < 34:
-                resp_meta["calendar_availability"] = "Empty Calendar"
-        except Exception as error:
-            print(error)
+        #     if average > 70:
+        #         resp_meta["calendar_availability"] = "Fully Booked Calendar"
+        #     elif average > 34 and average < 70:
+        #         resp_meta["calendar_availability"] = "Some Calendar Availability"
+        #     elif average < 34:
+        #         resp_meta["calendar_availability"] = "Empty Calendar"
+        # except Exception as error:
+        #     print(error)
         # styleseat_item["resp_meta"] = resp_meta
         yield resp_meta
         

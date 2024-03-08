@@ -1,4 +1,5 @@
 import time
+import urllib.parse
 import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -8,36 +9,29 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 from .utils import setup_driver
-
+from boostedchatScrapper.models import Link
 
 
 
 def generate_gmap_links(url,area):
     driver = setup_driver()
-    driver.get(url)
+    google_maps_url = (
+            url
+            + urllib.parse.quote_plus(area)
+            + "?hl=en"
+    )
+    driver.get(google_maps_url)
     links = []
     time.sleep(7)  # Wait for the page to load dynamically
-    search_box = driver.find_element(By.CSS_SELECTOR, '#searchboxinput')
-    
-    search_box.send_keys(area)  # Perform a search
-    search = driver.find_element(By.XPATH, '//*[@id="searchbox-searchbutton"]')
-    search.click()
-    time.sleep(7)  # Wait for the search results to load
-    
     divSideBar = None
     try:
         divSideBar = driver.find_element(
-            By.CSS_SELECTOR, f"div[aria-label='Matokeo ya {area}']"
+            By.CSS_SELECTOR, f"div[aria-label='Results for {area}']"
         )
     except NoSuchElementException as err:
-        print(err)
-        try:
-            divSideBar = driver.find_element(
-                By.CSS_SELECTOR, f"div[aria-label='Results of {area}']"
-            )
-        except NoSuchElementException as err:
-            print(err)
+        print("************************search box not found**********************************")
 
+   
     i = 0
     keepScrolling = True
     while keepScrolling:
@@ -60,6 +54,7 @@ def generate_gmap_links(url,area):
             if "place" in element.get_attribute("href"):
                 try:
                     links.append(element.get_attribute("href"))
+                    # Link.objects.create(url=element.get_attribute("href"),name='gmaps')
                 except Exception as error:
                     print(error)
             
@@ -76,6 +71,7 @@ def generate_gmap_links(url,area):
 
        
     driver.quit()
+    
     return links
 
 

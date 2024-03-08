@@ -1,7 +1,7 @@
 import time
 import logging
 import os
-# from selenium import webdriver
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from seleniumwire import webdriver
+# from seleniumwire import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
 

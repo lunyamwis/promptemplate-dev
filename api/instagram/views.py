@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from .tasks import scrap_followers_or_similar_accounts,scrap_followers_into_csv,scrap_followers_or_similar_accounts_forever
+from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich
 from boostedchatScrapper.spiders.instagram import InstagramSpider
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 from api.helpers.dag_generator import generate_dag
@@ -36,40 +36,41 @@ class LeadSourceViewSet(viewsets.ModelViewSet):
     serializer_class = LeadSourceSerializer
 
 
-class CleanDatabaseLeads(APIView):
+class ScrapFollowers(APIView):
     def post(self, request):
-        followers = request.data.get("get_followers")
-        positive_keywords = request.data.get("positive_keywords")
-        negative_keywords = request.data.get("negative_keywords")
-        scrap_followers_or_similar_accounts_forever.delay(followers,positive_keywords,negative_keywords)
+        username = request.data.get("username")
+        delay = request.data.get("delay")
+        if isinstance(username,list):
+            for account in username:
+                scrap_followers.delay(account,delay)
+        else:
+            scrap_followers.delay(username,delay)
         return Response({"success":True},status=status.HTTP_200_OK)
 
-class ExtractInfiniteLeads(APIView):
+class ScrapUsers(APIView):
     def post(self,request):
-        scrap_followers_or_similar_accounts_forever.delay()
+        query = request.data.get("query")
+        scrap_users.delay(query)
         return Response({"success":True},status=status.HTTP_200_OK)
 
-class GetFollowersOrSimilarAccounts(APIView):
+class ScrapInfo(APIView):
     def post(self,request):
-        accounts = request.data.get("accounts",[])
-        followers = request.data.get("get_followers")
-        positive_keywords = request.data.get("positive_keywords")
-        negative_keywords = request.data.get("negative_keywords")
-        scrap_followers_or_similar_accounts.delay(accounts,followers,positive_keywords,negative_keywords)
+        delay_before_requests = request.data.get("delay_before_requests",[])
+        delay_after_requests = request.data.get("delay_after_requests")
+        step = request.data.get("step")
+        accounts = request.data.get("accounts")
+        round = request.data.get("round")
+        scrap_info.delay(delay_before_requests,delay_after_requests,step,accounts,round)
         return Response({"success":True},status=status.HTTP_200_OK)
 
-
-
-class GetFollowersToCSV(APIView):
-    def post(self, request):
-        client = login_user(username='matisti96', password='luther1996-')
-        username = request.data.get('accounts')
-        user_id = client.user_id_from_username(''.join(username))
-        _, cursor = client.user_followers_gql_chunk(user_id, max_amount=3)
-        
-        scrap_followers_into_csv.delay(cursor,user_id)
+class InsertAndEnrich(APIView):
+    def post(self,request):
+        account_data = request.data.get("account_data",[])
+        outsourced_data = request.data.get("outsourced_data")
+        keywords_to_check = request.data.get("keywords_to_check")
+        insert_and_enrich.delay(account_data,outsourced_data,keywords_to_check)
         return Response({"success":True},status=status.HTTP_200_OK)
-
+    
 
 class SetupScrapper(APIView):
     def post(self, request):
@@ -105,40 +106,18 @@ class SetupScrapper(APIView):
             # Create a dictionary from the serializer data
             print(data_dict)
             data = None
-            for source in sources:
+            for i,source in enumerate(sources):
                 if source.criterion == 0 or source.criterion == 1 and not make_infinite:
                     data = {
                         "dag_id": source.name,
                         "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapFollowersOrSimilarAccounts/",
+                        "endpoint": "instagram/scrapFollowers/",
                         "info":{
-                            "accounts": source.account_usernames,
-                            "get_followers": source.criterion,
-                            "positive_keywords": qualification_algorithm.positive_keywords,
-                            "negative_keywords": qualification_algorithm.negative_keywords
+                            "username": source.account_usernames,
+                            "delay": source.criterion or 5
                         }
                     }
-                if collect_as_csv:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapFollowersToCSV/",
-                        "info":{
-                            "accounts": source.account_usernames,
-                            "get_followers": source.criterion 
-                        }
-                    }
-                if source.criterion == 0 or source.criterion == 1 and make_infinite:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapForever/",
-                        "info":{
-                            "get_followers": source.criterion,
-                            "positive_keywords": qualification_algorithm.positive_keywords,
-                            "negative_keywords": qualification_algorithm.negative_keywords
-                        }
-                    }
+                
                 
             # Write the dictionary to a YAML file
             yaml_file_path = os.path.join(settings.BASE_DIR, 'api','helpers',

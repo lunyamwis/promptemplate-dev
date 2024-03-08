@@ -169,3 +169,4 @@ report.html
 boostedchatScrapper/*.json
 *.csv
 logs/
+*.txt
