@@ -26,19 +26,6 @@ from sqlalchemy import create_engine, text,Table,MetaData,select,update
 from api.instagram.models import InstagramUser
 from api.scout.models import Scout,Device
 from django.db.models import Q
-# from boostedchatScrapper.spiders.instagram import InstagramSpider
-# insta_spider = InstagramSpider()
-# insta_spider.get_followers('colorswithchemistry')
-
-# producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-def bytes_encoder(o):
-    if isinstance(o, bytes):
-        return o.decode('utf-8')  # Or encode to base64, etc.
-    if isinstance(o, str):
-        return str.replace("'","")
-    raise TypeError
-
-
 
 class InstagramSpider:
     name = 'instagram'
@@ -203,7 +190,7 @@ class InstagramSpider:
                                     'description':'test','headers':json.dumps({})}
                     periodic_task_statement = self.django_celery_beat_periodictask_table.insert().values(periodic_data)
                     connection.execute(periodic_task_statement)
-                    print(f"-----------------------------successfullyninsertedperiodictaskfor-----------{client_info['username']}-----------")
+                    print(f"successfullyninsertedperiodictaskfor->{client_info['username']}")
 
 
     def insert_and_enrich(self,account_data,outsourced_data,keywords_to_check):
