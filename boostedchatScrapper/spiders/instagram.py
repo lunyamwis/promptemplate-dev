@@ -16,7 +16,8 @@ current_dir = os.getcwd()
 sys.path.append(current_dir)
 import concurrent.futures
 from .helpers.instagram_login_helper import login_user
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from django.utils import timezone
 from urllib.parse import urlparse
 from kafka import KafkaProducer
 from collections import ChainMap
@@ -65,7 +66,14 @@ class InstagramSpider:
         return cursor
 
     def scrap_followers(self,username,delay):
-        client = login_user()
+        scouts = Scout.objects.filter(available=True)
+        scout_index = 0
+        initial_scout = scouts[scout_index]
+        try:
+            client = login_user(initial_scout)
+        except Exception as error:
+            print("There was an error logging in")
+        
         user_info = client.user_info_by_username(''.join(username))
         time.sleep(delay)
         steps = user_info.follower_count/12
@@ -80,7 +88,7 @@ class InstagramSpider:
         time.sleep(delay)
         if self.is_cursor_available:
             cursor = cursor
-        for i in range(steps-1):
+        for i in range(int(steps)-1):
             time.sleep(random.randint(delay,delay*2))
             try:
                 followers, cursor = client.user_followers_gql_chunk(user_info.pk, max_amount=5,end_cursor=cursor)
@@ -89,7 +97,10 @@ class InstagramSpider:
             self.store(followers)
 
     def scrap_users(self,query):
-        client = login_user()
+        scouts = Scout.objects.filter(available=True)
+        scout_index = 0
+        initial_scout = scouts[scout_index]
+        client = login_user(scout=initial_scout)
         time.sleep(random.randint(4,10))
         users = client.search_users_v1(query,count=3)
         self.store(users)
@@ -114,33 +125,60 @@ class InstagramSpider:
             instagram_users = InstagramUser.objects.filter(round=round)
 
         for i, user in enumerate(instagram_users, start=1):
-            time.sleep(random.randint(delay_before_requests,delay_before_requests+step))
-            try:
-                user.info = client.user_info_by_username(user.username)
-            except Exception as error:
-                user.outsourced_id_pointer=True
-                user.save()
-                print(error)
-            
-            if i % step == 0:
-                scout_index = (scout_index + 1) % len(scouts)
-                client = login_user(scouts[scout_index])
-            if i % accounts == 0:
-                time.sleep(random.randint(delay_after_requests,delay_after_requests+step))
+            if user.username:
+                time.sleep(random.randint(delay_before_requests,delay_before_requests+step))
+                try:
+                    user.info = client.user_info_by_username(user.username)
+                    user.save()
+                except Exception as error:
+                    user.outsourced_id_pointer=True
+                    user.save()
+                    print(error)
+                
+                if i % step == 0:
+                    scout_index = (scout_index + 1) % len(scouts)
+                    client = login_user(scouts[scout_index])
+                if i % accounts == 0:
+                    time.sleep(random.randint(delay_after_requests,delay_after_requests+step))
 
     
-
-    def custom_insert(self,data,table,return_val):
+    @classmethod
+    def custom_insert(self,instagram_user):
         record = None
-
+        
         with self.engine.connect() as connection:
-            try:
-                insert_statement = table.insert().values(data).returning(table.c.return_val)
-                result = connection.execute(insert_statement)
-                record = result.fetchone()
-            except Exception as error:
-                logging.warning(error)
-        return record
+            insert_statement = self.instagram_account_table.insert().values({
+                    'id': str(uuid.uuid4()),
+                    'created_at':timezone.now(),
+                    'updated_at':timezone.now(),
+                    'igname':instagram_user.username,
+                    'full_name': instagram_user.info['full_name'],
+                    "email":"",
+                    "phone_number":"",
+                    "profile_url":"",
+                    "igname":"",
+                    "full_name":"",
+                    "assigned_to":"Robot",
+                    "dormant_profile_created":True,
+                    "confirmed_problems":"",
+                    "rejected_problems":"",
+                    "qualified":False,
+                    "index":1,
+                    "linked_to":"not"
+            }).returning(self.instagram_account_table.c.id)
+            result = connection.execute(insert_statement)
+            account = result.fetchone()
+            insert_statement = self.instagram_outsourced_table.insert().values({
+                    'id': str(uuid.uuid4()),
+                    'created_at':timezone.now(),
+                    'updated_at':timezone.now(),
+                    "source":"ig",
+                    'results':instagram_user.info,
+                    'account_id':account['id'] 
+            }).returning(self.instagram_outsourced_table.c.results)
+            result = connection.execute(insert_statement)
+            record = result.fetchone()
+        return record['results']
 
     
                 
@@ -172,13 +210,7 @@ class InstagramSpider:
         instagram_users = InstagramUser.objects.all()
         hour = 0
         for i,instagram_user in enumerate(instagram_users):
-            account = self.custom_insert(account_data.update({
-                            'igname':instagram_user.username,
-                            'full_name': instagram_user.info['full_name']
-                        }),self.instagram_account_table,'id')
-            outsourced = self.custom_insert(outsourced_data.update({
-                            'results':instagram_user,
-                            'account_id':account['id'] 
-                        }),self.instagram_outsourced_table,'results')
+            
+            outsourced = self.custom_insert(instagram_user)
             hour += 0.5
-            self.qualify(outsourced['results'],keywords_to_check, datetime.now()+timedelta(hours=hour))
+            self.qualify(outsourced,keywords_to_check, datetime.now()+timedelta(hours=hour))

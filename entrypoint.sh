@@ -6,17 +6,17 @@ echo "<<<<<<<< Collect Staticfiles>>>>>>>>>"
 python3 manage.py collectstatic --noinput
 
 
-sleep 5
-echo "<<<<<<<< Database Setup and Migrations Starts >>>>>>>>>"
-# Run database migrations
-python3 manage.py makemigrations &
-python3 manage.py migrate &
+# sleep 5
+# echo "<<<<<<<< Database Setup and Migrations Starts >>>>>>>>>"
+# # Run database migrations
+# python3 manage.py makemigrations &
+# python3 manage.py migrate &
 
-sleep 5
-echo "<<<<<<< Initializing the Database >>>>>>>>>>"
-echo " "
-python manage.py loaddata initialization.yaml
-echo " "
+# sleep 5
+# echo "<<<<<<< Initializing the Database >>>>>>>>>>"
+# echo " "
+# python manage.py loaddata initialization.yaml
+# echo " "
 echo "<<<<<<<<<<<<<<<<<<<< START Celery >>>>>>>>>>>>>>>>>>>>>>>>"
 
 # # start Celery worker

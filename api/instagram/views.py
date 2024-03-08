@@ -55,19 +55,20 @@ class ScrapUsers(APIView):
 
 class ScrapInfo(APIView):
     def post(self,request):
-        delay_before_requests = request.data.get("delay_before_requests",[])
-        delay_after_requests = request.data.get("delay_after_requests")
-        step = request.data.get("step")
-        accounts = request.data.get("accounts")
-        round = request.data.get("round")
+        delay_before_requests = int(request.data.get("delay_before_requests",[]))
+        delay_after_requests = int(request.data.get("delay_after_requests"))
+        step = int(request.data.get("step"))
+        accounts = int(request.data.get("accounts"))
+        round = int(request.data.get("round"))
         scrap_info.delay(delay_before_requests,delay_after_requests,step,accounts,round)
         return Response({"success":True},status=status.HTTP_200_OK)
 
 class InsertAndEnrich(APIView):
     def post(self,request):
-        account_data = request.data.get("account_data",[])
+        account_data = request.data.get("account_data")
         outsourced_data = request.data.get("outsourced_data")
         keywords_to_check = request.data.get("keywords_to_check")
+        print(account_data)
         insert_and_enrich.delay(account_data,outsourced_data,keywords_to_check)
         return Response({"success":True},status=status.HTTP_200_OK)
     
