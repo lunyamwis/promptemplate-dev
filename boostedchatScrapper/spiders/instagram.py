@@ -92,6 +92,14 @@ class InstagramSpider:
         users = client.search_users_v1(query,count=3)
         self.store(users)
        
+    def scrap_extra(self, url, params, return_val):
+        scouts = Scout.objects.filter(available=True)
+        scout_index = 0
+        initial_scout = scouts[scout_index]
+        client = login_user(scout=initial_scout)
+        result = client.private_request(url, params=params)
+        self.store(result[return_val])    
+        return result[return_val]
    
     def scrap_info(self,delay_before_requests,delay_after_requests,step,accounts,round):
         scouts = Scout.objects.filter(available=True)
@@ -134,37 +142,42 @@ class InstagramSpider:
         record = None
         
         with self.engine.connect() as connection:
-            insert_statement = self.instagram_account_table.insert().values({
-                    'id': str(uuid.uuid4()),
-                    'created_at':timezone.now(),
-                    'updated_at':timezone.now(),
-                    'igname':instagram_user.username,
-                    'full_name': instagram_user.info['full_name'],
-                    "email":"",
-                    "phone_number":"",
-                    "profile_url":"",
-                    "igname":"",
-                    "full_name":"",
-                    "assigned_to":"Robot",
-                    "dormant_profile_created":True,
-                    "confirmed_problems":"",
-                    "rejected_problems":"",
-                    "qualified":False,
-                    "index":1,
-                    "linked_to":"not"
-            }).returning(self.instagram_account_table.c.id)
-            result = connection.execute(insert_statement)
-            account = result.fetchone()
-            insert_statement = self.instagram_outsourced_table.insert().values({
-                    'id': str(uuid.uuid4()),
-                    'created_at':timezone.now(),
-                    'updated_at':timezone.now(),
-                    "source":"ig",
-                    'results':instagram_user.info,
-                    'account_id':account['id'] 
-            }).returning(self.instagram_outsourced_table.c.results)
-            result = connection.execute(insert_statement)
-            record = result.fetchone()
+            existing_username_query = select([self.instagram_account_table]).where(
+                self.instagram_account_table.c.igname == instagram_user.username
+            )
+            existing_username = self.engine.execute(existing_username_query).fetchone()
+            if not existing_username:
+                insert_statement = self.instagram_account_table.insert().values({
+                        'id': str(uuid.uuid4()),
+                        'created_at':timezone.now(),
+                        'updated_at':timezone.now(),
+                        'igname':instagram_user.username,
+                        'full_name': instagram_user.info['full_name'],
+                        "email":"",
+                        "phone_number":"",
+                        "profile_url":"",
+                        "igname":"",
+                        "full_name":"",
+                        "assigned_to":"Robot",
+                        "dormant_profile_created":True,
+                        "confirmed_problems":"",
+                        "rejected_problems":"",
+                        "qualified":False,
+                        "index":1,
+                        "linked_to":"not"
+                }).returning(self.instagram_account_table.c.id)
+                result = connection.execute(insert_statement)
+                account = result.fetchone()
+                insert_statement = self.instagram_outsourced_table.insert().values({
+                        'id': str(uuid.uuid4()),
+                        'created_at':timezone.now(),
+                        'updated_at':timezone.now(),
+                        "source":"ig",
+                        'results':instagram_user.info,
+                        'account_id':account['id'] 
+                }).returning(self.instagram_outsourced_table.c.results)
+                result = connection.execute(insert_statement)
+                record = result.fetchone()
         return record['results']
 
     
