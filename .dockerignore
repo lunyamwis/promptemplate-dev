@@ -2,6 +2,8 @@
 *.pyo
 *.mo
 *.db
+*.json
+*.csv
 *.css.map
 *.egg-info
 *.sql.gz
