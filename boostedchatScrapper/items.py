@@ -2,7 +2,8 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
-
+from scrapy_djangoitem import DjangoItem
+from boostedchatScrapper.models import ScrappedData
 import scrapy
 
 
@@ -22,7 +23,6 @@ class StyleSeatItem(scrapy.Item):
 # items.py
 
 
-class APIItem(scrapy.Item):
-    name = scrapy.Field()
-    resp_meta = scrapy.Field()
+class APIItem(DjangoItem):
+    django_model = ScrappedData
     

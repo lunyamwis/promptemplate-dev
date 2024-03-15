@@ -49,11 +49,13 @@ class LeadSource(BaseModel):
     CRITERIA = (
         (0, 'get similar accounts'),
         (1, 'get followers'),
-        (2, 'get posts with hashtag'),
-        (3, 'interacted with photos'),
-        (4, 'to be enriched from instagram'),
-        (5, 'google maps'),
-        (6, 'urls')
+        (2, 'get users'),
+        (3, 'get posts with hashtag'),
+        (4, 'interacted with photos'),
+        (5, 'to be enriched from instagram'),
+        (6, 'google maps'),
+        (7, 'urls'),
+        (8, 'apis')
     )
     name = models.CharField(max_length=255)
     criterion = models.IntegerField(choices=CRITERIA, default=0)
@@ -89,3 +91,5 @@ class InstagramUser(BaseModel):
     def __str__(self) -> str:
 
         return self.username if self.username else 'cursor'
+
+

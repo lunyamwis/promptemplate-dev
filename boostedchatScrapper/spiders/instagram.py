@@ -29,17 +29,22 @@ from django.db.models import Q
 
 class InstagramSpider:
     name = 'instagram'
-    db_url = f"postgresql://{os.getenv('POSTGRES_USERNAME')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DBNAME')}"
-    engine = create_engine(db_url)
-    connection = engine.connect()
-    transaction = connection.begin()
-    metadata = MetaData()
-    instagram_account_table = Table('instagram_account', metadata, autoload_with=engine)
-    instagram_outsourced_table = Table('instagram_outsourced',metadata, autoload_with=engine)
-    django_celery_beat_crontabschedule_table = Table('django_celery_beat_crontabschedule', metadata, autoload_with=engine)
-    django_celery_beat_periodictask_table = Table('django_celery_beat_periodictask', metadata, autoload_with=engine)
-    salesrep_table = Table('sales_rep_salesrep',metadata,autoload_with=engine)
-    salesrep_instagram_table = Table('sales_rep_salesrep_instagram',metadata,autoload_with=engine)
+    # db_url = f"postgresql://{os.getenv('POSTGRES_USERNAME')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DBNAME')}"
+    # engine = create_engine(db_url)
+    # connection = engine.connect()
+    # transaction = connection.begin()
+    
+    def __init__(self, load_tables: bool, db_url: str):
+        if load_tables:
+            self.metadata = MetaData()
+            self.engine = create_engine(db_url)
+            self.connection = self.engine.connect()
+            self.instagram_account_table = Table('instagram_account', self.metadata, autoload_with=self.engine)
+            self.instagram_outsourced_table = Table('instagram_outsourced',self.metadata, autoload_with=self.engine)
+            self.django_celery_beat_crontabschedule_table = Table('django_celery_beat_crontabschedule', self.metadata, autoload_with=self.engine)
+            self.django_celery_beat_periodictask_table = Table('django_celery_beat_periodictask', self.metadata, autoload_with=self.engine)
+            self.salesrep_table = Table('sales_rep_salesrep',self.metadata,autoload_with=self.engine)
+            self.salesrep_instagram_table = Table('sales_rep_salesrep_instagram',self.metadata,autoload_with=self.engine)
 
     
     def store(self,users,source=1,linked_to='no_one',round=0):

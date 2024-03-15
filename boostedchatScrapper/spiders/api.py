@@ -51,6 +51,6 @@ class ApiSpider(scrapy.Spider):
         dictionaries = response.json()
         for i,dictionary in enumerate(dictionaries['data']):
             api_item['name'] = f'mindbodyonline_api_{i}'
-            api_item['resp_meta'] = dictionary
+            api_item['response'] = dictionary
         
             yield api_item

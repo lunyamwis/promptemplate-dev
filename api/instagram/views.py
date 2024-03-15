@@ -1,6 +1,7 @@
 import yaml
 import os
 import pandas as pd
+import subprocess
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,17 +9,8 @@ from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich
-from boostedchatScrapper.spiders.instagram import InstagramSpider
-from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
-from twisted.internet import reactor
-from twisted.internet import defer
-from scrapy.crawler import CrawlerRunner
-from scrapy.utils.project import get_project_settings
-from boostedchatScrapper.spiders.gmaps import GmapsSpider
-# Create your views here.
-# views.py
 
 from rest_framework import viewsets
 from .models import Score, QualificationAlgorithm, Scheduler, LeadSource
@@ -55,25 +47,45 @@ class ScrapFollowers(APIView):
 class ScrapGmaps(APIView):
 
     def get(self,request):
-        settings = get_project_settings()
-        runner = CrawlerRunner(settings)
-        deferreds = []
-        deferreds.append(runner.crawl(GmapsSpider))
-        
-        # Create a callback function to stop the reactor when all crawlers are done
-        def stop_reactor():
-            reactor.stop()
+        try:
+            # Execute Scrapy spider using the command line
+            subprocess.run(["scrapy", "crawl", "gmaps"])
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
-        defer.DeferredList(deferreds).addCallback(lambda _: stop_reactor())
-        reactor.run()
-        return Response({"success":True},status=status.HTTP_200_OK)
+class ScrapAPI(APIView):
+
+    def get(self,request):
+        try:
+            # Execute Scrapy spider using the command line
+            subprocess.run(["scrapy", "crawl", "api"])
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+class ScrapURL(APIView):
+
+    def get(self,request):
+        try:
+            # Execute Scrapy spider using the command line
+            subprocess.run(["scrapy", "crawl", "webcrawler"])
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
 class ScrapUsers(APIView):
     def post(self,request):
         query = request.data.get("query")
-        scrap_users.delay(query)
+        if isinstance(query,list):
+            for name in query:
+                scrap_users.delay(name)
+        else:
+            scrap_users.delay(query)
         return Response({"success":True},status=status.HTTP_200_OK)
 
 class ScrapInfo(APIView):
@@ -157,17 +169,54 @@ class SetupScrapper(APIView):
                         "dag_id": source.name,
                         "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
                         "endpoint": "instagram/scrapFollowers/",
+                        "method": "POST",
                         "info":{
                             "username": source.account_usernames,
                             "delay": source.criterion or 5
                         }
                     }
-                
+                if source.criterion == 2:
+                    data = {
+                        "dag_id": source.name,
+                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
+                        "endpoint": "instagram/scrapUsers/",
+                        "method": "POST",
+                        "info":{
+                            "query": source.estimated_usernames
+                        }
+                    }
+                if source.criterion == 6:
+                    data = {
+                        "dag_id": source.name,
+                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
+                        "endpoint": "instagram/scrapGmaps/",
+                        "method": "GET",
+                        "info":{}
+                    }
+                if source.criterion == 7:
+                    data = {
+                        "dag_id": source.name,
+                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
+                        "endpoint": "instagram/scrapURL/",
+                        "method": "GET",
+                        "info":{}
+                    }
+
+                if source.criterion == 8:
+                    data = {
+                        "dag_id": source.name,
+                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
+                        "endpoint": "instagram/scrapAPI/",
+                        "method": "GET",
+                        "info":{}
+                    }
+
                 if enrich:
                     data = {
                         "dag_id": source.name,
                         "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
                         "endpoint": "instagram/scrapInfo/",
+                        "method": "POST",
                         "info":{
                                 "delay_before_requests":4,
                                 "delay_after_requests":14,
@@ -182,6 +231,7 @@ class SetupScrapper(APIView):
                         "dag_id": source.name,
                         "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
                         "endpoint": "instagram/insertAndEnrich/",
+                        "method": "POST",
                         "info":{
                             "keywords_to_check": qualification_algorithm.positive_keywords,
                             "round": round_

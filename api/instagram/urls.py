@@ -12,6 +12,8 @@ urlpatterns = [
     path('', include(router.urls)),
     path('scrapFollowers/', views.ScrapFollowers.as_view()),
     path('scrapGmaps/', views.ScrapGmaps.as_view()),
+    path('scrapAPI/', views.ScrapAPI.as_view()),
+    path('scrapURL/', views.ScrapURL.as_view()),
     path('scrapUsers/', views.ScrapUsers.as_view()),
     path('scrapInfo/', views.ScrapInfo.as_view()),
     path('insertAndEnrich/', views.InsertAndEnrich.as_view()),

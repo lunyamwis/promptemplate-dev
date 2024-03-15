@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from .helpers.gmaps_dynamic_actions import generate_gmap_links
 from .helpers.utils import click_element,generate_html
 from ..http import SeleniumRequest
+from ..items import APIItem
 from boostedchatScrapper.items import GmapsItem
 
 CLEAN_STRING = re.compile(r"[\']")
@@ -57,7 +58,7 @@ class GmapsSpider(CrawlSpider):
     def parse(self, response):
         print("==================☁️☁️titles_page☁️☁️===========")
         resp_meta = {}
-        item = GmapsItem()
+        item = APIItem()
         item["name"] = "google_maps"
         resp_meta["name"] = "google_maps"
         resp_meta["title"] = CLEAN_STRING.sub("", response.request.meta['driver'].title)
@@ -131,8 +132,8 @@ class GmapsSpider(CrawlSpider):
         if about_url:
             resp_meta["tag_name"] =  [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//h2[contains(@class,"iL3Qke")]')]
             resp_meta["tag_detail"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//li[contains(@class,"hpLkke")]/span')]
-        item["resp_meta"] = resp_meta
-        yield resp_meta
+        item["response"] = resp_meta
+        yield item
 
     def parse_reviews(self,response):
         item = {}
