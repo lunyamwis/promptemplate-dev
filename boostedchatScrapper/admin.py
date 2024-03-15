@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Link
+from .models import Link,ScrappedData
 
 @admin.register(Link)
 class LinkAdmin(admin.ModelAdmin):
@@ -8,3 +8,6 @@ class LinkAdmin(admin.ModelAdmin):
         self.exclude = ("id",)
         form = super(LinkAdmin, self).get_form(request, obj, **kwargs)
         return form
+    
+
+admin.site.register(ScrappedData)

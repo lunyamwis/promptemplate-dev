@@ -12,51 +12,21 @@ from itemadapter import ItemAdapter
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from sqlalchemy import create_engine, Column, Integer, String, JSON
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from boostedchatScrapper.models import ScrappedData
+from asgiref.sync import sync_to_async
 
-class BoostedchatscrapperPipeline:
-    pass
-    # def __init__(self) -> None:
-        
-    #     self.engine = create_engine(URL(
-    #                         account = os.getenv('SF_ACCOUNT_IDENTIFIER'),
-    #                         user = os.getenv('SF_USERNAME'),
-    #                         password = os.getenv('SF_PASSWORD'),
-    #                         database = os.getenv('SF_DATABASE'),
-    #                         schema = os.getenv('SF_SCHEMA'),
-    #                         warehouse = os.getenv('SF_WAREHOUSE'),
-    #                         role=os.getenv('SF_ROLE'),
-    #                 ))
-    #     self.connection = self.engine.connect()
-    #     print("=====================snowflaketester⭐⭐⭐=====================================")
-    #     result = self.connection.execute("select * from INSTAGRAM_ACCOUNT;")
-    #     for row in result:
-    #         print(row)
-    #     print("======================snowflaketester⭐⭐⭐⭐====================================")
+Base = declarative_base()
 
-    # def process_item(self, item, spider):
-    #     result = self.connection.execute("select * from INSTAGRAM_ACCOUNT;")
-    #     print("=====================snowflaketest⭐=====================================")
-    #     print(result)
-    #     print("======================snowflaketest⭐====================================")
-    #     with Session(self.engine) as session:
-    #         session.begin()  # <-- required, else InvalidRequestError raised on next call
-    #         print("=====================snowflaketest⭐⭐⭐⭐⭐⭐⭐⭐=====================================")
-    #         print(result)
-    #         print("======================snowflaketest⭐⭐⭐⭐⭐⭐⭐⭐====================================")
-    #         if "name" in item.keys():
-    #             print("=====================snowflaketest⭐⭐⭐⭐⭐⭐⭐⭐=====================================")
-    #             print(item)
-    #             print("======================snowflaketest⭐⭐⭐⭐⭐⭐⭐⭐====================================")
-    #             session.execute(f"""insert into INSTAGRAM_OUTSOURCEDINFO (SOURCE, RESULTS) values ('{item["name"]}','{str(json.dumps(item))}')""")
-    #             session.commit()
-                
-    #         session.close()
 
-    #     return item
-    
-    # def close_spider(self, spider):
+class BoostedchatscrapperPipeline(object):
+    async def process_item(self, item, spider):
+        # Convert synchronous operation to asynchronous using sync_to_async
+        create_scraped_data = sync_to_async(ScrappedData.objects.create)
 
-    #     ## Close cursor & connection to database 
-    #     self.connection.close()
-    #     self.engine.dispose()
-        
+        # Await the asynchronous function call
+        await create_scraped_data(name=item['name'], response=item['response'])
+
+        return item

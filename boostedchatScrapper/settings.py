@@ -59,6 +59,7 @@ DOWNLOADER_MIDDLEWARES = {
    'scrapeops_scrapy.middleware.retry.RetryMiddleware': 550,
    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
    "boostedchatScrapper.middlewares.SeleniumMiddleware": 800,
+   # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1
 }
 
 # Enable or disable extensions

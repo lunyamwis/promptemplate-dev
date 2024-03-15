@@ -2,6 +2,7 @@ import logging
 import scrapy
 import time
 import re
+import urllib.parse
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.http import HtmlResponse
@@ -9,6 +10,7 @@ from selenium.webdriver.common.by import By
 from .helpers.gmaps_dynamic_actions import generate_gmap_links
 from .helpers.utils import click_element,generate_html
 from ..http import SeleniumRequest
+from ..items import APIItem
 from boostedchatScrapper.items import GmapsItem
 
 CLEAN_STRING = re.compile(r"[\']")
@@ -26,26 +28,37 @@ class GmapsSpider(CrawlSpider):
     
     
     def start_requests(self):
-        urls = generate_gmap_links(self.start_urls[0],"Barbers, Orlando, FL")
+        # urls = generate_gmap_links(self.start_urls[0],"Barbers, Orlando, FL")
 
-        for url in urls:
-            page  = generate_html(url)
+        # for url in urls:
+        #     page  = generate_html(url)
             
-            print("==================☁️☁️generated_url☁️☁️===========")
-            print(page.current_url)
-            print("==================☁️☁️generated_url☁️☁️===========")
-            yield SeleniumRequest(
-                    url = page.current_url,
+        #     print("==================☁️☁️generated_url☁️☁️===========")
+        #     print(page.current_url)
+        #     print("==================☁️☁️generated_url☁️☁️===========")
+        #     yield SeleniumRequest(
+        #             url = page.current_url,
+        #             callback = self.parse
+        #         )
+
+        search_string = "Minute Suites - DFW Airport Terminal A, Near A38,TX,US"
+        google_maps_url = (
+            "https://www.google.com/maps/search/"
+            + urllib.parse.quote_plus(search_string)
+            + "?hl=en"
+        )
+        
+        yield SeleniumRequest(
+                    url = google_maps_url,
                     callback = self.parse
                 )
-
     
     
 
     def parse(self, response):
         print("==================☁️☁️titles_page☁️☁️===========")
         resp_meta = {}
-        item = GmapsItem()
+        item = APIItem()
         item["name"] = "google_maps"
         resp_meta["name"] = "google_maps"
         resp_meta["title"] = CLEAN_STRING.sub("", response.request.meta['driver'].title)
@@ -119,8 +132,8 @@ class GmapsSpider(CrawlSpider):
         if about_url:
             resp_meta["tag_name"] =  [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//h2[contains(@class,"iL3Qke")]')]
             resp_meta["tag_detail"] = [elem.text for elem in response.request.meta['driver'].find_elements(by=By.XPATH, value='//li[contains(@class,"hpLkke")]/span')]
-        item["resp_meta"] = resp_meta
-        yield resp_meta
+        item["response"] = resp_meta
+        yield item
 
     def parse_reviews(self,response):
         item = {}
