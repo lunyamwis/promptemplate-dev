@@ -19,3 +19,10 @@ class StyleSeatItem(scrapy.Item):
     name = scrapy.Field()
     resp_meta = scrapy.Field()
     
+# items.py
+
+
+class APIItem(scrapy.Item):
+    name = scrapy.Field()
+    resp_meta = scrapy.Field()
+    

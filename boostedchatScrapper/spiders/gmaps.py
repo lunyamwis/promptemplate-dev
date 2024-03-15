@@ -2,6 +2,7 @@ import logging
 import scrapy
 import time
 import re
+import urllib.parse
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.http import HtmlResponse
@@ -26,19 +27,30 @@ class GmapsSpider(CrawlSpider):
     
     
     def start_requests(self):
-        urls = generate_gmap_links(self.start_urls[0],"Barbers, Orlando, FL")
+        # urls = generate_gmap_links(self.start_urls[0],"Barbers, Orlando, FL")
 
-        for url in urls:
-            page  = generate_html(url)
+        # for url in urls:
+        #     page  = generate_html(url)
             
-            print("==================☁️☁️generated_url☁️☁️===========")
-            print(page.current_url)
-            print("==================☁️☁️generated_url☁️☁️===========")
-            yield SeleniumRequest(
-                    url = page.current_url,
+        #     print("==================☁️☁️generated_url☁️☁️===========")
+        #     print(page.current_url)
+        #     print("==================☁️☁️generated_url☁️☁️===========")
+        #     yield SeleniumRequest(
+        #             url = page.current_url,
+        #             callback = self.parse
+        #         )
+
+        search_string = "Minute Suites - DFW Airport Terminal A, Near A38,TX,US"
+        google_maps_url = (
+            "https://www.google.com/maps/search/"
+            + urllib.parse.quote_plus(search_string)
+            + "?hl=en"
+        )
+        
+        yield SeleniumRequest(
+                    url = google_maps_url,
                     callback = self.parse
                 )
-
     
     
 

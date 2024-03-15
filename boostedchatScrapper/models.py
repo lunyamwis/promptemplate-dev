@@ -9,3 +9,4 @@ class Link(BaseModel):
     def __str__(self) -> str:
         return self.name
     
+

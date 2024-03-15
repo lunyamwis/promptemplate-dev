@@ -12,6 +12,11 @@ from boostedchatScrapper.spiders.instagram import InstagramSpider
 from boostedchatScrapper.spiders.helpers.instagram_login_helper import login_user
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
+from twisted.internet import reactor
+from twisted.internet import defer
+from scrapy.crawler import CrawlerRunner
+from scrapy.utils.project import get_project_settings
+from boostedchatScrapper.spiders.gmaps import GmapsSpider
 # Create your views here.
 # views.py
 
@@ -46,6 +51,24 @@ class ScrapFollowers(APIView):
         else:
             scrap_followers.delay(username,delay)
         return Response({"success":True},status=status.HTTP_200_OK)
+    
+class ScrapGmaps(APIView):
+
+    def get(self,request):
+        settings = get_project_settings()
+        runner = CrawlerRunner(settings)
+        deferreds = []
+        deferreds.append(runner.crawl(GmapsSpider))
+        
+        # Create a callback function to stop the reactor when all crawlers are done
+        def stop_reactor():
+            reactor.stop()
+
+        defer.DeferredList(deferreds).addCallback(lambda _: stop_reactor())
+        reactor.run()
+        return Response({"success":True},status=status.HTTP_200_OK)
+
+
 
 class ScrapUsers(APIView):
     def post(self,request):
@@ -62,14 +85,25 @@ class ScrapInfo(APIView):
         round = int(request.data.get("round"))
         scrap_info.delay(delay_before_requests,delay_after_requests,step,accounts,round)
         return Response({"success":True},status=status.HTTP_200_OK)
+    
+
+
+
+class ScrapApi(APIView):
+    def post(self,request):
+        delay_before_requests = int(request.data.get("delay_before_requests",[]))
+        delay_after_requests = int(request.data.get("delay_after_requests"))
+        step = int(request.data.get("step"))
+        accounts = int(request.data.get("accounts"))
+        round = int(request.data.get("round"))
+        scrap_info.delay(delay_before_requests,delay_after_requests,step,accounts,round)
+        return Response({"success":True},status=status.HTTP_200_OK)
 
 class InsertAndEnrich(APIView):
     def post(self,request):
-        account_data = request.data.get("account_data")
-        outsourced_data = request.data.get("outsourced_data")
         keywords_to_check = request.data.get("keywords_to_check")
-        print(account_data)
-        insert_and_enrich.delay(account_data,outsourced_data,keywords_to_check)
+        round_ = request.data.get("round")
+        insert_and_enrich.delay(keywords_to_check,round_)
         return Response({"success":True},status=status.HTTP_200_OK)
     
 
@@ -97,6 +131,16 @@ class SetupScrapper(APIView):
             except LeadSource.DoesNotExist as error:
                 return Response({'error': str(error)}, status=400)
             try:
+                enrich = data_dict.get('enrich')
+            except Exception as error:
+                return Response({'error': str(error)}, status=400)
+            
+            try:
+                round_ = data_dict.get('round')
+            except Exception as error:
+                return Response({'error': str(error)}, status=400)
+            
+            try:
                 collect_as_csv = data_dict.get('collect_as_csv')
             except Exception as error:
                 return Response({'error': str(error)}, status=400)
@@ -119,6 +163,30 @@ class SetupScrapper(APIView):
                         }
                     }
                 
+                if enrich:
+                    data = {
+                        "dag_id": source.name,
+                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
+                        "endpoint": "instagram/scrapInfo/",
+                        "info":{
+                                "delay_before_requests":4,
+                                "delay_after_requests":14,
+                                "step":3,
+                                "accounts":18,
+                                "round":round_
+                            }
+                    }
+
+                if make_infinite:
+                    data = {
+                        "dag_id": source.name,
+                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
+                        "endpoint": "instagram/insertAndEnrich/",
+                        "info":{
+                            "keywords_to_check": qualification_algorithm.positive_keywords,
+                            "round": round_
+                        }
+                    }
                 
             # Write the dictionary to a YAML file
             yaml_file_path = os.path.join(settings.BASE_DIR, 'api','helpers',
