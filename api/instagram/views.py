@@ -81,11 +81,12 @@ class ScrapURL(APIView):
 class ScrapUsers(APIView):
     def post(self,request):
         query = request.data.get("query")
+        round_ = request.data.get("round")
         if isinstance(query,list):
             for name in query:
                 scrap_users.delay(name)
         else:
-            scrap_users.delay(query)
+            scrap_users.delay(query,round = round_)
         return Response({"success":True},status=status.HTTP_200_OK)
 
 class ScrapInfo(APIView):
@@ -172,7 +173,8 @@ class SetupScrapper(APIView):
                         "method": "POST",
                         "info":{
                             "username": source.account_usernames,
-                            "delay": source.criterion or 5
+                            "delay": source.criterion or 5,
+                            "round": round_
                         }
                     }
                 if source.criterion == 2:
@@ -182,7 +184,8 @@ class SetupScrapper(APIView):
                         "endpoint": "instagram/scrapUsers/",
                         "method": "POST",
                         "info":{
-                            "query": source.estimated_usernames
+                            "query": source.estimated_usernames,
+                            "round": round_
                         }
                     }
                 if source.criterion == 6:

@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["34.28.104.255","127.0.0.1","0.0.0.0","localhost","web","booksy.us.boostedchat.com","scrapper.booksy.boostedchat.com",
                 "airflow.booksy.boostedchat.com","jamel.boostedchat.com","scrapper.jamel.boostedchat.com",
                 "airflow.jamel.boostedchat.com"]
-CSRF_TRUSTED_ORIGINS = ["http://34.28.104.255"]
+CSRF_TRUSTED_ORIGINS = ["http://34.28.104.255","https://scrapper.booksy.boostedchat.com","https://scrapper.jamel.boostedchat.com"]
 
 # Application definition
 

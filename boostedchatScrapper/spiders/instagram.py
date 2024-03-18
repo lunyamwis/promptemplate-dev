@@ -57,7 +57,7 @@ class InstagramSpider:
             cursor = is_cursor_available.latest('created_at')
         return cursor
 
-    def scrap_followers(self,username,delay):
+    def scrap_followers(self,username,delay,round_):
         scouts = Scout.objects.filter(available=True)
         scout_index = 0
         initial_scout = scouts[scout_index]
@@ -76,7 +76,7 @@ class InstagramSpider:
             InstagramUser.objects.create(cursor=cursor)
             print(error)
 
-        self.store(followers)
+        self.store(followers,round=round_)
         time.sleep(delay)
         if self.is_cursor_available:
             cursor = cursor
@@ -86,16 +86,28 @@ class InstagramSpider:
                 followers, cursor = client.user_followers_gql_chunk(user_info.pk, max_amount=5,end_cursor=cursor)
             except Exception as error:
                 InstagramUser.objects.create(cursor=cursor)
-            self.store(followers)
+            self.store(followers,round=round_)
 
-    def scrap_users(self,query):
+    def scrap_users(self,query,round_):
         scouts = Scout.objects.filter(available=True)
         scout_index = 0
         initial_scout = scouts[scout_index]
         client = login_user(scout=initial_scout)
-        time.sleep(random.randint(4,10))
-        users = client.search_users_v1(query,count=3)
-        self.store(users)
+        for i,user in enumerate(query):
+            time.sleep(random.randint(4,8))
+            print(i, user)
+
+            try:
+                users = client.search_users_v1(user,count=3)
+            except Exception as error:
+                print(error)
+            self.store(users,round=round_)
+            if i % 3 == 0:
+                scout_index = (scout_index + 1) % len(scouts)
+                client = login_user(scouts[scout_index])
+            if i % 16 == 0:
+                time.sleep(random.randint(4,8))
+
        
     def scrap_extra(self, url, params, return_val):
         scouts = Scout.objects.filter(available=True)

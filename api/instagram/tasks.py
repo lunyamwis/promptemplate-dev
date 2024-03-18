@@ -14,9 +14,9 @@ def scrap_followers(username,delay):
     inst.scrap_followers(username,delay)
 
 @shared_task()
-def scrap_users(query):
+def scrap_users(query,round_):
     inst = InstagramSpider(load_tables=load_tables,db_url=db_url)
-    inst.scrap_users(query)
+    inst.scrap_users(query,round_=round_)
     
 @shared_task()
 def scrap_info(delay_before_requests,delay_after_requests,step,accounts,round):
