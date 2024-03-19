@@ -66,6 +66,29 @@ class ScrapAPI(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
+
+class ScrapSitemaps(APIView):
+
+    def get(self,request):
+        try:
+            # Execute Scrapy spider using the command line
+            subprocess.run(["scrapy", "crawl", "sitemaps"])
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+class ScrapMindBodyOnline(APIView):
+
+    def get(self,request):
+        try:
+            # Execute Scrapy spider using the command line
+            subprocess.run(["scrapy", "crawl", "mindbodyonline"])
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class ScrapURL(APIView):
 
     def get(self,request):
@@ -81,17 +104,14 @@ class ScrapURL(APIView):
 class ScrapUsers(APIView):
     def post(self,request):
         query = request.data.get("query")
-        round_ = request.data.get("round")
+        round_ = int(request.data.get("round"))
         if isinstance(query,list):
-            for name in query:
-                scrap_users.delay(name)
-        else:
-            scrap_users.delay(query,round = round_)
+            scrap_users.delay(query,round_ = round_)
         return Response({"success":True},status=status.HTTP_200_OK)
 
 class ScrapInfo(APIView):
     def post(self,request):
-        delay_before_requests = int(request.data.get("delay_before_requests",[]))
+        delay_before_requests = int(request.data.get("delay_before_requests"))
         delay_after_requests = int(request.data.get("delay_after_requests"))
         step = int(request.data.get("step"))
         accounts = int(request.data.get("accounts"))
@@ -101,16 +121,6 @@ class ScrapInfo(APIView):
     
 
 
-
-class ScrapApi(APIView):
-    def post(self,request):
-        delay_before_requests = int(request.data.get("delay_before_requests",[]))
-        delay_after_requests = int(request.data.get("delay_after_requests"))
-        step = int(request.data.get("step"))
-        accounts = int(request.data.get("accounts"))
-        round = int(request.data.get("round"))
-        scrap_info.delay(delay_before_requests,delay_after_requests,step,accounts,round)
-        return Response({"success":True},status=status.HTTP_200_OK)
 
 class InsertAndEnrich(APIView):
     def post(self,request):

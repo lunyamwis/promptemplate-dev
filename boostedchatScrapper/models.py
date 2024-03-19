@@ -13,6 +13,7 @@ class Link(BaseModel):
 
 class ScrappedData(models.Model):
     name = models.CharField(max_length=255)
+    sitemap_key = models.CharField(max_length=255,null=True, blank=True,unique=True)
     response = models.JSONField()
 
     def __str__(self) -> str:

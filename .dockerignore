@@ -7,6 +7,7 @@
 *.css.map
 *.egg-info
 *.sql.gz
+*.xml
 .cache
 .project
 .idea
@@ -28,4 +29,4 @@ web/media
 web/static/CACHE
 stats
 Dockerfile
-
+sitemaps.*

@@ -38,7 +38,6 @@ class InstagramSpider:
         if load_tables:
             self.metadata = MetaData()
             self.engine = create_engine(db_url)
-            self.connection = self.engine.connect()
             self.instagram_account_table = Table('instagram_account', self.metadata, autoload_with=self.engine)
             self.instagram_outsourced_table = Table('instagram_outsourced',self.metadata, autoload_with=self.engine)
             self.django_celery_beat_crontabschedule_table = Table('django_celery_beat_crontabschedule', self.metadata, autoload_with=self.engine)
@@ -118,7 +117,7 @@ class InstagramSpider:
         self.store(result[return_val])    
         return result[return_val]
    
-    def scrap_info(self,delay_before_requests,delay_after_requests,step,accounts,round):
+    def scrap_info(self,delay_before_requests,delay_after_requests,step,accounts,round,index=0):
         scouts = Scout.objects.filter(available=True)
         scout_index = 0
         initial_scout = scouts[scout_index]
@@ -130,7 +129,8 @@ class InstagramSpider:
         instagram_users = InstagramUser.objects.filter(round=round)
         print(len(instagram_users))
         # val = 10 + 31 + 45 + 3 + 35 + 6
-        for i, user in enumerate(instagram_users, start=1):
+        
+        for i, user in enumerate(instagram_users[index:], start=1):
             print(i)
             if user.username:
                 time.sleep(random.randint(delay_before_requests,delay_before_requests+step))
@@ -149,17 +149,20 @@ class InstagramSpider:
                     time.sleep(random.randint(delay_after_requests,delay_after_requests+step))
 
     
-    @classmethod
-    def custom_insert(self,instagram_user):
+    def custom_insert(self,instagram_username):
         record = None
-        
+        instagram_user = InstagramUser.objects.filter(username=instagram_username).last()
+
         with self.engine.connect() as connection:
             existing_username_query = select([self.instagram_account_table]).where(
                 self.instagram_account_table.c.igname == instagram_user.username
             )
-            existing_username = self.engine.execute(existing_username_query).fetchone()
-            # if not existing_username:
             try:
+                existing_username = self.engine.execute(existing_username_query).fetchone()
+            except Exception as err:
+                print(err)
+            try:
+                print(instagram_user.username)
                 insert_statement = self.instagram_account_table.insert().values({
                         'id': str(uuid.uuid4()),
                         'created_at':timezone.now(),
@@ -182,6 +185,7 @@ class InstagramSpider:
 
                 result = connection.execute(insert_statement)
                 account = result.fetchone()
+                print(f"inserted {account['id']}")
                 insert_statement = self.instagram_outsourced_table.insert().values({
                         'id': str(uuid.uuid4()),
                         'created_at':timezone.now(),
@@ -239,11 +243,18 @@ class InstagramSpider:
     def qualify(self, client_info, keywords_to_check,time_to_begin_outreach):
         qualified = False
         if client_info:
-            keyword_found = any(
-                len(str(value)) > 1 and keyword.lower() in str(value).lower()
-                for value in client_info.values()
-                for keyword in keywords_to_check
-            )
+            keyword_counts = {keyword: 0 for keyword in keywords_to_check}
+
+            # Iterate through the values in client_info
+            for value in client_info.values():
+                # Iterate through the keywords to check
+                for keyword in keywords_to_check:
+                    # Count the occurrences of the keyword in the value
+                    keyword_counts[keyword] += str(value).lower().count(keyword.lower())
+
+            # Check if any keyword has more than two occurrences
+            keyword_found = any(count > 1 for count in keyword_counts.values())
+
             if keyword_found:
                 with self.engine.connect() as connection:
                     crontab_data = {'minute':time_to_begin_outreach.minute,'hour':time_to_begin_outreach.hour,
@@ -257,7 +268,10 @@ class InstagramSpider:
                                         'args':json.dumps([client_info['username']]),'kwargs':json.dumps({}),'enabled':True,'one_off':True,'total_run_count':0,'date_changed':datetime.now(),
                                         'description':'test','headers':json.dumps({})}
                         periodic_task_statement = self.django_celery_beat_periodictask_table.insert().values(periodic_data)
-                        connection.execute(periodic_task_statement)
+                        try:
+                            connection.execute(periodic_task_statement)
+                        except Exception as error:
+                            print(error)
                         print(f"successfullyninsertedperiodictaskfor->{client_info['username']}")
                         qualified = True
         return qualified
@@ -267,9 +281,10 @@ class InstagramSpider:
         instagram_users = InstagramUser.objects.filter(round=round)
         hour = 0
         for i,instagram_user in enumerate(instagram_users):
-            print(i)
-            outsourced = self.custom_insert(instagram_user)
-            hour += 0.5
-            qualified = self.qualify(outsourced,keywords_to_check, datetime.now()+timedelta(hours=hour))
-            if qualified:
-                self.assign_salesreps(instagram_user.username,i)
+            print(i,instagram_user.username)
+            if instagram_user.username:
+                outsourced = self.custom_insert(instagram_user.username)
+                hour += 0.5
+                qualified = self.qualify(outsourced,keywords_to_check, datetime.now()+timedelta(hours=hour))
+                if qualified:
+                    self.assign_salesreps(instagram_user.username,i)

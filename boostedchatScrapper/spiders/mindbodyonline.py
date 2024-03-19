@@ -1,78 +1,139 @@
-import logging
+import requests
+import json
 import scrapy
-import time
-import re
-import math
-
-from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
-from scrapy.http import HtmlResponse
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from selenium.webdriver.common.by import By
-from boostedchatScrapper.items import StyleSeatItem
-from urllib.parse import urlparse, parse_qs
-from .helpers.styleseat_dynamic_actions import generate_styleseat_links
-from .helpers.utils import click_element,generate_html
-from ..http import SeleniumRequest
-
-CLEAN_STRING = re.compile(r"[\']")
-
-class MindBodyOnlineSpider(CrawlSpider):
-    name = "mindbodyonline"
-    allowed_domains = ["www.mindbodyonline.com"]
-    base_url = "https://www.mindbodyonline.com"
-    start_urls = [
-        "https://www.mindbodyonline.com/explore/locations/f45-training-kirkland-moss-bay",
-        "https://www.mindbodyonline.com/explore/locations/pura-buena-onda-north-park",
-        "https://www.mindbodyonline.com/explore/locations/breath-oneness",
-        "https://www.mindbodyonline.com/explore/locations/move-massage-fitness-lifestyle"
-    ]
-    
-    rules = (Rule(LinkExtractor(allow=r"Items/"), callback="parse", follow=True),)
-
-    def start_requests(self):
-        
-        # urls = generate_styleseat_links(self.start_urls[0])
-        # for url in urls:
-        #     page  = generate_html(url)
-        threads = []
-        # with ThreadPoolExecutor(max_workers=10) as executor:
-        #     for url in self.start_urls:
-        #         requests = SeleniumRequest(
-        #             url = url,
-        #             callback = self.parse
-        #         )
-        #         threads.append(
-        #             executor.submit(
-        #                 requests, url, self.parse
-        #             )
-        #         )
-
-        #     for t in as_completed(threads):
-        #         yield t.result()
-                
-        for url in self.start_urls:
-            yield SeleniumRequest(
-                    url = url,
-                    callback = self.parse
-                )
-
-    
+import os
+from lxml import etree
+from ..items import APIItem
+from django.conf import settings
+from boostedchatScrapper.models import ScrappedData
+from asgiref.sync import sync_to_async
 
 
-    def parse(self, response):
-        # styleseat_item = StyleSeatItem()
-        resp_meta = {}
-        print("==================☁️☁️meta_driver☁️☁️===========")
-        print(response.request.meta)
-        print("==================☁️☁️meta_driver☁️☁️===========")
-        # time.sleep(10)
-        # resp_meta["secondary_name"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//h2[@class="is-marginless"]').text
-        # resp_meta["address"] = response.request.meta['driver'].find_element(by=By.XPATH, value='DetailHeader_address__3jDc1').text
-        resp_meta["gmaps_link"] = response.request.meta['driver'].find_element(by=By.XPATH,value='//a[@class="StudioAddress_link__3HM2W is-inline-block"]').get_attribute("href")
-        print(f"resp_meta------------------------------->{resp_meta}")
-        
-        yield resp_meta
-        
+class MindbodySpider(scrapy.Spider):
+    name = 'mindbodyonline'
+    allowed_domains = ['mindbodyonline.com']
 
    
+
+    def parse_locations(self, response):
+        try:
+            xml_content = response.body
+        except Exception as err:
+            print("xml content not found")
+        root = etree.fromstring(xml_content)
+        nsmap = root.nsmap
+        nsmap['ns'] = nsmap.pop(None)
+        item = APIItem()
+        for url in root.xpath('//ns:url/ns:loc/text()', namespaces=nsmap):
+
+            url_ = "https://prod-mkt-gateway.mindbody.io/v1/search/locations"
+            location = url.split('/')[-1].strip().replace('\n', '')
+            
+            if len(location) > 2:
+                payload = json.dumps({
+                "sort": "",
+                "page": {
+                    "size": 1
+                },
+                "filter": {
+                    "radius": 0,
+                    "locationSlugs": [location]
+                }
+                })
+                headers = {
+                'Content-Type': 'application/json',
+                'Cookie': '__cf_bm=eqo0_OXEeXogdNReThHcDerAZ5BqZDZWn9sf.mt7uD4-1710837347-1.0.1.1-ioSKKzmcmNHMOSl_HdwHuYUysSYwGiZCffIoCH1utX0lNtt8bp3oOd6TYFgs1q4wffArasNl.uTyFSdczY1vZg'
+                }
+                try:
+                    response = requests.request("POST", url_, headers=headers, data=payload)
+                    print(response.json())
+                except Exception as error:
+                    print(error)
+                item['name'] = f'mindbodyonline/locations/{location}'
+                item['response'] = response.json()
+                
+                yield item
+
+    def parse_instructors(self, response):
+        try:
+            xml_content = response.body
+        except Exception as err:
+            print("xml content not found")
+        root = etree.fromstring(xml_content)
+        nsmap = root.nsmap
+        nsmap['ns'] = nsmap.pop(None)
+        item = APIItem()
+        for url in root.xpath('//ns:url/ns:loc/text()', namespaces=nsmap):
+
+            url_ = "https://prod-mkt-gateway.mindbody.io/v1/search/instructors"
+            location = url.split('/')[-1].strip().replace('\n', '')
+            if len(location) > 2:
+                payload = json.dumps({
+                "filter": {
+                    "locationSlugs": [location]
+                }
+                })
+                headers = {
+                'Content-Type': 'application/json',
+                'Cookie': '__cf_bm=eqo0_OXEeXogdNReThHcDerAZ5BqZDZWn9sf.mt7uD4-1710837347-1.0.1.1-ioSKKzmcmNHMOSl_HdwHuYUysSYwGiZCffIoCH1utX0lNtt8bp3oOd6TYFgs1q4wffArasNl.uTyFSdczY1vZg'
+                }
+                try:
+                    response = requests.request("POST", url_, headers=headers, data=payload)
+                    print(response.json())
+                except Exception as error:
+                    print(error)
+                item['name'] = f'mindbodyonline/instructors/{location}'
+                item['response'] = response.json()
+                yield item
+    
+
+    def parse_availability(self, response):
+
+        try:
+            xml_content = response.body
+        except Exception as err:
+            print("xml content not found")
+        root = etree.fromstring(xml_content)
+        nsmap = root.nsmap
+        nsmap['ns'] = nsmap.pop(None)
+        item = APIItem()
+        for url in root.xpath('//ns:url/ns:loc/text()', namespaces=nsmap):
+            location = url.split('/')[-1].strip().replace('\n', '')
+            url_ = f"https://prod-mkt-gateway.mindbody.io/v1/availability/location?filter.location_slug={location}&filter.timezone=America%2FLos_Angeles&filter.start_time_from=2024-03-19T11%3A04%3A18.927Z&filter.start_time_to=2024-04-09T06%3A59%3A59.999Z"
+            if len(location) > 2:
+                params = json.dumps({
+                "filter": {
+                    "locationSlugs": [location]
+                }
+                })
+                headers = {
+                'Content-Type': 'application/json',
+                'Cookie': '__cf_bm=eqo0_OXEeXogdNReThHcDerAZ5BqZDZWn9sf.mt7uD4-1710837347-1.0.1.1-ioSKKzmcmNHMOSl_HdwHuYUysSYwGiZCffIoCH1utX0lNtt8bp3oOd6TYFgs1q4wffArasNl.uTyFSdczY1vZg'
+                }
+                try:
+                    response = requests.request("GET", url_, headers=headers, params=params)
+                    print(response.json())
+                except Exception as error:
+                    print(error)
+                item['name'] = f'mindbodyonline/availability/{location}'
+                item['response'] = response.json()
+                yield item
+
+
+
+        
+    def start_requests(self):
+    
+        # Define the directory containing XML files
+        xml_directory = settings.BASE_DIR/'sitemaps'
+
+        # Fetch all XML files from the directory
+        xml_files = [f for f in os.listdir(xml_directory) if f.endswith('.xml')]
+
+        # Construct start_urls
+        start_urls = [f'file://{xml_directory}/{filename}' for filename in xml_files]
+
+        for url in start_urls:
+            yield scrapy.Request(url, callback=self.parse_instructors, dont_filter=True)
+            yield scrapy.Request(url, callback=self.parse_availability, dont_filter=True)
+            yield scrapy.Request(url, callback=self.parse_locations, dont_filter=True)
