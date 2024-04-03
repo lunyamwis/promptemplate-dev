@@ -89,11 +89,11 @@ def login_user(scout: Scout):
     
     # index = 1
     # before_ip = cl._send_public_request("https://api.ipify.org/")
-    # cl.set_proxy(
-    #     # f"https://lunyamwi;country=KE;city=Nairobi:8213ae-6228c7-550488-c480ad-0f7eb4@premium.residential.proxyrack.net:10000"
-    #     f"http://Sql8t2uRG3XRvQrO:wifi;{device.scout.country.lower()};starlink;;{device.scout.city.lower()}@proxy.soax.com:9000"
-    #     # "http://NQkWIMtrprYfgFH5:mobile;ke;safaricom;;nairobi@proxy.soax.com:9000"
-    # )
+    cl.set_proxy(
+        # f"https://lunyamwi;country=KE;city=Nairobi:8213ae-6228c7-550488-c480ad-0f7eb4@premium.residential.proxyrack.net:10000"
+        f"http://Sql8t2uRG3XRvQrO:wifi;{device.scout.country.lower()};starlink;;{device.scout.city.lower()}@proxy.soax.com:9000"
+        # "http://NQkWIMtrprYfgFH5:mobile;ke;safaricom;;nairobi@proxy.soax.com:9000"
+    )
     # after_ip = cl._send_public_request("https://api.ipify.org/")
     # print(f"Before: {before_ip}")
     # print(f"After: {after_ip}")

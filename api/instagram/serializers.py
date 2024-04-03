@@ -1,7 +1,12 @@
 # serializers.py
-
+import os
+import yaml
 from rest_framework import serializers
-from .models import Score, QualificationAlgorithm, Scheduler, LeadSource
+from .models import Score, QualificationAlgorithm, Scheduler, LeadSource,SimpleHttpOperatorModel,WorkflowModel,DagModel
+from django.conf import settings
+from django.db import IntegrityError
+from api.helpers.dag_generator import generate_dag
+
 
 class ScoreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,11 +45,59 @@ class LeadSourceSerializer(serializers.ModelSerializer):
             "google_maps_search_keywords":{"required": False, "allow_null": True}
         }
 
+class DagModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DagModel
+        fields = '__all__'
 
-class SetupScrapperSerializer(serializers.Serializer):
-    qualification_algorithm = serializers.CharField()
-    schedule = serializers.CharField()
-    source = serializers.ListField(child=serializers.CharField())
-    collect_as_csv = serializers.BooleanField()
-    make_infinite = serializers.BooleanField()
+class SimpleHttpOperatorModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SimpleHttpOperatorModel
+        fields = '__all__'
+
+class WorkflowModelSerializer(serializers.ModelSerializer):
+    simplehttpoperators = SimpleHttpOperatorModelSerializer(many=True, required=False)
+    dag = DagModelSerializer(required=False)
+
+    class Meta:
+        model = WorkflowModel
+        fields = ['id', 'name', 'simplehttpoperators','dag']
+
+    
+    def create(self, validated_data):
+        simplehttpoperators_data = validated_data.pop('simplehttpoperators', [])
+        dag_data = validated_data.pop('dag', None)
+
+        workflow = super().create(validated_data)
+
+        for simplehttpoperator_data in simplehttpoperators_data:
+            simplehttpoperator, _ = SimpleHttpOperatorModel.objects.get_or_create(**simplehttpoperator_data)
+            workflow.simplehttpoperators.add(simplehttpoperator)
+
+        if dag_data:
+            dag, _ = DagModel.objects.get_or_create(**dag_data)
+            workflow.dag = dag
+            workflow.save()
+
+        data = {
+            "dag":[entry for entry in DagModel.objects.filter(id = workflow.dag.id).values()],
+            "operators":[entry for entry in workflow.simplehttpoperators.values()]
+        }
+
+        # Write the dictionary to a YAML file
+        yaml_file_path = os.path.join(settings.BASE_DIR, 'api', 'helpers', 'include', 'dag_configs', f"{workflow.dag.dag_id}_config.yaml")
+        with open(yaml_file_path, 'w') as yaml_file:
+            try:
+                yaml.dump(data, yaml_file, default_flow_style=False)
+            except Exception as error:
+                raise serializers.ValidationError(str(error))
+
+        try:
+            generate_dag()
+        except Exception as error:
+            raise serializers.ValidationError(str(error))
+
+        return workflow
+
+
     

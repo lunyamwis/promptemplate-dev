@@ -42,7 +42,7 @@ class MindbodySpider(scrapy.Spider):
                 })
                 headers = {
                 'Content-Type': 'application/json',
-                'Cookie': '__cf_bm=eqo0_OXEeXogdNReThHcDerAZ5BqZDZWn9sf.mt7uD4-1710837347-1.0.1.1-ioSKKzmcmNHMOSl_HdwHuYUysSYwGiZCffIoCH1utX0lNtt8bp3oOd6TYFgs1q4wffArasNl.uTyFSdczY1vZg'
+                'Cookie': '__cf_bm=TfUJKbjzA.3gHeKswmI8JEfKeUKVFxcfaboMDPcIX.w-1710923557-1.0.1.1-AiydEiakyZqpfqyi1R0ZCAoaP_R1UHtV7SqwO3PLPKqpxGaoAscFG5RhR8HxV.clUzoJAwuzNa0DIGegqKVWUA'
                 }
                 try:
                     response = requests.request("POST", url_, headers=headers, data=payload)
@@ -75,7 +75,7 @@ class MindbodySpider(scrapy.Spider):
                 })
                 headers = {
                 'Content-Type': 'application/json',
-                'Cookie': '__cf_bm=eqo0_OXEeXogdNReThHcDerAZ5BqZDZWn9sf.mt7uD4-1710837347-1.0.1.1-ioSKKzmcmNHMOSl_HdwHuYUysSYwGiZCffIoCH1utX0lNtt8bp3oOd6TYFgs1q4wffArasNl.uTyFSdczY1vZg'
+                'Cookie': '__cf_bm=TfUJKbjzA.3gHeKswmI8JEfKeUKVFxcfaboMDPcIX.w-1710923557-1.0.1.1-AiydEiakyZqpfqyi1R0ZCAoaP_R1UHtV7SqwO3PLPKqpxGaoAscFG5RhR8HxV.clUzoJAwuzNa0DIGegqKVWUA'
                 }
                 try:
                     response = requests.request("POST", url_, headers=headers, data=payload)
@@ -108,7 +108,7 @@ class MindbodySpider(scrapy.Spider):
                 })
                 headers = {
                 'Content-Type': 'application/json',
-                'Cookie': '__cf_bm=eqo0_OXEeXogdNReThHcDerAZ5BqZDZWn9sf.mt7uD4-1710837347-1.0.1.1-ioSKKzmcmNHMOSl_HdwHuYUysSYwGiZCffIoCH1utX0lNtt8bp3oOd6TYFgs1q4wffArasNl.uTyFSdczY1vZg'
+                'Cookie': '__cf_bm=TfUJKbjzA.3gHeKswmI8JEfKeUKVFxcfaboMDPcIX.w-1710923557-1.0.1.1-AiydEiakyZqpfqyi1R0ZCAoaP_R1UHtV7SqwO3PLPKqpxGaoAscFG5RhR8HxV.clUzoJAwuzNa0DIGegqKVWUA'
                 }
                 try:
                     response = requests.request("GET", url_, headers=headers, params=params)
@@ -132,6 +132,10 @@ class MindbodySpider(scrapy.Spider):
 
         # Construct start_urls
         start_urls = [f'file://{xml_directory}/{filename}' for filename in xml_files]
+        # start_urls = [
+            # f'file:///home/martin/Documents/boostedchat-scrapper/https___www_mindbodyonline_com_explore_sitemap1_xml_gz.xml',
+            # f'file:///home/martin/Documents/boostedchat-scrapper/https___www_mindbodyonline_com_explore_sitemap2_xml_gz.xml'
+        # ]
 
         for url in start_urls:
             yield scrapy.Request(url, callback=self.parse_instructors, dont_filter=True)

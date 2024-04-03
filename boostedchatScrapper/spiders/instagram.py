@@ -25,6 +25,7 @@ from .constants import STYLISTS_WORDS,STYLISTS_NEGATIVE_WORDS
 from sqlalchemy import create_engine, text,Table,MetaData,select,update
 from api.instagram.models import InstagramUser
 from api.scout.models import Scout,Device
+from django.core.mail import send_mail
 from django.db.models import Q
 
 class InstagramSpider:
@@ -63,7 +64,17 @@ class InstagramSpider:
         try:
             client = login_user(initial_scout)
         except Exception as error:
-            print("There was an error logging in")
+            try:
+                send_mail(
+                    "Check Issue",
+                    f"Please resolve {str(error)} for account {initial_scout.username}",
+                    "from@example.com",
+                    [initial_scout.email],
+                    fail_silently=False,
+                )
+            except Exception as error:
+                print(error)
+            print(error)
         
         user_info = client.user_info_by_username(''.join(username))
         time.sleep(delay)
@@ -87,12 +98,12 @@ class InstagramSpider:
                 InstagramUser.objects.create(cursor=cursor)
             self.store(followers,round=round_)
 
-    def scrap_users(self,query,round_):
+    def scrap_users(self,query,round_,index=0):
         scouts = Scout.objects.filter(available=True)
         scout_index = 0
         initial_scout = scouts[scout_index]
         client = login_user(scout=initial_scout)
-        for i,user in enumerate(query):
+        for i,user in enumerate(query[index:]):
             time.sleep(random.randint(4,8))
             print(i, user)
 
@@ -102,8 +113,21 @@ class InstagramSpider:
                 print(error)
             self.store(users,round=round_)
             if i % 3 == 0:
-                scout_index = (scout_index + 1) % len(scouts)
-                client = login_user(scouts[scout_index])
+                try:
+                    scout_index = (scout_index + 1) % len(scouts)
+                    client = login_user(scouts[scout_index])
+                except Exception as error:
+                    try:
+                        send_mail(
+                            "Check Issue",
+                            f"Please resolve {str(error)} for account {initial_scout.username}",
+                            "from@example.com",
+                            [initial_scout.email],
+                            fail_silently=False,
+                        )
+                    except Exception as error:
+                        print(error)
+                    print(error)
             if i % 16 == 0:
                 time.sleep(random.randint(4,8))
 
@@ -112,7 +136,20 @@ class InstagramSpider:
         scouts = Scout.objects.filter(available=True)
         scout_index = 0
         initial_scout = scouts[scout_index]
-        client = login_user(scout=initial_scout)
+        try:
+            client = login_user(initial_scout)
+        except Exception as error:
+            try:
+                send_mail(
+                    "Check Issue",
+                    f"Please resolve {str(error)} for account {initial_scout.username}",
+                    "from@example.com",
+                    [initial_scout.email],
+                    fail_silently=False,
+                )
+            except Exception as error:
+                print(error)
+            print(error)
         result = client.private_request(url, params=params)
         self.store(result[return_val])    
         return result[return_val]
@@ -124,7 +161,17 @@ class InstagramSpider:
         try:
             client = login_user(initial_scout)
         except Exception as error:
-            print("There was an error logging in")
+            try:
+                send_mail(
+                    "Check Issue",
+                    f"Please resolve {str(error)} for account {initial_scout.username}",
+                    "from@example.com",
+                    [initial_scout.email],
+                    fail_silently=False,
+                )
+            except Exception as error:
+                print(error)
+            print(error)
         
         instagram_users = InstagramUser.objects.filter(round=round)
         print(len(instagram_users))
@@ -135,6 +182,7 @@ class InstagramSpider:
             if user.username:
                 time.sleep(random.randint(delay_before_requests,delay_before_requests+step))
                 try:
+
                     user.info = client.user_info_by_username(user.username).dict()
                     user.save()
                 except Exception as error:
@@ -143,63 +191,27 @@ class InstagramSpider:
                     print(error)
                 
                 if i % step == 0:
-                    scout_index = (scout_index + 1) % len(scouts)
-                    client = login_user(scouts[scout_index])
+                    try:
+                        scout_index = (scout_index + 1) % len(scouts)
+                        client = login_user(scouts[scout_index])
+                    except Exception as error:
+                        try:
+                            send_mail(
+                                "Check Issue",
+                                f"Please resolve {str(error)} for account {initial_scout.username}",
+                                "from@example.com",
+                                [initial_scout.email],
+                                fail_silently=False,
+                            )
+                        except Exception as error:
+                            print(error)
+                        print(error)
                 if i % accounts == 0:
                     time.sleep(random.randint(delay_after_requests,delay_after_requests+step))
+    
 
     
-    def custom_insert(self,instagram_username):
-        record = None
-        instagram_user = InstagramUser.objects.filter(username=instagram_username).last()
-
-        with self.engine.connect() as connection:
-            existing_username_query = select([self.instagram_account_table]).where(
-                self.instagram_account_table.c.igname == instagram_user.username
-            )
-            try:
-                existing_username = self.engine.execute(existing_username_query).fetchone()
-            except Exception as err:
-                print(err)
-            try:
-                print(instagram_user.username)
-                insert_statement = self.instagram_account_table.insert().values({
-                        'id': str(uuid.uuid4()),
-                        'created_at':timezone.now(),
-                        'updated_at':timezone.now(),
-                        'igname':instagram_user.username,
-                        'full_name': instagram_user.info['full_name'],
-                        "email":"",
-                        "phone_number":"",
-                        "profile_url":"",
-                        "igname":"",
-                        "full_name":"",
-                        "assigned_to":"Robot",
-                        "dormant_profile_created":True,
-                        "confirmed_problems":"",
-                        "rejected_problems":"",
-                        "qualified":False,
-                        "index":1,
-                        "linked_to":"not"
-                }).returning(self.instagram_account_table.c.id)
-
-                result = connection.execute(insert_statement)
-                account = result.fetchone()
-                print(f"inserted {account['id']}")
-                insert_statement = self.instagram_outsourced_table.insert().values({
-                        'id': str(uuid.uuid4()),
-                        'created_at':timezone.now(),
-                        'updated_at':timezone.now(),
-                        "source":"ig",
-                        'results':instagram_user.info,
-                        'account_id':account['id'] 
-                }).returning(self.instagram_outsourced_table.c.results)
-                result = connection.execute(insert_statement)
-                record = result.fetchone()
-            except Exception as error:
-                print(error)
-        return record['results'] if record else None
-
+    
     
     def assign_salesreps(self,username,index):
         
@@ -253,7 +265,7 @@ class InstagramSpider:
                     keyword_counts[keyword] += str(value).lower().count(keyword.lower())
 
             # Check if any keyword has more than two occurrences
-            keyword_found = any(count > 1 for count in keyword_counts.values())
+            keyword_found = any(count >= 1 for count in keyword_counts.values())
 
             if keyword_found:
                 with self.engine.connect() as connection:
@@ -274,17 +286,65 @@ class InstagramSpider:
                             print(error)
                         print(f"successfullyninsertedperiodictaskfor->{client_info['username']}")
                         qualified = True
-        return qualified
+        return qualified,keyword_counts
 
 
-    def insert_and_enrich(self,keywords_to_check,round):
-        instagram_users = InstagramUser.objects.filter(round=round)
-        hour = 0
-        for i,instagram_user in enumerate(instagram_users):
-            print(i,instagram_user.username)
-            if instagram_user.username:
-                outsourced = self.custom_insert(instagram_user.username)
-                hour += 0.5
-                qualified = self.qualify(outsourced,keywords_to_check, datetime.now()+timedelta(hours=hour))
-                if qualified:
-                    self.assign_salesreps(instagram_user.username,i)
+    
+    def insert_and_enrich(self, keywords_to_check, round_number):
+        instagram_users = InstagramUser.objects.filter(round=round_number)
+        hour = 4
+        for i, instagram_user in enumerate(instagram_users):
+            if instagram_user.username and not instagram_user.info.get('is_private'):
+                # import pdb;pdb.set_trace()
+                try:
+                    with self.engine.connect() as connection:
+                        try:
+                            existing_username_query = select([self.instagram_account_table]).where(
+                                self.instagram_account_table.c.igname == instagram_user.username
+                            )
+                        except Exception as err:
+                            try:
+                                existing_username_query = select(self.instagram_account_table).where(
+                                    self.instagram_account_table.c.igname == instagram_user.username
+                                )
+                            except Exception as err:
+                                print(err)
+                        existing_username = connection.execute(existing_username_query).fetchone()
+                        print(existing_username)
+                        if existing_username:
+                            pass
+                        else:
+                            insert_statement = self.instagram_account_table.insert().values(
+                                id=str(uuid.uuid4()),
+                                created_at=timezone.now(),
+                                updated_at=timezone.now(),
+                                igname=instagram_user.username,
+                                full_name=instagram_user.info.get('full_name', ''),
+                                assigned_to="Robot",
+                                dormant_profile_created=True,
+                                qualified=False,
+                                index=1,
+                                linked_to="not"
+                            ).returning(self.instagram_account_table.c.id)
+
+                            account_id = connection.execute(insert_statement).fetchone()[0]
+
+                            insert_statement = self.instagram_outsourced_table.insert().values(
+                                id=str(uuid.uuid4()),
+                                created_at=timezone.now(),
+                                updated_at=timezone.now(),
+                                source="ig",
+                                results=instagram_user.info,
+                                account_id=account_id
+                            ).returning(self.instagram_outsourced_table.c.results)
+
+                            record = connection.execute(insert_statement).fetchone()
+                            qualified,keyword_counts = self.qualify(record['results'], keywords_to_check, datetime.now() + timedelta(hours=hour))
+                            if qualified:
+                                filtered_dict = {key: value for key, value in keyword_counts.items() if value >= 1}
+                                instagram_user.qualified_keywords = str(filtered_dict)
+                                instagram_user.save()
+                                self.assign_salesreps(instagram_user.username, i)
+
+                except Exception as error:
+                    print(error)

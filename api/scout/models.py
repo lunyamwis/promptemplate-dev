@@ -4,6 +4,8 @@ from api.helpers.models import BaseModel
 # Create your models here.
 class ScoutingMaster(BaseModel):
     name = models.CharField(max_length=255)
+    email = models.EmailField(null=True, blank=True)
+    
     def __str__(self) -> str:
         return self.name
 
@@ -12,6 +14,7 @@ class ScoutingMaster(BaseModel):
 class Scout(BaseModel):
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
+    email = models.EmailField(null=True, blank=True)
     country = models.CharField(max_length=5)
     city = models.CharField(max_length=20)
     code = models.IntegerField()

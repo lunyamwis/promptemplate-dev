@@ -7,6 +7,8 @@ router.register(r'scores', views.ScoreViewSet)
 router.register(r'qualification_algorithms', views.QualificationAlgorithmViewSet)
 router.register(r'schedulers', views.SchedulerViewSet)
 router.register(r'lead_sources', views.LeadSourceViewSet)
+router.register(r'simplehttpoperator',views.SimpleHttpOperatorViewSet)
+router.register(r'workflows',views.WorkflowViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -19,6 +21,5 @@ urlpatterns = [
     path('scrapUsers/', views.ScrapUsers.as_view()),
     path('scrapInfo/', views.ScrapInfo.as_view()),
     path('insertAndEnrich/', views.InsertAndEnrich.as_view()),
-    path('setup/', views.SetupScrapper.as_view()),
 ]
 

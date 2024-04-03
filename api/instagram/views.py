@@ -8,13 +8,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich
+from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich,scrap_mbo
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
 
 from rest_framework import viewsets
-from .models import Score, QualificationAlgorithm, Scheduler, LeadSource
-from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer, SetupScrapperSerializer
+from .models import Score, QualificationAlgorithm, Scheduler, LeadSource,DagModel,SimpleHttpOperatorModel,WorkflowModel
+from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer, SimpleHttpOperatorModelSerializer, WorkflowModelSerializer
 
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
@@ -33,15 +33,29 @@ class LeadSourceViewSet(viewsets.ModelViewSet):
     serializer_class = LeadSourceSerializer
 
 
+class SimpleHttpOperatorViewSet(viewsets.ModelViewSet):
+    queryset = SimpleHttpOperatorModel.objects.all()
+    serializer_class = SimpleHttpOperatorModelSerializer
+
+class WorkflowViewSet(viewsets.ModelViewSet):
+    queryset = WorkflowModel.objects.all()
+    serializer_class = WorkflowModelSerializer
+
+    
 class ScrapFollowers(APIView):
     def post(self, request):
         username = request.data.get("username")
-        delay = request.data.get("delay")
+        delay = int(request.data.get("delay"))
+        round_ =  int(request.data.get("round"))
+        chain = request.data.get("chain")
         if isinstance(username,list):
             for account in username:
-                scrap_followers.delay(account,delay)
+                if chain:
+                    scrap_followers(account,delay,round_=round_)
+                else:
+                    scrap_followers.delay(account,delay,round_=round_)
         else:
-            scrap_followers.delay(username,delay)
+            scrap_followers.delay(username,delay,round_=round_)
         return Response({"success":True},status=status.HTTP_200_OK)
     
 class ScrapGmaps(APIView):
@@ -80,10 +94,14 @@ class ScrapSitemaps(APIView):
 
 class ScrapMindBodyOnline(APIView):
 
-    def get(self,request):
+    def post(self,request):
+        chain = request.data.get("chain")
         try:
-            # Execute Scrapy spider using the command line
-            subprocess.run(["scrapy", "crawl", "mindbodyonline"])
+            if chain:
+                scrap_mbo()
+            else:    
+                # Execute Scrapy spider using the command line
+                scrap_mbo.delay()
             return Response({"success": True}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -105,8 +123,15 @@ class ScrapUsers(APIView):
     def post(self,request):
         query = request.data.get("query")
         round_ = int(request.data.get("round"))
+        index = int(request.data.get("index"))
+        chain = request.data.get("chain")
+
         if isinstance(query,list):
-            scrap_users.delay(query,round_ = round_)
+            if chain:
+                scrap_users(query,round_ = round_,index=index)
+            else:
+                scrap_users.delay(query,round_ = round_,index=index)
+            
         return Response({"success":True},status=status.HTTP_200_OK)
 
 class ScrapInfo(APIView):
@@ -115,8 +140,12 @@ class ScrapInfo(APIView):
         delay_after_requests = int(request.data.get("delay_after_requests"))
         step = int(request.data.get("step"))
         accounts = int(request.data.get("accounts"))
-        round = int(request.data.get("round"))
-        scrap_info.delay(delay_before_requests,delay_after_requests,step,accounts,round)
+        round_number = int(request.data.get("round"))
+        chain = request.data.get("chain")
+        if chain:
+            scrap_info(delay_before_requests,delay_after_requests,step,accounts,round_number)
+        else:
+            scrap_info.delay(delay_before_requests,delay_after_requests,step,accounts,round_number)
         return Response({"success":True},status=status.HTTP_200_OK)
     
 
@@ -126,143 +155,11 @@ class InsertAndEnrich(APIView):
     def post(self,request):
         keywords_to_check = request.data.get("keywords_to_check")
         round_ = request.data.get("round")
-        insert_and_enrich.delay(keywords_to_check,round_)
+        chain = request.data.get("chain")
+        if chain:
+            insert_and_enrich(keywords_to_check,round_)
+        else:
+            insert_and_enrich.delay(keywords_to_check,round_)
         return Response({"success":True},status=status.HTTP_200_OK)
     
 
-class SetupScrapper(APIView):
-    def post(self, request):
-        
-        try:
-            request.data
-        except Exception as error:
-            return Response({'error': str(error)}, status=400)
-        serializer = SetupScrapperSerializer(data=request.data)
-        if serializer.is_valid():
-            data_dict = serializer.data
-            try:
-                qualification_algorithm = get_object_or_404(QualificationAlgorithm, id = data_dict.get('qualification_algorithm'))
-            except QualificationAlgorithm.DoesNotExist as error:
-                return Response({'error': str(error)}, status=400)
-            try:
-                schedule = get_object_or_404(Scheduler, id = data_dict.get('schedule'))
-            except QualificationAlgorithm.DoesNotExist as error:
-                return Response({'error': str(error)}, status=400)
-
-            try:
-                sources = LeadSource.objects.filter(id__in = data_dict.get('source'))
-            except LeadSource.DoesNotExist as error:
-                return Response({'error': str(error)}, status=400)
-            try:
-                enrich = data_dict.get('enrich')
-            except Exception as error:
-                return Response({'error': str(error)}, status=400)
-            
-            try:
-                round_ = data_dict.get('round')
-            except Exception as error:
-                return Response({'error': str(error)}, status=400)
-            
-            try:
-                collect_as_csv = data_dict.get('collect_as_csv')
-            except Exception as error:
-                return Response({'error': str(error)}, status=400)
-            try:
-                make_infinite = data_dict.get('make_infinite')
-            except Exception as error:
-                return Response({'error': str(error)}, status=400)
-            # Create a dictionary from the serializer data
-            print(data_dict)
-            data = None
-            for i,source in enumerate(sources):
-                if source.criterion == 0 or source.criterion == 1 and not make_infinite:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapFollowers/",
-                        "method": "POST",
-                        "info":{
-                            "username": source.account_usernames,
-                            "delay": source.criterion or 5,
-                            "round": round_
-                        }
-                    }
-                if source.criterion == 2:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapUsers/",
-                        "method": "POST",
-                        "info":{
-                            "query": source.estimated_usernames,
-                            "round": round_
-                        }
-                    }
-                if source.criterion == 6:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapGmaps/",
-                        "method": "GET",
-                        "info":{}
-                    }
-                if source.criterion == 7:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapURL/",
-                        "method": "GET",
-                        "info":{}
-                    }
-
-                if source.criterion == 8:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapAPI/",
-                        "method": "GET",
-                        "info":{}
-                    }
-
-                if enrich:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/scrapInfo/",
-                        "method": "POST",
-                        "info":{
-                                "delay_before_requests":4,
-                                "delay_after_requests":14,
-                                "step":3,
-                                "accounts":18,
-                                "round":round_
-                            }
-                    }
-
-                if make_infinite:
-                    data = {
-                        "dag_id": source.name,
-                        "schedule_interval": datetime_to_cron_expression(schedule.scrapper_starttime),
-                        "endpoint": "instagram/insertAndEnrich/",
-                        "method": "POST",
-                        "info":{
-                            "keywords_to_check": qualification_algorithm.positive_keywords,
-                            "round": round_
-                        }
-                    }
-                
-            # Write the dictionary to a YAML file
-            yaml_file_path = os.path.join(settings.BASE_DIR, 'api','helpers',
-                            'include','dag_configs', f"{source.name}_config.yaml")
-            with open(yaml_file_path, 'w') as yaml_file:
-                try:
-                    yaml.dump(data, yaml_file, default_flow_style=False)
-                except Exception as error:
-                    return Response({'error': str(error)}, status=400)
-
-            try:
-                generate_dag()
-            except Exception as error:
-                return Response({'error': str(error)}, status=400)
-            return Response({'status': 'success', 'message': 'DAG config created and YAML file saved'}, status=status.HTTP_201_CREATED)
-        return Response({'error': 'Invalid input data'}, status=400)

@@ -86,6 +86,7 @@ class InstagramUser(BaseModel):
     account_id_pointer = models.BooleanField(default=False)
     outsourced_id = models.CharField(max_length=255,null=True,blank=True)
     outsourced_id_pointer = models.BooleanField(default=False)
+    qualified_keywords = models.TextField(null=True, blank=True)
     cursor = models.TextField(null=True,blank=True)
 
     def __str__(self) -> str:
@@ -93,3 +94,67 @@ class InstagramUser(BaseModel):
         return self.username if self.username else 'cursor'
 
 
+
+class DagModel(BaseModel):
+    dag_id = models.CharField(max_length=255)
+    description = models.TextField()
+    schedule = models.CharField()
+    schedule_interval = models.CharField(max_length=255)
+    timetable = models.CharField(max_length=255,null=True,blank=True)
+    start_date = models.DateTimeField(null=True,blank=True)
+    end_date = models.DateTimeField(null=True,blank=True)
+    full_filepath = models.CharField(max_length=255,null=True,blank=True)
+    template_searchpath = models.CharField(null=True,blank=True)
+    template_undefined = models.TextField(null=True,blank=True)
+    user_defined_macros  = models.JSONField(null=True,blank=True)
+    user_defined_filters = models.JSONField(null=True,blank=True)
+    default_args = models.JSONField(null=True,blank=True)
+    concurrency = models.IntegerField(null=True,blank=True)
+    max_active_tasks = models.IntegerField(null=True,blank=True)
+    max_active_runs = models.IntegerField(null=True,blank=True)
+    dagrun_timeout = models.DateTimeField(null=True,blank=True)
+    sla_miss_callback = models.TextField(null=True,blank=True)
+    default_view = models.CharField(max_length=255,null=True,blank=True)
+    orientation = models.CharField(max_length=255,null=True,blank=True)
+    catchup = models.BooleanField(default=False)
+    on_success_callback = models.TextField(null=True,blank=True)
+    on_failure_callback = models.TextField(null=True,blank=True)
+    doc_md = models.CharField(max_length=255,null=True,blank=True)
+    params = models.JSONField(null=True,blank=True)
+    access_control = models.JSONField(null=True,blank=True)
+    is_paused_upon_creation = models.BooleanField(default=False)
+    jinja_environment_kwargs = models.JSONField(null=True,blank=True)
+    render_template_as_native_obj = models.BooleanField(default=False)
+    tags = ArrayField(models.CharField(max_length=50), blank=True, null=True)
+    owner_links = models.JSONField(null=True,blank=True)
+    auto_register = models.BooleanField(default=False)
+    fail_stop = models.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return self.dag_id
+    
+
+class SimpleHttpOperatorModel(BaseModel):
+    METHODS = (
+        ("GET","GET"),
+        ("POST","POST")
+    )
+    task_id = models.CharField(max_length=255,null=True, blank=True)
+    http_conn_id=models.CharField(max_length=144,default="your_http_connection")
+    endpoint = models.CharField(max_length=255)
+    method = models.CharField(max_length=20, choices=METHODS, default="POST")
+    data = models.JSONField()
+    headers = models.JSONField()
+    response_check = models.CharField(max_length=1024,null=True,blank=True)
+    extra_options = models.JSONField(null=True,blank=True)
+    xcom_push = models.BooleanField(default=False)
+    log_response = models.BooleanField(default=False)
+    
+    def __str__(self) -> str:
+        return self.endpoint
+
+
+class WorkflowModel(BaseModel):
+    name = models.CharField(max_length=255,null=True, blank=True)
+    simplehttpoperators = models.ManyToManyField(SimpleHttpOperatorModel)
+    dag = models.ForeignKey(DagModel,on_delete=models.CASCADE,null=True, blank=True)
