@@ -6,8 +6,8 @@ Pillow
 kafka-python3
 kafka-python
 pandas
-django
-djangorestframework
+django==4.2.9
+djangorestframework==3.14.0
 django-celery-beat
 django-softdelete
 django-cors-headers
