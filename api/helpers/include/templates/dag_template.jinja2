@@ -5,24 +5,31 @@ from airflow.utils.dates import days_ago
 from datetime import timedelta
 import json
 
+{% for dag_ in dag %}
 dag = DAG(
-    "{{dag_id}}",
-    schedule_interval="{{schedule_interval}}",
-    start_date=days_ago(1),
-    catchup={{catchup or False}},
+    "{{ dag_.dag_id }}",
+    schedule_interval="{{ dag_.schedule_interval }}",
+    start_date="{{ dag_.start_date }}",
+    catchup={{ dag_.catchup or False }},
 )
+{% endfor %}
 
+{% for operator in operators %}
 # Define the HTTP operator
-http_task = SimpleHttpOperator(
-    task_id='http_task',
-    http_conn_id='your_http_connection',  # Specify the HTTP connection ID
-    endpoint='{{endpoint}}',  # Specify the endpoint to hit
-    method='{{method}}',  # Specify the HTTP method
-    headers={'Content-Type': 'application/json'}, # Add any headers if needed
-    data=json.dumps({{info}}),  # Add any data if needed
-    log_response=True,  # Log the response in the Airflow UI
+http_task_{{ loop.index }} = SimpleHttpOperator(
+    task_id="{{ operator.task_id }}",
+    http_conn_id="{{ operator.http_conn_id }}",
+    endpoint="{{ operator.endpoint }}",
+    method="{{ operator.method }}",
+    headers={{ operator.headers | tojson }},  # Assuming headers is a dictionary, convert it to JSON
+    data={{ operator.data | tojson }},
+    log_response={{ operator.log_response }},
     dag=dag,
 )
 
 # Set up task dependencies
-http_task
+{% if loop.index > 1 %}
+http_task_{{ loop.index - 1 }} >> http_task_{{ loop.index }}
+{% endif %}
+
+{% endfor %}

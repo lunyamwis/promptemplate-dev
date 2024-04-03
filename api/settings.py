@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_celery_beat',
     'softdelete',
-    'boostedchatScrapper'
+    'boostedchatScrapper',
+    'sitemaps'
 ]
 
 MIDDLEWARE = [
