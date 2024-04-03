@@ -9,7 +9,7 @@ import json
 dag = DAG(
     "{{ dag_.dag_id }}",
     schedule_interval="{{ dag_.schedule_interval }}",
-    start_date="{{ dag_.start_date }}",
+    start_date=days_ago(1),
     catchup={{ dag_.catchup or False }},
 )
 {% endfor %}
