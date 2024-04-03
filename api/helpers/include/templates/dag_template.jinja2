@@ -5,6 +5,9 @@ from airflow.utils.dates import days_ago
 from datetime import timedelta
 import json
 
+true=True
+false=False
+
 {% for dag_ in dag %}
 dag = DAG(
     "{{ dag_.dag_id }}",
