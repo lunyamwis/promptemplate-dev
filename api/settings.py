@@ -44,6 +44,8 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
     f"https://api.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    f"https://scrapper.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
+    f"https://scrapper.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
     "http://34.28.104.255"]
 
 # Application definition
