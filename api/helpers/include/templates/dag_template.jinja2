@@ -5,8 +5,6 @@ from airflow.utils.dates import days_ago
 from datetime import timedelta
 import json
 
-true=True
-false=False
 
 {% for dag_ in dag %}
 dag = DAG(
@@ -25,7 +23,7 @@ http_task_{{ loop.index }} = SimpleHttpOperator(
     endpoint="{{ operator.endpoint }}",
     method="{{ operator.method }}",
     headers={{ operator.headers | tojson }},  # Assuming headers is a dictionary, convert it to JSON
-    data={{ operator.data | tojson }},
+    data=json.dumps({{ operator.data}}),
     log_response={{ operator.log_response }},
     dag=dag,
 )
