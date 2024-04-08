@@ -81,7 +81,7 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
             workflow.dag = dag
             workflow.save()
 
-        json_data = workflow.delay_durations
+        json_data = json.dumps(workflow.delay_durations)
         data_serializable = json.loads(json_data)
         delay_durations = {key: timedelta(seconds=value) for key, value in data_serializable.items()}
 
