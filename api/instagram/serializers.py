@@ -87,7 +87,7 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
             "operators":[entry for entry in workflow.simplehttpoperators.values()],
             "data_seconds":workflow.delay_durations
         }
-
+        
         # Write the dictionary to a YAML file
         yaml_file_path = os.path.join(settings.BASE_DIR, 'api', 'helpers', 'include', 'dag_configs', f"{workflow.dag.dag_id}_config.yaml")
         with open(yaml_file_path, 'w') as yaml_file:
