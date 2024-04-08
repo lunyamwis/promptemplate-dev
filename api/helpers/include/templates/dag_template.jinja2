@@ -1,11 +1,3 @@
-from airflow import DAG
-from airflow.operators.http_operator import SimpleHttpOperator
-from airflow.sensors.http_sensor import HttpSensor
-from airflow.utils.dates import days_ago
-from datetime import timedelta
-import json
-
-
 {% for dag_ in dag %}
 dag = DAG(
     "{{ dag_.dag_id }}",
@@ -14,6 +6,8 @@ dag = DAG(
     catchup={{ dag_.catchup or False }},
 )
 {% endfor %}
+
+{% set delay_durations = {{delay_durations}} %}
 
 {% for operator in operators %}
 # Define the HTTP operator
@@ -28,9 +22,17 @@ http_task_{{ loop.index }} = SimpleHttpOperator(
     dag=dag,
 )
 
-# Set up task dependencies
-{% if loop.index > 1 %}
-http_task_{{ loop.index - 1 }} >> http_task_{{ loop.index }}
+# Set up task dependencies with dynamic delay durations
+{% if loop.index|string in delay_durations %}
+{# Add delay sensor between tasks #}
+delay_task_{{ loop.index }} = TimeDeltaSensor(
+    task_id='delay_task_{{ loop.index }}',
+    delta=delay_durations[loop.index|string],  # Use dynamic delay durations from the dictionary
+    mode='reschedule',
+    dag=dag,
+)
+
+http_task_{{ loop.index - 1 }} >> delay_task_{{ loop.index }} >> http_task_{{ loop.index }}
 {% endif %}
 
 {% endfor %}

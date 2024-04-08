@@ -1,6 +1,8 @@
 # serializers.py
 import os
+import json
 import yaml
+from datetime import timedelta
 from rest_framework import serializers
 from .models import Score, QualificationAlgorithm, Scheduler, LeadSource,SimpleHttpOperatorModel,WorkflowModel,DagModel
 from django.conf import settings
@@ -61,7 +63,7 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WorkflowModel
-        fields = ['id', 'name', 'simplehttpoperators','dag']
+        fields = ['id', 'name', 'simplehttpoperators','dag','delay_durations']
 
     
     def create(self, validated_data):
@@ -79,9 +81,14 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
             workflow.dag = dag
             workflow.save()
 
+        json_data = workflow.delay_durations
+        data_serializable = json.loads(json_data)
+        delay_durations = {key: timedelta(seconds=value) for key, value in data_serializable.items()}
+
         data = {
             "dag":[entry for entry in DagModel.objects.filter(id = workflow.dag.id).values()],
-            "operators":[entry for entry in workflow.simplehttpoperators.values()]
+            "operators":[entry for entry in workflow.simplehttpoperators.values()],
+            "delay_durations":delay_durations
         }
 
         # Write the dictionary to a YAML file

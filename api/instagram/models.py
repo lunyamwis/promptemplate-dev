@@ -158,3 +158,4 @@ class WorkflowModel(BaseModel):
     name = models.CharField(max_length=255,null=True, blank=True)
     simplehttpoperators = models.ManyToManyField(SimpleHttpOperatorModel)
     dag = models.ForeignKey(DagModel,on_delete=models.CASCADE,null=True, blank=True)
+    delay_durations = models.JSONField(null=True,blank=True)
