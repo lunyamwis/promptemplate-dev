@@ -81,14 +81,11 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
             workflow.dag = dag
             workflow.save()
 
-        json_data = json.dumps(workflow.delay_durations)
-        data_serializable = json.loads(json_data)
-        delay_durations = {key: timedelta(seconds=value) for key, value in data_serializable.items()}
-
+        
         data = {
             "dag":[entry for entry in DagModel.objects.filter(id = workflow.dag.id).values()],
             "operators":[entry for entry in workflow.simplehttpoperators.values()],
-            "delay_durations":delay_durations
+            "data_seconds":workflow.delay_durations
         }
 
         # Write the dictionary to a YAML file
