@@ -45,7 +45,7 @@ http_task_{{ loop.index }} = SimpleHttpOperator(
 {# Add delay sensor between tasks #}
 delay_task_{{ loop.index }} = TimeDeltaSensor(
     task_id='delay_task_{{ loop.index }}',
-    delta=timedelta(seconds=delay_durations[{{loop.index}}]),  # Use dynamic delay durations from the dictionary
+    delta=timedelta(seconds={{loop.index}}),  # Use dynamic delay durations from the dictionary
     mode='reschedule',
     dag=dag,
 )
