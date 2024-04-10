@@ -18,40 +18,45 @@ CLEAN_STRING = re.compile(r"[\']")
 class GmapsSpider(CrawlSpider):
     name = "gmaps"
     allowed_domains = ["www.google.com"]
-    base_url = "https://www.google.com/maps/"
-    start_urls = [
-        "https://www.google.com/maps/search/"
+    base_url = "https://www.google.com/maps/search/"
+    # start_urls = [
+    #     "https://www.google.com/maps/search/"
 
-    ]
+    # ]
 
     rules = (Rule(LinkExtractor(allow=r"Items/"), callback="parse", follow=True),)
-    
+
+
+
+    def __init__(self, search_string, **kwargs):
+        self.search_string = search_string # py36
+        super().__init__(**kwargs)  # python3
     
     def start_requests(self):
-        # urls = generate_gmap_links(self.start_urls[0],"Barbers, Orlando, FL")
+        urls = generate_gmap_links(self.base_url,self.search_string)
 
-        # for url in urls:
-        #     page  = generate_html(url)
+        for url in urls:
+            page  = generate_html(url)
             
-        #     print("==================☁️☁️generated_url☁️☁️===========")
-        #     print(page.current_url)
-        #     print("==================☁️☁️generated_url☁️☁️===========")
-        #     yield SeleniumRequest(
-        #             url = page.current_url,
-        #             callback = self.parse
-        #         )
-
-        search_string = "Minute Suites - DFW Airport Terminal A, Near A38,TX,US"
-        google_maps_url = (
-            "https://www.google.com/maps/search/"
-            + urllib.parse.quote_plus(search_string)
-            + "?hl=en"
-        )
-        
-        yield SeleniumRequest(
-                    url = google_maps_url,
+            print("==================☁️☁️generated_url☁️☁️===========")
+            print(page.current_url)
+            print("==================☁️☁️generated_url☁️☁️===========")
+            yield SeleniumRequest(
+                    url = page.current_url,
                     callback = self.parse
                 )
+
+        # search_string = "Minute Suites - DFW Airport Terminal A, Near A38,TX,US"
+        # google_maps_url = (
+        #     "https://www.google.com/maps/search/"
+        #     + urllib.parse.quote_plus(self.search_string)
+        #     + "?hl=en"
+        # )
+        
+        # yield SeleniumRequest(
+        #             url = google_maps_url,
+        #             callback = self.parse
+        #         )
     
     
 
@@ -60,6 +65,7 @@ class GmapsSpider(CrawlSpider):
         resp_meta = {}
         item = APIItem()
         item["name"] = "google_maps"
+        item["inference_key"] = self.search_string
         resp_meta["name"] = "google_maps"
         resp_meta["title"] = CLEAN_STRING.sub("", response.request.meta['driver'].title)
         time.sleep(4)

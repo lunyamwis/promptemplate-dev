@@ -1,5 +1,6 @@
 import yaml
 import os
+import logging
 import pandas as pd
 import subprocess
 
@@ -13,6 +14,7 @@ from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
 
 from rest_framework import viewsets
+from boostedchatScrapper.models import ScrappedData
 from .models import Score, QualificationAlgorithm, Scheduler, LeadSource,DagModel,SimpleHttpOperatorModel,WorkflowModel
 from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer, SimpleHttpOperatorModelSerializer, WorkflowModelSerializer
 
@@ -60,11 +62,23 @@ class ScrapFollowers(APIView):
     
 class ScrapGmaps(APIView):
 
-    def get(self,request):
+    def post(self,request):
+        search_string = request.data.get("search_string")
+        chain = request.data.get("chain")
+        round_ = request.data.get("round")
+        index = request.data.get("index")
         try:
-            # Execute Scrapy spider using the command line
-            subprocess.run(["scrapy", "crawl", "gmaps"])
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            subprocess.run(["scrapy", "crawl", "gmaps","-a",f"search_string={search_string}"])
+            user = ScrappedData.objects.filter(inference_key=search_string)
+            if user.exists():
+                if chain:
+                    scrap_users(list(user.last().response.get("business_name")),round_ = round_,index=index)
+                else:
+                    scrap_users.delay(list(user.last().response.get("business_name")),round_ = round_,index=index)
+
+                return Response({"success": True}, status=status.HTTP_200_OK)
+            else:
+                logging.warning("Unable to find user")
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     

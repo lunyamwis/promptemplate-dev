@@ -1,3 +1,12 @@
+from airflow import DAG
+from airflow.operators.http_operator import SimpleHttpOperator
+from airflow.sensors.http_sensor import HttpSensor
+from airflow.sensors.time_delta import TimeDeltaSensor
+from airflow.utils.dates import days_ago
+from datetime import timedelta
+import json
+
+
 {% for dag_ in dag %}
 dag = DAG(
     "{{ dag_.dag_id }}",
@@ -20,6 +29,13 @@ http_task_{{ loop.index }} = SimpleHttpOperator(
     data=json.dumps({{ operator.data}}),
     log_response={{ operator.log_response }},
     dag=dag,
+    on_failure_callback=[
+        send_slack_notification(
+            text="The task {{ operator.task_id }} for failed",
+            channel="#tech-notifications",
+            username="airflow",
+        )
+    ],
 )
 
 # Set up task dependencies with dynamic delay durations

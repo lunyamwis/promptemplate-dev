@@ -57,18 +57,10 @@ def generate_gmap_links(url,area):
                     # Link.objects.create(url=element.get_attribute("href"),name='gmaps')
                 except Exception as error:
                     print(error)
-            
-            
-            if len(links) == 1:
-                break
-
-        if len(links) == 1:
-                break        
-        # if html.find("You've reached the end of the list.") != -1:
-            # keepScrolling = False
-        # elif html.find("Umefikia mwisho wa orodha.") != -1:
-            # keepScrolling = False
-
+                    
+        if html.find("You've reached the end of the list.") != -1:
+            keepScrolling = False
+        
        
     driver.quit()
     

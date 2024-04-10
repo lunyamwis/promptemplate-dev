@@ -1,5 +1,6 @@
 scrapy
 SQLAlchemy==1.4.51
+apache-airflow-providers-slack==
 psycopg2-binary
 instagrapi
 Pillow
@@ -19,6 +20,7 @@ pytz
 psycopg2-binary
 pyyaml
 Jinja2
+pydantic==1.10.9
 instagrapi==1.19.1
 webdriver_manager
 scrapeops-scrapy

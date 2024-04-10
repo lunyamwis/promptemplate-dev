@@ -27,6 +27,7 @@ class BoostedchatscrapperPipeline(object):
         create_scraped_data = sync_to_async(ScrappedData.objects.create)
 
         # Await the asynchronous function call
-        await create_scraped_data(name=item['name'], response=item['response'])
+        
+        await create_scraped_data(name=item['name'], inference_key=item.get('inference_key',''),response=item['response'])
 
         return item
