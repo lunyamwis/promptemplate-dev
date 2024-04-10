@@ -1,6 +1,6 @@
 scrapy
 SQLAlchemy==1.4.51
-apache-airflow-providers-slack==
+apache-airflow-providers-slack
 psycopg2-binary
 instagrapi
 Pillow
