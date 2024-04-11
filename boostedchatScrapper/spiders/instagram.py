@@ -341,7 +341,7 @@ class InstagramSpider:
                             record = connection.execute(insert_statement).fetchone()
                             qualified,keyword_counts = self.qualify(record['results'], keywords_to_check, datetime.now() + timedelta(hours=hour))
                             if qualified:
-                                filtered_dict = {key: value for key, value in keyword_counts.items() if value >= 1}
+                                filtered_dict = {key: value for key, value in keyword_counts.items() if value >= 2}
                                 instagram_user.qualified_keywords = str(filtered_dict)
                                 instagram_user.save()
                                 self.assign_salesreps(instagram_user.username, i)

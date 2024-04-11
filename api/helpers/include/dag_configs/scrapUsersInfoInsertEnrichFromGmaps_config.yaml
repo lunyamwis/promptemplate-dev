@@ -3,7 +3,7 @@ dag:
   auto_register: false
   catchup: false
   concurrency: null
-  created_at: 2024-04-10 23:08:26.995383+00:00
+  created_at: 2024-04-10 23:20:57.682680+00:00
   dag_id: scrapUsersInfoInsertEnrichFromGmaps
   dagrun_timeout: null
   default_args: null
@@ -14,7 +14,7 @@ dag:
   end_date: null
   fail_stop: false
   full_filepath: ''
-  id: 123fasdxmaasdfdfaasasddfop213oaloofasdpf
+  id: 123fasdxmaasdfdfaasasdmajoofdfop213oastootdpf
   is_paused_upon_creation: false
   jinja_environment_kwargs: null
   max_active_runs: null
@@ -33,14 +33,13 @@ dag:
   template_searchpath: ''
   template_undefined: ''
   timetable: ''
-  updated_at: 2024-04-10 23:08:26.995439+00:00
+  updated_at: 2024-04-10 23:20:57.682765+00:00
   user_defined_filters: null
   user_defined_macros: null
 data_seconds:
-  '1': 1080.0
   '2': 720.0
 operators:
-- created_at: 2024-04-10 23:08:15.437323+00:00
+- created_at: 2024-04-10 23:20:46.009265+00:00
   data:
     chain: true
     index: 0
@@ -52,14 +51,14 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobGricGaaas7823dfgwrfsdfaloofOLs1adf235adf
+  id: -NgcH1oobGricGaaas7823dfgwrmajooffsdfOLtotos1adf235adf
   log_response: true
   method: POST
   response_check: ''
   task_id: getUsers
-  updated_at: 2024-04-10 23:08:15.437444+00:00
+  updated_at: 2024-04-10 23:20:46.009336+00:00
   xcom_push: false
-- created_at: 2024-04-10 23:08:18.201098+00:00
+- created_at: 2024-04-10 23:20:49.285533+00:00
   data:
     accounts: 18
     chain: true
@@ -74,14 +73,14 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdg12sfgd123fOasdalooffLasfs5
+  id: -NgcH1oobx78vdg12sfgd123fOasdfmajoototofLasfs5
   log_response: true
   method: POST
   response_check: ''
   task_id: getInfo
-  updated_at: 2024-04-10 23:08:18.201160+00:00
+  updated_at: 2024-04-10 23:20:49.285571+00:00
   xcom_push: false
-- created_at: 2024-04-10 23:08:21.170246+00:00
+- created_at: 2024-04-10 23:20:51.947884+00:00
   data:
     chain: true
     keywords_to_check:
@@ -151,14 +150,14 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobGrO78La235zxs21aloof3sdfaasfdfgcvfs5
+  id: -NgcH1oobGrO78La235zxs213sdfaamajototoofsfdfgcvfs5
   log_response: true
   method: POST
   response_check: ''
   task_id: enrich
-  updated_at: 2024-04-10 23:08:21.170267+00:00
+  updated_at: 2024-04-10 23:20:51.948004+00:00
   xcom_push: false
-- created_at: 2024-04-10 23:08:24.037667+00:00
+- created_at: 2024-04-10 23:20:54.917482+00:00
   data:
     num_tasks: ''
     start_hour: 3
@@ -170,10 +169,10 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobiGUGO78Lasd2asfs12aloof3dfgasdf35zxcv
+  id: -NgcH1oobiGUGO78Lasd2asfs123dfgasmajoototofdf35zxcv
   log_response: true
   method: POST
   response_check: ''
   task_id: reschedule
-  updated_at: 2024-04-10 23:08:24.037739+00:00
+  updated_at: 2024-04-10 23:20:54.917542+00:00
   xcom_push: false
