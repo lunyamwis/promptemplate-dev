@@ -34,7 +34,7 @@ http_task_{{ loop.index }} = SimpleHttpOperator(
     on_failure_callback=[
         send_slack_notification(
             text="The task {{ operator.task_id }} for failed",
-            channel="#tech-notifications",
+            channel="#airflow-error",
             username="airflow",
         )
     ],
