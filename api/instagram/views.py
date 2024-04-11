@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich,scrap_mbo
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
+from boostedchatScrapper.spiders.helpers.thecut_helper import scrap_the_cut
 
 from rest_framework import viewsets
 from boostedchatScrapper.models import ScrappedData
@@ -59,7 +60,55 @@ class ScrapFollowers(APIView):
         else:
             scrap_followers.delay(username,delay,round_=round_)
         return Response({"success":True},status=status.HTTP_200_OK)
-    
+
+class ScrapTheCut(APIView):
+
+    def post(self,request):
+        chain = request.data.get("chain")
+        round_ = request.data.get("round")
+        index = request.data.get("index")
+        try:
+            scrap_the_cut(round_number=round_)
+            users = ScrappedData.objects.filter(round_number=round_)
+            if users.exists():
+                if chain:
+                    for user in users:
+                        scrap_users(list(user.response.get("keywords")[1]),round_ = round_,index=index)
+                else:
+                    for user in users:
+                        scrap_users.delay(list(user.response.get("keywords")[1]),round_ = round_,index=index)
+
+                return Response({"success": True}, status=status.HTTP_200_OK)
+            else:
+                logging.warning("Unable to find user")
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ScrapStyleseat(APIView):
+
+    def post(self,request):
+        region = request.data.get("region")
+        category = request.data.get("category")
+        chain = request.data.get("chain")
+        round_ = request.data.get("round")
+        index = request.data.get("index")
+        try:
+            subprocess.run(["scrapy", "crawl", "styleseat","-a",f"region={region}","-a",f"category={category}"])
+            users = ScrappedData.objects.filter(inference_key=region)
+            if users.exists():
+                if chain:
+                    for user in users:
+                        scrap_users(list(user.response.get("businessName")),round_ = round_,index=index)
+                else:
+                    for user in users:
+                        scrap_users.delay(list(user.response.get("businessName")),round_ = round_,index=index)
+
+                return Response({"success": True}, status=status.HTTP_200_OK)
+            else:
+                logging.warning("Unable to find user")
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ScrapGmaps(APIView):
 
     def post(self,request):
@@ -69,12 +118,14 @@ class ScrapGmaps(APIView):
         index = request.data.get("index")
         try:
             subprocess.run(["scrapy", "crawl", "gmaps","-a",f"search_string={search_string}"])
-            user = ScrappedData.objects.filter(inference_key=search_string)
-            if user.exists():
+            users = ScrappedData.objects.filter(inference_key=search_string)
+            if users.exists():
                 if chain:
-                    scrap_users(list(user.last().response.get("business_name")),round_ = round_,index=index)
+                    for user in users:
+                        scrap_users(list(user.response.get("business_name")),round_ = round_,index=index)
                 else:
-                    scrap_users.delay(list(user.last().response.get("business_name")),round_ = round_,index=index)
+                    for user in users:
+                        scrap_users.delay(list(user.response.get("business_name")),round_ = round_,index=index)
 
                 return Response({"success": True}, status=status.HTTP_200_OK)
             else:

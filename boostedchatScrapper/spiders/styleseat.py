@@ -9,7 +9,7 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.http import HtmlResponse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from selenium.webdriver.common.by import By
-from boostedchatScrapper.items import StyleSeatItem
+from boostedchatScrapper.items import StyleSeatItem, APIItem
 from urllib.parse import urlparse, parse_qs
 from .helpers.styleseat_dynamic_actions import generate_styleseat_links
 from .helpers.utils import click_element,generate_html
@@ -20,7 +20,7 @@ CLEAN_STRING = re.compile(r"[\']")
 class StyleseatSpider(CrawlSpider):
     name = "styleseat"
     allowed_domains = ["www.styleseat.com"]
-    base_url = "https://www.styleseat.com"
+    base_url = "https://www.styleseat.com/m/"
     start_urls = [
         "https://www.styleseat.com/m/v/gerard",
         "https://www.styleseat.com/m/v/barberpaul",
@@ -29,44 +29,35 @@ class StyleseatSpider(CrawlSpider):
 
     rules = (Rule(LinkExtractor(allow=r"Items/"), callback="parse", follow=True),)
 
+    def __init__(self, region, category, **kwargs):
+        self.region = region # py36
+        self.category = category
+        super().__init__(**kwargs)  # python3
+    
     def start_requests(self):
-        
-        # urls = generate_styleseat_links(self.start_urls[0])
-        # for url in urls:
-        #     page  = generate_html(url)
-        threads = []
-        # with ThreadPoolExecutor(max_workers=10) as executor:
-        #     for url in self.start_urls:
-        #         requests = SeleniumRequest(
-        #             url = url,
-        #             callback = self.parse
-        #         )
-        #         threads.append(
-        #             executor.submit(
-        #                 requests, url, self.parse
-        #             )
-        #         )
+        urls = generate_styleseat_links(f"https://www.styleseat.com/m/search/{self.region}/{self.category}")
 
-        #     for t in as_completed(threads):
-        #         yield t.result()
-                
-        for url in self.start_urls:
+        for url in urls:
+            page  = generate_html(url)
+            
+            print("==================☁️☁️generated_url☁️☁️===========")
+            print(page.current_url)
+            print("==================☁️☁️generated_url☁️☁️===========")
             yield SeleniumRequest(
-                    url = url,
+                    url = page.current_url,
                     callback = self.parse
                 )
-
-    
-
+   
 
     def parse(self, response):
-        # styleseat_item = StyleSeatItem()
+        styleseat_item = APIItem()
         resp_meta = {}
         print("==================☁️☁️meta_driver☁️☁️===========")
         print(response.request.meta)
         print("==================☁️☁️meta_driver☁️☁️===========")
         time.sleep(10)
-        # styleseat_item["name"] = "styleseat"
+        styleseat_item["name"] = "styleseat"
+        styleseat_item["inference_key"] = self.region
         resp_meta["name"] = "styleseat"
         resp_meta["secondary_name"] = response.request.meta['driver'].find_element(by=By.XPATH, value='//h1[@data-testid="proName"]').text
         print(f"resp_meta------------------------------->{resp_meta}")
@@ -235,7 +226,9 @@ class StyleseatSpider(CrawlSpider):
         #         resp_meta["calendar_availability"] = "Empty Calendar"
         # except Exception as error:
         #     print(error)
-        # styleseat_item["resp_meta"] = resp_meta
+        
+        styleseat_item["response"] = resp_meta
+
         yield resp_meta
         
 

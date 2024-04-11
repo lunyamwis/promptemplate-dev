@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+from boostedchatScrapper.models import ScrappedData
 
 # Function to get access token
 def get_access_token():
@@ -34,7 +35,7 @@ def get_access_token():
         raise e
 
 # Function to make API call with access token
-def make_api_call(access_token, entry):
+def make_api_call(access_token, entry, round_number):
     try:
         response = requests.get(f"https://api.thecut.co/v2/search/barbers?latitude={entry['lat']}&longitude={entry['lon']}&keywords=", headers={
             "Authorization": f"Bearer {access_token}",
@@ -52,13 +53,20 @@ def make_api_call(access_token, entry):
             "Signature": "v1 MTcwODMzNTg5NzprTFVKNmxjNFpiUzU4aXdUTFFsTENWQTFWNUlGSVFLMDpLQlhiand2bVpCeFppZmZieGFtYnd5bzh6aWp3c3FpSUU4ZHd6azViRHRrPQ=="
         })
         data = response.json()
-        filename = os.path.join("barbers", f"{entry['name']}.json")
-        with open(filename, "w") as f:
-            json.dump(data, f)
+        try:
+            for thecutData in data:
+                ScrappedData.objects.create(
+                    name = thecutData.get('keywords')[0],
+                    inference_key = thecutData.get('keywords')[1],
+                    response = thecutData,
+                    round_number = round_number
+                )
+        except Exception as err:
+            print(err)
     except Exception as e:
         print("Error making API call:", e)
 
-def main():
+def scrap_the_cut(round_number):
     try:
         # Get access token
         access_token = get_access_token()
@@ -77,10 +85,7 @@ def main():
         # Call API with access token for each entry
         for entry in data:
             print(entry)
-            make_api_call(access_token, entry)
+            make_api_call(access_token, entry,round_number)
     except Exception as e:
         print("An error occurred:", e)
 
-# Start the main function
-if __name__ == "__main__":
-    main()
