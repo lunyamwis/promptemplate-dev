@@ -19,6 +19,7 @@ dag = DAG(
 {% endfor %}
 
 {% set delay_durations = data_seconds %}
+duration_data = {{data_seconds}}
 
 {% for operator in operators %}
 # Define the HTTP operator
@@ -45,7 +46,7 @@ http_task_{{ loop.index }} = SimpleHttpOperator(
 {# Add delay sensor between tasks #}
 delay_task_{{ loop.index }} = TimeDeltaSensor(
     task_id='delay_task_{{ loop.index }}',
-    delta=timedelta(seconds={{loop.index}}),  # Use dynamic delay durations from the dictionary
+    delta=timedelta(seconds=duration_data[{{loop.index}}]),  # Use dynamic delay durations from the dictionary
     mode='reschedule',
     dag=dag,
 )
