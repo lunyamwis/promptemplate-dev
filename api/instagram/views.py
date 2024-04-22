@@ -1,6 +1,8 @@
 import yaml
 import os
+import json
 import logging
+import requests
 import pandas as pd
 import subprocess
 
@@ -13,6 +15,7 @@ from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich,scra
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
 from boostedchatScrapper.spiders.helpers.thecut_helper import scrap_the_cut
+from .models import InstagramUser
 
 from rest_framework import viewsets
 from boostedchatScrapper.models import ScrappedData
@@ -228,3 +231,72 @@ class InsertAndEnrich(APIView):
         return Response({"success":True},status=status.HTTP_200_OK)
     
 
+class GetMediaIds(APIView):
+    def post(self,request):
+        round_ = request.data.get("round")
+        chain = request.data.get("chain")
+        
+        datasets = []
+        for user in InstagramUser.objects.filter(round=round):
+            resp = requests.post(f"api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data=json.dumps({"username":user.username}))
+            if resp.json()['has_responded']:
+                return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
+            else:
+                dataset = {
+                    "mediaIds": user.info.get("media_id"),
+                    "username_from": user.attached_salesrep
+                }
+                datasets.append(dataset)
+        
+        if chain and round_:  
+            return Response({"data": datasets},status=status.HTTP_200_OK)
+        else:
+            return Response({"error":"There is an error fetching medias"}, status=400)
+        
+
+class GetMediaComments(APIView):
+    def post(self,request):
+        round_ = request.data.get("round")
+        chain = request.data.get("chain")
+        
+        datasets = []
+
+        for user in InstagramUser.objects.filter(round=round):
+            resp = requests.post(f"api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data=json.dumps({"username":user.username}))
+            if resp.json()['has_responded']:
+                return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
+            else:
+                dataset = {
+                    "mediaId": user.info.get("media_id"),
+                    "comment": "cool stuff!",
+                    "username_from": user.attached_salesrep
+                }
+                datasets.append(dataset)
+        
+        if chain and round_:  
+            return Response({"mediaComments": datasets},status=status.HTTP_200_OK)
+        else:
+            return Response({"error":"There is an error fetching medias"}, status=400)
+        
+class GetAccounts(APIView):
+    def post(self,request):
+        round_ = request.data.get("round")
+        chain = request.data.get("chain")
+        
+        datasets = []
+        for user in InstagramUser.objects.filter(round=round):
+            resp = requests.post(f"api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data=json.dumps({"username":user.username}))
+            if resp.json()['has_responded']:
+                return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
+            else:
+                dataset = {
+                    "usernames_to": user.info.get("username"),
+                    "username_from": user.attached_salesrep
+                }
+                datasets.append(dataset)
+        
+        if chain and round_:  
+            return Response({"data": datasets},status=status.HTTP_200_OK)
+        else:
+            return Response({"error":"There is an error fetching medias"}, status=400)
+        

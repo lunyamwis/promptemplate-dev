@@ -1,13 +1,14 @@
+import requests
+
 from airflow import DAG
 from airflow.operators.http_operator import SimpleHttpOperator
+from airflow.operators.python_operator import PythonOperator  # Import PythonOperator
 from airflow.sensors.http_sensor import HttpSensor
 from airflow.sensors.time_delta import TimeDeltaSensor
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 from airflow.providers.slack.notifications.slack import send_slack_notification
-
 import json
-
 
 {% for dag_ in dag %}
 dag = DAG(
@@ -19,34 +20,82 @@ dag = DAG(
 {% endfor %}
 
 {% set delay_durations = data_seconds %}
-duration_data = {{data_seconds}}
+duration_data = {{ data_seconds }}
 
-{% for operator in operators %}
-# Define the HTTP operator
-http_task_{{ loop.index }} = SimpleHttpOperator(
-    task_id="{{ operator.task_id }}",
-    http_conn_id="{{ operator.http_conn_id }}",
-    endpoint="{{ operator.endpoint }}",
-    method="{{ operator.method }}",
-    headers={{ operator.headers | tojson }},  # Assuming headers is a dictionary, convert it to JSON
-    data=json.dumps({{ operator.data}}),
-    log_response={{ operator.log_response }},
+{% set http_tasks = [] %}
+{% set prev_response = None %}
+
+# Define the first HTTP operator separately
+http_task_1 = SimpleHttpOperator(
+    task_id="{{ operators[0].task_id }}",
+    http_conn_id="{{ operators[0].http_conn_id }}",
+    endpoint="{{ operators[0].endpoint }}",
+    method="{{ operators[0].method }}",
+    headers={{ operators[0].headers | tojson }},  # Assuming headers is a dictionary, convert it to JSON
+    data=json.dumps({{ operators[0].data}}),
+    log_response={{ operators[0].log_response }},
     dag=dag,
+    do_xcom_push=True,
     on_failure_callback=[
         send_slack_notification(
-            text="The task {{ operator.task_id }} for failed",
+            text="The task {{ operators[0].task_id }} for failed",
             channel="#airflow-error",
             username="airflow",
         )
     ],
 )
+http_tasks.append(http_task_1)
 
 # Set up task dependencies with dynamic delay durations
-{% if loop.index|string in delay_durations  and loop.index > 1%}
-{# Add delay sensor between tasks #}
+{% if operators|length > 1 %}
+{% for i in range(1, operators|length) %}
+
+# Downstream task to retrieve XCom value
+{% if i > 1 %}
+def process_json_response_{{i}}(**context):
+    ti = context['task_instance']
+    prev_json_data = ti.xcom_pull(task_ids='process_response_{{i-1}}_task', key='json_response')
+    if prev_json_data:
+        response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data))
+        json_data = response.json()  # Your JSON response
+    
+        context['task_instance'].xcom_push(key='json_response', value=json_data)
+
+process_response_{{i}}_task = PythonOperator(
+    task_id='process_response_{{i}}',
+    python_callable=process_json_response_{{i}},
+    provide_context=True,
+)
+
+# Define the HTTP operator
+http_task_{{ i + 1 }} = SimpleHttpOperator(
+    task_id="{{ operators[i].task_id }}",
+    http_conn_id="{{ operators[i].http_conn_id }}",
+    endpoint="{{ operators[i].endpoint }}",
+    method="{{ operators[i].method }}",
+    headers={{ operators[i].headers | tojson }},  # Assuming headers is a dictionary, convert it to JSON
+    data=json.dumps({{ operators[i].data }}),
+    log_response={{ operators[i].log_response }},
+    do_xcom_push=True,  # Enable pushing response to XCom
+    dag=dag,
+    on_failure_callback=[
+        send_slack_notification(
+            text="The task {{ operators[i].task_id }} for failed",
+            channel="#airflow-error",
+            username="airflow",
+        )
+    ],
+)
+http_tasks.append(http_task_{{ i + 1 }})
+
+{% endif %}
+
+# Set up task dependencies with dynamic delay durations
+{% if loop.index|string in delay_durations and loop.index > 1 and operators[loop.index].data %}
+# Add delay sensor between tasks
 delay_task_{{ loop.index }} = TimeDeltaSensor(
     task_id='delay_task_{{ loop.index }}',
-    delta=timedelta(seconds=duration_data[{{loop.index}}]),  # Use dynamic delay durations from the dictionary
+    delta=timedelta(seconds=duration_data[{{ loop.index }}]),  # Use dynamic delay durations from the dictionary
     mode='reschedule',
     dag=dag,
 )
@@ -54,6 +103,9 @@ delay_task_{{ loop.index }} = TimeDeltaSensor(
 http_task_{{ loop.index - 1 }} >> delay_task_{{ loop.index }} >> http_task_{{ loop.index }}
 {% elif loop.index > 1 %}
 http_task_{{ loop.index - 1 }} >> http_task_{{ loop.index }}
+{% else %}
+process_response_{{loop.index-1}}_task  >> process_response_{{loop.index}}_task 
 {% endif %}
 
 {% endfor %}
+{% endif %}

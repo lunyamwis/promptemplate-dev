@@ -88,6 +88,7 @@ class InstagramUser(BaseModel):
     outsourced_id_pointer = models.BooleanField(default=False)
     qualified_keywords = models.TextField(null=True, blank=True)
     cursor = models.TextField(null=True,blank=True)
+    attached_salesrep = models.CharField(max_length=255,null=True,blank=True)
 
     def __str__(self) -> str:
 
@@ -147,8 +148,9 @@ class SimpleHttpOperatorModel(BaseModel):
     headers = models.JSONField()
     response_check = models.CharField(max_length=1024,null=True,blank=True)
     extra_options = models.JSONField(null=True,blank=True)
-    xcom_push = models.BooleanField(default=False)
+    xcom_push = models.BooleanField(default=True)
     log_response = models.BooleanField(default=False)
+    url = models.URLField(null=True, blank=True)
     
     def __str__(self) -> str:
         return self.endpoint

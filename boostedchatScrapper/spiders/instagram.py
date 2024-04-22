@@ -183,7 +183,14 @@ class InstagramSpider:
                 time.sleep(random.randint(delay_before_requests,delay_before_requests+step))
                 try:
 
-                    user.info = client.user_info_by_username(user.username).dict()
+                    info_dict = client.user_info_by_username(user.username).dict()
+                    try:
+                        user_medias = client.user_medias(info_dict.get("pk"),amount=1)
+                        info_dict.update({"media_id":user_medias[0].id})
+                    except Exception as error:
+                        info_dict.update({"media_id":""})
+                        print(error)
+                    user.info = info_dict
                     user.save()
                 except Exception as error:
                     user.outsourced_id_pointer=True
@@ -252,6 +259,13 @@ class InstagramSpider:
             else:
                 print(f"Account {username} does not exist")
             
+            ig_users = InstagramUser.objects.filter(username=username)
+            if ig_users.exists():
+                ig_user = ig_users.last()
+                ig_user.attached_salesrep = salesreps[index % len(salesreps)]['ig_username']
+                ig_user.save()
+
+
     def qualify(self, client_info, keywords_to_check,time_to_begin_outreach):
         qualified = False
         if client_info:
@@ -265,7 +279,7 @@ class InstagramSpider:
                     keyword_counts[keyword] += str(value).lower().count(keyword.lower())
 
             # Check if any keyword has more than two occurrences
-            keyword_found = any(count >= 1 for count in keyword_counts.values())
+            keyword_found = any(count >= 2 for count in keyword_counts.values())
 
             if keyword_found:
                 with self.engine.connect() as connection:

@@ -1,5 +1,6 @@
 
 from jinja2 import Environment, FileSystemLoader
+# from airflow.models import TaskInstance
 import yaml
 import os
 
@@ -15,4 +16,7 @@ def generate_dag():
             with open(f"{file_dir}/include/dag_configs/{filename}","r") as input_file:
                 inputs = yaml.unsafe_load(input_file)
                 with open(f"/opt/airflow/dags/{inputs['dag'][0]['dag_id']}.py","w") as f:
-                    f.write(template.render(inputs))
+                    context = {
+                        'task_instance': {}  # Example of task_instance context
+                    }
+                    f.write(template.render(inputs, **context))
