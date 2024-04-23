@@ -26,3 +26,4 @@ webdriver_manager
 scrapeops-scrapy
 scrapy-djangoitem
 paramiko
+requests

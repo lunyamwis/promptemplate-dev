@@ -57,21 +57,25 @@ def process_json_response_{{i}}(**context):
     ti = context['task_instance']
     prev_json_data = ti.xcom_pull(task_ids='process_response_{{i-1}}_task', key='json_response')
     if prev_json_data:
-        response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data))
-        if "data" in response.json():
-            json_data = response.json()["data"]  # Your JSON response
+        response = None  
+        if "data" in prev_json_data:
+            response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data['data']))
         else:
-            json_data = response.json()
+            response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data))
+        
+        json_data = response.json()
     
         context['task_instance'].xcom_push(key='json_response', value=json_data)
     else:
-        prev_json_data = ti.xcom_pull(task_ids='http_task_{{i-1}}', key='json_response')
-        response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data))
-        json_data = None
-        if "data" in response.json():
-            json_data = response.json()["data"]  # Your JSON response
+        prev_json_data = ti.xcom_pull(task_ids='{{ operators[i-1].task_id }}', key='return_value')
+        response = None
+        if "data" in prev_json_data:
+
+            response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data['data']))
         else:
-            json_data = response.json()
+            response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data))
+        
+        json_data = response.json()
 
         context['task_instance'].xcom_push(key='json_response', value=json_data)
 

@@ -3,7 +3,7 @@ dag:
   auto_register: false
   catchup: false
   concurrency: null
-  created_at: 2024-04-23 07:51:54.490375+00:00
+  created_at: 2024-04-23 10:49:41.201358+00:00
   dag_id: scrapUsersInfoInsertEnrichTheCutThree
   dagrun_timeout: null
   default_args: null
@@ -14,7 +14,7 @@ dag:
   end_date: null
   fail_stop: false
   full_filepath: ''
-  id: -Nw8w8Sv2b8erZ7YG7GD
+  id: -Nw9ZpgUtfZ_V4gXKaA1
   is_paused_upon_creation: false
   jinja_environment_kwargs: null
   max_active_runs: null
@@ -33,13 +33,13 @@ dag:
   template_searchpath: ''
   template_undefined: ''
   timetable: ''
-  updated_at: 2024-04-23 07:51:54.490411+00:00
+  updated_at: 2024-04-23 10:49:41.201422+00:00
   user_defined_filters: null
   user_defined_macros: null
 data_seconds:
   '2': 720.0
 operators:
-- created_at: 2024-04-23 07:51:18.856148+00:00
+- created_at: 2024-04-23 10:49:10.582312+00:00
   data:
     chain: true
     index: 0
@@ -52,15 +52,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w-l7AIzZKthGuDTP
+  id: -Nw9ZiG3dg30QkfNdyiH
   log_response: true
   method: POST
   response_check: ''
   task_id: getUsers
-  updated_at: 2024-04-23 07:51:18.856183+00:00
+  updated_at: 2024-04-23 10:49:10.582388+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-23 07:51:22.328062+00:00
+- created_at: 2024-04-23 10:49:13.239715+00:00
   data:
     accounts: 18
     chain: true
@@ -75,15 +75,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w0ejVhhZsfiqzFUz
+  id: -Nw9Ziv2ggWau2Q3nXi6
   log_response: true
   method: POST
   response_check: ''
   task_id: getInfo
-  updated_at: 2024-04-23 07:51:22.328100+00:00
+  updated_at: 2024-04-23 10:49:13.239756+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-23 07:51:25.921254+00:00
+- created_at: 2024-04-23 10:49:18.673085+00:00
   data:
     chain: true
     keywords_to_check:
@@ -95,15 +95,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w1W7umGPFO8XVwfh
+  id: -Nw9ZkD4yOYHvXC7PtjI
   log_response: true
   method: POST
   response_check: ''
   task_id: enrich
-  updated_at: 2024-04-23 07:51:25.921292+00:00
+  updated_at: 2024-04-23 10:49:18.673142+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-23 07:51:29.483447+00:00
+- created_at: 2024-04-23 10:49:21.188531+00:00
   data:
     num_tasks: ''
     start_hour: 3
@@ -115,15 +115,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w2Q1ouxcVimwb0Dp
+  id: -Nw9ZkqFkUrheekyvGx2
   log_response: true
   method: POST
   response_check: ''
   task_id: reschedule
-  updated_at: 2024-04-23 07:51:29.483485+00:00
+  updated_at: 2024-04-23 10:49:21.188545+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-23 07:51:32.986816+00:00
+- created_at: 2024-04-23 10:49:23.999665+00:00
   data:
     chain: true
     index: 0
@@ -134,15 +134,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w3EVso8CG2Viu_b8
+  id: -Nw9ZlWGjia52U402Mdc
   log_response: true
   method: POST
   response_check: ''
   task_id: getMediaIds
-  updated_at: 2024-04-23 07:51:32.986857+00:00
+  updated_at: 2024-04-23 10:49:23.999720+00:00
   url: https://example.com
   xcom_push: true
-- created_at: 2024-04-23 07:51:36.570283+00:00
+- created_at: 2024-04-23 10:49:26.767032+00:00
   data: null
   deleted_at: null
   endpoint: instagram/scrapInfo/
@@ -150,15 +150,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w486mpiG2sHVXBS1
+  id: -Nw9ZmD4rDXfI67wvv2I
   log_response: true
   method: POST
   response_check: ''
   task_id: like
-  updated_at: 2024-04-23 07:51:36.570319+00:00
+  updated_at: 2024-04-23 10:49:26.767069+00:00
   url: https://mqtt.booksy.us.boostedchat.com/like
   xcom_push: true
-- created_at: 2024-04-23 07:51:40.158818+00:00
+- created_at: 2024-04-23 10:49:29.835560+00:00
   data:
     chain: true
     index: 0
@@ -169,15 +169,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w507r_TcieJ1Mp3B
+  id: -Nw9ZmvuuW-KGQFdXi7N
   log_response: true
   method: POST
   response_check: ''
   task_id: getMediaComments
-  updated_at: 2024-04-23 07:51:40.158880+00:00
+  updated_at: 2024-04-23 10:49:29.835598+00:00
   url: https://example.com
   xcom_push: true
-- created_at: 2024-04-23 07:51:43.417611+00:00
+- created_at: 2024-04-23 10:49:32.798634+00:00
   data: null
   deleted_at: null
   endpoint: instagram/scrapInfo/
@@ -185,15 +185,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w5oJTZEF-8O0OfLC
+  id: -Nw9ZngiZYhP_YYwioKT
   log_response: true
   method: POST
   response_check: ''
   task_id: comment
-  updated_at: 2024-04-23 07:51:43.417649+00:00
+  updated_at: 2024-04-23 10:49:32.798661+00:00
   url: https://mqtt.booksy.us.boostedchat.com/comment
   xcom_push: true
-- created_at: 2024-04-23 07:51:47.322410+00:00
+- created_at: 2024-04-23 10:49:35.364727+00:00
   data:
     chain: true
     index: 0
@@ -204,15 +204,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w6gJh5ebwp6epDR_
+  id: -Nw9ZoJTxTcy2MoKPcP0
   log_response: true
   method: POST
   response_check: ''
   task_id: getAccounts
-  updated_at: 2024-04-23 07:51:47.322448+00:00
+  updated_at: 2024-04-23 10:49:35.364786+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-23 07:51:50.906358+00:00
+- created_at: 2024-04-23 10:49:38.028268+00:00
   data: null
   deleted_at: null
   endpoint: instagram/scrapInfo/
@@ -220,11 +220,11 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -Nw8w7d6one9Ceo0HmYl
+  id: -Nw9ZoyV3jKUGfiuXx3e
   log_response: true
   method: POST
   response_check: ''
   task_id: reactToStory
-  updated_at: 2024-04-23 07:51:50.906398+00:00
+  updated_at: 2024-04-23 10:49:38.028334+00:00
   url: https://mqtt.booksy.us.boostedchat.com/reactToStory
   xcom_push: true
