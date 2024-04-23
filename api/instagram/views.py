@@ -237,17 +237,23 @@ class GetMediaIds(APIView):
         chain = request.data.get("chain")
         
         datasets = []
-        for user in InstagramUser.objects.filter(round=round):
-            resp = requests.post(f"api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data=json.dumps({"username":user.username}))
-            if resp.json()['has_responded']:
-                return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
+        for user in InstagramUser.objects.filter(round=round_):
+            resp = requests.post(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data={"username":user.username})
+            print(resp.status_code)
+            if resp.status_code == 200:
+                if resp.json()['has_responded']:
+                    return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
             else:
-                dataset = {
-                    "mediaIds": user.info.get("media_id"),
-                    "username_from": user.attached_salesrep
-                }
-                datasets.append(dataset)
-        
+                resp = requests.get(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/account/retrieve-salesrep/{user.username}/")
+                if resp.status_code == 200:
+                    print(resp.json())
+                    dataset = {
+                        "mediaIds": user.info.get("media_id"),
+                        "username_from": resp.json()['salesrep'].get('username','')
+                    }
+                    datasets.append(dataset)
+            
+
         if chain and round_:  
             return Response({"data": datasets},status=status.HTTP_200_OK)
         else:
@@ -260,18 +266,24 @@ class GetMediaComments(APIView):
         chain = request.data.get("chain")
         
         datasets = []
-
-        for user in InstagramUser.objects.filter(round=round):
-            resp = requests.post(f"api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data=json.dumps({"username":user.username}))
-            if resp.json()['has_responded']:
-                return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
+        for user in InstagramUser.objects.filter(round=round_):
+            resp = requests.post(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data={"username":user.username})
+            print(resp.status_code)
+            if resp.status_code == 200:
+                if resp.json()['has_responded']:
+                    return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
             else:
-                dataset = {
-                    "mediaId": user.info.get("media_id"),
-                    "comment": "cool stuff!",
-                    "username_from": user.attached_salesrep
-                }
-                datasets.append(dataset)
+                resp = requests.get(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/account/retrieve-salesrep/{user.username}/")
+                if resp.status_code == 200:
+                    print(resp.json())
+                    dataset = {
+                        "mediaId": user.info.get("media_id"),
+                        "comment": "cool stuff!",
+                        "username_from": resp.json()['salesrep'].get('username','')
+                    }
+                    datasets.append(dataset)
+
+        
         
         if chain and round_:  
             return Response({"mediaComments": datasets},status=status.HTTP_200_OK)
@@ -284,16 +296,22 @@ class GetAccounts(APIView):
         chain = request.data.get("chain")
         
         datasets = []
-        for user in InstagramUser.objects.filter(round=round):
-            resp = requests.post(f"api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data=json.dumps({"username":user.username}))
-            if resp.json()['has_responded']:
-                return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
+        for user in InstagramUser.objects.filter(round=round_):
+            resp = requests.post(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data={"username":user.username})
+            print(resp.status_code)
+            if resp.status_code == 200:
+                if resp.json()['has_responded']:
+                    return Response({"message":"No need to carry on further because client has responded"}, status=status.HTTP_200_OK)
             else:
-                dataset = {
-                    "usernames_to": user.info.get("username"),
-                    "username_from": user.attached_salesrep
-                }
-                datasets.append(dataset)
+                resp = requests.get(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/account/retrieve-salesrep/{user.username}/")
+                if resp.status_code == 200:
+                    print(resp.json())
+                    dataset = {
+                        "usernames_to": user.info.get("username"),
+                        "username_from": resp.json()['salesrep'].get('username','')
+                    }
+                    datasets.append(dataset)
+        
         
         if chain and round_:  
             return Response({"data": datasets},status=status.HTTP_200_OK)

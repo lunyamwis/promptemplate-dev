@@ -171,3 +171,5 @@ boostedchatScrapper/*.json
 *.csv
 logs/
 barbers/
+ssh-key
+ssh-key.pub

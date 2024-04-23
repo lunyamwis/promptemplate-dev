@@ -144,7 +144,7 @@ class SimpleHttpOperatorModel(BaseModel):
     http_conn_id=models.CharField(max_length=144,default="your_http_connection")
     endpoint = models.CharField(max_length=255)
     method = models.CharField(max_length=20, choices=METHODS, default="POST")
-    data = models.JSONField()
+    data = models.JSONField(null=True,blank=True)
     headers = models.JSONField()
     response_check = models.CharField(max_length=1024,null=True,blank=True)
     extra_options = models.JSONField(null=True,blank=True)

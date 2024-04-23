@@ -51,11 +51,18 @@ class DagModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = DagModel
         fields = '__all__'
+        extra_kwargs = {
+            "id": {"required": False, "allow_null": True},
+        }
 
 class SimpleHttpOperatorModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = SimpleHttpOperatorModel
         fields = '__all__'
+        extra_kwargs = {
+            "id": {"required": False, "allow_null": True},
+            "data": {"required": False, "allow_null": True},
+        }
 
 class WorkflowModelSerializer(serializers.ModelSerializer):
     simplehttpoperators = SimpleHttpOperatorModelSerializer(many=True, required=False)
@@ -64,7 +71,9 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkflowModel
         fields = ['id', 'name', 'simplehttpoperators','dag','delay_durations']
-
+        extra_kwargs = {
+            "id": {"required": False, "allow_null": True},
+        }
     
     def create(self, validated_data):
         simplehttpoperators_data = validated_data.pop('simplehttpoperators', [])

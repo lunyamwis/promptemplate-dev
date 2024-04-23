@@ -25,3 +25,4 @@ instagrapi==1.19.1
 webdriver_manager
 scrapeops-scrapy
 scrapy-djangoitem
+paramiko

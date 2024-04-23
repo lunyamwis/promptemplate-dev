@@ -3,7 +3,7 @@ dag:
   auto_register: false
   catchup: false
   concurrency: null
-  created_at: 2024-04-22 12:41:46.707373+00:00
+  created_at: 2024-04-23 07:51:54.490375+00:00
   dag_id: scrapUsersInfoInsertEnrichTheCutThree
   dagrun_timeout: null
   default_args: null
@@ -14,7 +14,7 @@ dag:
   end_date: null
   fail_stop: false
   full_filepath: ''
-  id: 123fasdxmdfoa12mclosajoof3sopacvcvfdlopodpf
+  id: -Nw8w8Sv2b8erZ7YG7GD
   is_paused_upon_creation: false
   jinja_environment_kwargs: null
   max_active_runs: null
@@ -33,242 +33,41 @@ dag:
   template_searchpath: ''
   template_undefined: ''
   timetable: ''
-  updated_at: 2024-04-22 12:41:46.707412+00:00
+  updated_at: 2024-04-23 07:51:54.490411+00:00
   user_defined_filters: null
   user_defined_macros: null
 data_seconds:
   '2': 720.0
 operators:
-- created_at: 2024-04-22 12:41:12.608908+00:00
+- created_at: 2024-04-23 07:51:18.856148+00:00
   data:
     chain: true
     index: 0
     query:
-    - Next Level Barber Studio
-    - Razor Fade & Beard/Shave
-    - FADE ++\ud83d\ude4b\ud83c\udffb\u200d\u2642\ufe0f\ud83d\ude4b\ud83c\udffc\u200d\u2642\ufe0f
-    - The Works \ud83d\udd25
-    - Gfxdez
-    - Teen Lining
-    - oliver cepeda
-    - House Of Cutz Bareber Studios
-    - carlos ruiz
-    - Wash, Retwist & Barrels ( Braid To Back Shoulder Length)
-    - Bald Head & Face
-    - Cutsbylek \ud83d\udc88
-    - Adult Haircut With Facial Grooming
-    - Retwist & style Full Head
-    - Stater Locks
-    - WHO\'S NEXT NOW BARBER AND BEAUTY STUDIO
-    - Hair Cut with with\ud83d\udd25eyebrows
-    - Teen Lining & Taper
-    - kid haircuts
-    - Youth Caesar (17 & Under)
-    - After Cut Shampoo
-    - Mike barber
-    - ICY MJ \ud83c\udf2c
-    - Mens Edgeup Hair Only W/Razor
-    - Kids Cut 9 Years Old And Down
-    - Senior Citizen 65+
-    - Womans Undercut
-    - Kids Skin fade
-    - Lines&Shaves
-    - Knotless
-    - Shave And A Haircut
-    - Barber Lifestyle
-    - Beard Trim/ Styles
-    - Wash, Retwist & 4 Strand ( Middle Back )
-    - Line Up & Beard Combo
-    - Haircuts On Mondays
-    - Jose Aguillon
-    - Adult shape-up W Face
-    - Des!gn !ntell!gence/ Hard In The Paint Barbershop
-    - Fade With Beard \ud83e\uddd4\u200d\u2642\ufe0f
-    - Adult Monthly Subscription Please Read
-    - Beard Work
-    - Mens Haircut And Facial Hair
-    - Men\u2019s Drop Fades(Philly Fade) w/facial hair
-    - Dreads Shapeup( W/temple Tapper)
-    - Tapeup With Lineup
-    - Blessed Handz Barber Kids (15 and under)
-    - Ambition Barbershop Portage
-    - DeMar Colbert
-    - Hair Dye Color Black, Brown
-    - FS Studio, Hair Studio And Bar\ud83c\udf7b
-    - Fade With Beard
-    - TayGotchu\u2019
-    - Fly City Barbershop
-    - Simple Designs Only
-    - Line Up (ONLY)
-    - Women Eye Brow Arch
-    - anthony lobato
-    - Jaycees ChopShop
-    - Exclusive Haircut(children)
-    - Beard grooming only
-    - Beard Deluxe
-    - '[ Sunday Only ] Men Haircuts With Beard  (18 & Up)'
-    - Retwist, Cut, And Beard Trim
-    - Hair Blonding Package
-    - Dweezy cuts
-    - Kids 12 And Under Flat Top
-    - BlendsByLos
-    - \ud83d\udc88Razor Dread Lox Edge
-    - Lil HOMMIES & TEENz LINE UP
-    - Men,women And Kids (Edgeups Only No Face Hair)
-    - 'Teens Cut (Ages: 13-15)'
-    - Beards Trim
-    - Kids Low And Dark
-    - Jairo Martinez
-    - HouseCalls/Before&After Hours
-    - Men\'s Hair Replacement Maintenance
-    - Flat Twist For Twist Out
-    - Beard Treatment/ Maintenance
-    - House Call Mondays Only Please Call Me
-    - College Line Up \ud83d\udd25
-    - Haircut With Beard Appointment
-    - O.G - Wash & Cut
-    - All Scissors Haircuts
-    - Mori ( Master Barber  Tattoo Artist
-    - DrippyCuttz
-    - Hair Replacement System (HRS)
-    - Fresh And Clean
-    - Men\'s Haircut Without Beard
-    - Mikethebarbers
-    - Mens Hair Cut/Beard
-    - Bald Razor Shave
-    - Tape Up Men
-    - 1st Impressions Phase 2
-    - Low Caesar
-    - Teenager Taper Or Fade(ages13to17)
-    - (AFTER HOURS) 7pm -10pm
-    - Unfadeable Cuts
-    - Golden Service Cut
-    - (Kids)Fade,Taper&orMohawk\u2702\ufe0f
-    - shaquille coleman
-    - Neal aka Cornflake Cutz it
-    - StrikeZone kid\u2019s - $30 Kids Haircuts
-    - Regular Women\'s Haircut, Fade
-    - Haircut + Dye
-    - Mr Freestyle 340
-    - Relaxer Curl Texturizer (Additional Price Only)
-    - Bald Razor Shave And Beard
-    - Scalp Cleansing Treatment
-    - Skin Fade With Beard
-    - Temp W/line Up (Cut Not Included)
-    - Alvo The Barber
-    - Lining w/ out Beard Or Enhancements
-    - Touch of Precision
-    - Haircut With Blade Shave
-    - Million Dollar Cut
-    - V I P
-    - Taper (Ages 13-16)
-    - Shampoo Service Add On
-    - Men\u2019s cut @beard
-    - luisito barbershop \ud83d\udc88
-    - College Cut
-    - Kids Reg 10 Yrs Or Younger
-    - Estephan Lara
-    - gregory pouncy
-    - Men\u2019s haircut W/ design (large)
-    - Taper & Edge Up (Available)
-    - CMAC\u2019S  Child First Haircut
-    - Speciality Haircut
-    - Maintaining Locks/braids Cut~ [Cutting Down Extra Hair / Cut.  With Line Up]
-      Only
-    - Hot Oil Treatments
-    - Dominican Luxury Gentleman Salon
-    - Men\u2019s Haircut W/ Beard \ud83d\udc88
-    - Barberz Inc \ud83d\udc88
-    - Derde Cut(18+)
-    - Fade/Beard
-    - Adult Line Up/ Edge Up/ Facial Hair
-    - NappyCutz
-    - \u2694\ufe0fBig Chop
-    - House-Call Line up
-    - Loc Retwist ONLY (half of head)
-    - Mobile Cut \ud83d\ude97\ud83d\udc88
-    - \ud83e\uddd4\ud83c\udffbBeard Line Up/trim\ud83e\uddd4\ud83c\udffd\u200d\u2642\ufe0f
-    - Arkansas College Of Barbering
-    - Female Braiding Session - Jumbo Box Braids \ud83d\udc86\ud83c\udffb\u200d\u2640\ufe0f\u203c\ufe0f
-    - Haircut With Straight Razor Finish
-    - Anthony \u201cSkoolie\u201d Mascuilli
-    - After Hours /late Night Haircuts
-    - Blazin Men\u2019s Even All Over With Beard
-    - Fade W/beard & Design
-    - Adult Haircut With Shave
-    - Kids Shape Ups
-    - Dj Package
-    - Sanctuaire Combo
-    - Perfections Barbershop
-    - Line Up + Shave\u2757\ufe0f
-    - zay
-    - Haircut  (no Beard)
-    - OT
-    - Brian
-    - Brow Waxing (Adult)
-    - Kid Cuts
-    - \ud83e\ude92Beard Trims & Edge Ups
-    - Kids 12 & Under Regular Haircut
-    - FRESH
-    - Teen Cut + Head Wash If Needed
-    - Quadir Evans
-    - rayshaun Rayshaun Hutchison
-    - Teen Cut Ages 13-19
-    - Men Line And Beard Shape Up
-    - Head Shave / And Beard \ud83e\uddd4\u200d\u2642\ufe0f
-    - Starting Locs
-    - TRU
-    - EARLY MORNING HOURS
-    - JNBCUTS
-    - All Tapers
-    - 2 Kids ( 12 and Under)
-    - Wardz Barbershop
-    - Pre-teens Cuts 12yrs-15yrs
-    - Dean Littlejohn
-    - Starter Locs + Style (Shampoo Included)
-    - Bald Heads Including Facial Hair
-    - Oya\'s Barbershop
-    - Haircut & Fade With Beard
-    - Black Sparrow Barbershop
-    - Prices have changed due to tax Increase/ Los precios an cambiado debido al aumento
-      de impuesto
-    - ty
-    - All Hair Cuts
-    - Taper Fade
-    - \ud83d\udc88Edge Up \ud83d\udc88
-    - \u2b50\ufe0f HAIRCUT \u2b50\ufe0f
-    - Grade School(K-8th) and Senior(55+)
-    - Silver Package
-    - Slits In Eye Brows
-    - Beard Lineup
-    - JD
-    - Teenager Haircut 13 Yrs And Up
-    - The Blvck Experience
-    - Dapper lounge
-    - \ud83d\udccdMUST ADD EYEBROWS OR DESIGN!
-    round: 10
+    - psychologistswithoutborders
+    round: 11
   deleted_at: null
   endpoint: instagram/scrapUsers/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobGricGajoof8dfgsd2mclosfw3scvcvopafdlopodOLs1235adf
+  id: -Nw8w-l7AIzZKthGuDTP
   log_response: true
   method: POST
   response_check: ''
   task_id: getUsers
-  updated_at: 2024-04-22 12:41:12.608961+00:00
+  updated_at: 2024-04-23 07:51:18.856183+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-22 12:41:15.884982+00:00
+- created_at: 2024-04-23 07:51:22.328062+00:00
   data:
     accounts: 18
     chain: true
     delay_after_requests: 14
     delay_before_requests: 4
     index: 0
-    round: 10
+    round: 11
     step: 3
   deleted_at: null
   endpoint: instagram/scrapInfo/
@@ -276,247 +75,156 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdg12smaj2mclosoofsd43socvcvpafdlopodasfs5
+  id: -Nw8w0ejVhhZsfiqzFUz
   log_response: true
   method: POST
   response_check: ''
   task_id: getInfo
-  updated_at: 2024-04-22 12:41:15.884999+00:00
+  updated_at: 2024-04-23 07:51:22.328100+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-22 12:41:19.367527+00:00
+- created_at: 2024-04-23 07:51:25.921254+00:00
   data:
     chain: true
     keywords_to_check:
-    - hair
-    - appointment
-    - appointments
-    - book
-    - call
-    - book.thecut.co
-    - licensed
-    - cutz
-    - kutz
-    - cuts
-    - cut
-    - hairstylist
-    - salon
-    - salons
-    - educator
-    - specialist
-    - beauty
-    - barber
-    - walk
-    - text
-    - stylist
-    - colour
-    - colouring
-    - loreal
-    - olaplex
-    - hairspray
-    - mousse
-    - pomade
-    - hair oil
-    - hair serum
-    - scissors
-    - comb
-    - brush
-    - blow dryer
-    - flat iron
-    - curling iron
-    - hair rollers
-    - hair clips
-    - hair ties
-    - headbands
-    - hair accessories
-    - updos
-    - braids
-    - twists
-    - buns
-    - ponytails
-    - curls
-    - waves
-    - volume
-    - texture
-    - shine
-    - frizz control
-    - breakage
-    - dryness
-    - oiliness
-    - thinning
-    - hair loss
-    - dandruff
-    - scalp problems
-    round: 10
+    - psychologists
+    round: 11
   deleted_at: null
   endpoint: instagram/insertAndEnrich/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobGrO78La235zx2mclosssdfacvcvsf3sopafdlopodod23fgcvfs5
+  id: -Nw8w1W7umGPFO8XVwfh
   log_response: true
   method: POST
   response_check: ''
   task_id: enrich
-  updated_at: 2024-04-22 12:41:19.367566+00:00
+  updated_at: 2024-04-23 07:51:25.921292+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-22 12:41:22.644121+00:00
+- created_at: 2024-04-23 07:51:29.483447+00:00
   data:
     num_tasks: ''
     start_hour: 3
     start_minute: 30
     tasks_per_day: 24
   deleted_at: null
-  endpoint: https://api.booksy.us.boostedchat.com/v1/outreaches/tasks/reschedule_all/
+  endpoint: /v1/outreaches/tasks/reschedule_all/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobiGUGO78Las2mclosddfsdvcvcmaj3sopafdlopodoo123cv
+  id: -Nw8w2Q1ouxcVimwb0Dp
   log_response: true
   method: POST
   response_check: ''
   task_id: reschedule
-  updated_at: 2024-04-22 12:41:22.644197+00:00
+  updated_at: 2024-04-23 07:51:29.483485+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-22 12:41:26.022441+00:00
+- created_at: 2024-04-23 07:51:32.986816+00:00
   data:
-    accounts: 18
     chain: true
-    delay_after_requests: 14
-    delay_before_requests: 4
     index: 0
-    round: 10
-    step: 3
+    round: 11
   deleted_at: null
-  endpoint: instagram/scrapInfo/
+  endpoint: instagram/getMediaIds/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdg12smajou2mclosiffcvcv3sopafdlopodgda234asfs5
+  id: -Nw8w3EVso8CG2Viu_b8
   log_response: true
   method: POST
   response_check: ''
   task_id: getMediaIds
-  updated_at: 2024-04-22 12:41:26.022470+00:00
+  updated_at: 2024-04-23 07:51:32.986857+00:00
   url: https://example.com
-  xcom_push: false
-- created_at: 2024-04-22 12:41:29.504576+00:00
-  data:
-    accounts: 18
-    chain: true
-    delay_after_requests: 14
-    delay_before_requests: 4
-    index: 0
-    round: 10
-    step: 3
+  xcom_push: true
+- created_at: 2024-04-23 07:51:36.570283+00:00
+  data: null
   deleted_at: null
   endpoint: instagram/scrapInfo/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdg12sm2mclosajOL23cvcv3sopafdlopod4aasfs5
+  id: -Nw8w486mpiG2sHVXBS1
   log_response: true
   method: POST
   response_check: ''
   task_id: like
-  updated_at: 2024-04-22 12:41:29.504622+00:00
-  url: https://example.com
-  xcom_push: false
-- created_at: 2024-04-22 12:41:32.780477+00:00
+  updated_at: 2024-04-23 07:51:36.570319+00:00
+  url: https://mqtt.booksy.us.boostedchat.com/like
+  xcom_push: true
+- created_at: 2024-04-23 07:51:40.158818+00:00
   data:
-    accounts: 18
     chain: true
-    delay_after_requests: 14
-    delay_before_requests: 4
     index: 0
-    round: 10
-    step: 3
+    round: 11
   deleted_at: null
-  endpoint: instagram/scrapInfo/
+  endpoint: instagram/getMediaComments/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdg12sm2mclosajoffasdfg3vcvcvsopafdlopodd234asfs5
+  id: -Nw8w507r_TcieJ1Mp3B
   log_response: true
   method: POST
   response_check: ''
   task_id: getMediaComments
-  updated_at: 2024-04-22 12:41:32.780488+00:00
+  updated_at: 2024-04-23 07:51:40.158880+00:00
   url: https://example.com
-  xcom_push: false
-- created_at: 2024-04-22 12:41:36.160222+00:00
-  data:
-    accounts: 18
-    chain: true
-    delay_after_requests: 14
-    delay_before_requests: 4
-    index: 0
-    round: 10
-    step: 3
+  xcom_push: true
+- created_at: 2024-04-23 07:51:43.417611+00:00
+  data: null
   deleted_at: null
   endpoint: instagram/scrapInfo/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdg12sm2mclosajooffgdcvcvcv3sopafdlopodfOsdf4as5
+  id: -Nw8w5oJTZEF-8O0OfLC
   log_response: true
   method: POST
   response_check: ''
   task_id: comment
-  updated_at: 2024-04-22 12:41:36.160261+00:00
-  url: https://example.com
-  xcom_push: false
-- created_at: 2024-04-22 12:41:39.846949+00:00
+  updated_at: 2024-04-23 07:51:43.417649+00:00
+  url: https://mqtt.booksy.us.boostedchat.com/comment
+  xcom_push: true
+- created_at: 2024-04-23 07:51:47.322410+00:00
   data:
-    accounts: 18
     chain: true
-    delay_after_requests: 14
-    delay_before_requests: 4
     index: 0
-    round: 10
-    step: 3
+    round: 11
   deleted_at: null
-  endpoint: instagram/scrapInfo/
+  endpoint: instagram/getAccounts/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdg122mclossmajoui3sopavcvcvfdlopodqwerasdfoffgdfOasf
+  id: -Nw8w6gJh5ebwp6epDR_
   log_response: true
   method: POST
   response_check: ''
   task_id: getAccounts
-  updated_at: 2024-04-22 12:41:39.846987+00:00
+  updated_at: 2024-04-23 07:51:47.322448+00:00
   url: https://example.com
   xcom_push: false
-- created_at: 2024-04-22 12:41:43.327658+00:00
-  data:
-    accounts: 18
-    chain: true
-    delay_after_requests: 14
-    delay_before_requests: 4
-    index: 0
-    round: 10
-    step: 3
+- created_at: 2024-04-23 07:51:50.906358+00:00
+  data: null
   deleted_at: null
   endpoint: instagram/scrapInfo/
   extra_options: null
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NgcH1oobx78vdafs2mclosdfL233sopafdlocvcvpod4asssfs5
+  id: -Nw8w7d6one9Ceo0HmYl
   log_response: true
   method: POST
   response_check: ''
   task_id: reactToStory
-  updated_at: 2024-04-22 12:41:43.327681+00:00
-  url: https://example.com
-  xcom_push: false
+  updated_at: 2024-04-23 07:51:50.906398+00:00
+  url: https://mqtt.booksy.us.boostedchat.com/reactToStory
+  xcom_push: true
