@@ -286,7 +286,7 @@ class GetMediaComments(APIView):
         
         
         if chain and round_:  
-            return Response({"mediaComments": datasets},status=status.HTTP_200_OK)
+            return Response({"data": datasets},status=status.HTTP_200_OK)
         else:
             return Response({"error":"There is an error fetching medias"}, status=400)
         
