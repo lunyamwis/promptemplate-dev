@@ -84,6 +84,8 @@ def process_json_response_{{i}}(**context):
                         # Check the response status code
                         if response.status_code == 200:
                             print(response.json())
+                            json_data = response.json()
+                            # context['task_instance'].xcom_push(key='json_response', value=json_data)
                         else:
                             print(f'Request failed with status code {response.status_code}')
                     
@@ -91,33 +93,12 @@ def process_json_response_{{i}}(**context):
                         time.sleep(7)
                 
             
-        else:
-            data_list = json.loads(prev_json_data)  # Get the list of dictionaries under "data" key
-            if data_list:
-                    for i in range(0, len(data_list), chunk_size):
-                        chunk = data_list[i:i + chunk_size]
-                        print(chunk)
-                        # Send the chunk of requests
-                        response = requests.post(url="{{operators[i].url}}", json=chunk)
-                    
-                        # Check the response status code
-                        if response.status_code == 200:
-                            print(response.json())
-                        else:
-                            print(f'Request failed with status code {response.status_code}')
-                    
-                        # Wait for 20 seconds before sending the next chunk
-                        time.sleep(7)
+        
             
-        if response.status_code == 200:
-            json_data = response.json()
-
-            context['task_instance'].xcom_push(key='json_response', value=json_data)
-        else:
-            print(response.text)
+        
 
 process_response_{{i}}_task = PythonOperator(
-    task_id='process_response_{{i}}',
+    task_id='process_response_{{ operators[i].task_id }}',
     python_callable=process_json_response_{{i}},
     provide_context=True,
     retries=3,  # Override the retries for this task
