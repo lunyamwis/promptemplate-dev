@@ -162,7 +162,7 @@ class InstagramSpider:
             
             resp = requests.post(url=settings.AI_MICROSERVICE_URL+"blipInference/", data = {'media_url':media.thumbnail_url.strip()})
             if resp.status_code == 200:
-                resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"make the following caption in tripple backticks to sound more friendly compliment and real like from a human being ```{resp.json()['captioned_text']}``` return in json format the text as follows 'generated_text':text"})
+                resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"Please carefully examine the caption provided to determine if it showcases the work of a barber. If it appears to be a presentation of a barber’s work, rephrase the caption to resemble a complimentary comment that could be directly posted under the image  on Instagram. If the caption does not depict work posted by a barber, please respond with the word ```AWESOME`` enclosed in triple backticks return in json format the rephrased caption 'generated_text': rephrased_caption, caption is as follows: {resp.json()['captioned_text']} "})
                 if resp_.status_code == 200:
                     comment = json.loads(resp_.json()['choices'][0]['message']['content']).get('generated_text')
 
@@ -171,7 +171,7 @@ class InstagramSpider:
                 if resource.thumbnail_url:
                     resp = requests.post(url=settings.AI_MICROSERVICE_URL+"blipInference/", data = {'media_url':resource.thumbnail_url.strip()})
                     if resp.status_code == 200:
-                        resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"make the following caption in tripple backticks to sound more friendly compliment and real like from a human being ```{resp.json()['captioned_text']}``` return in json format the text as follows 'generated_text':text"})
+                        resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"Please carefully examine the caption provided to determine if it showcases the work of a barber. If it appears to be a presentation of a barber’s work, rephrase the caption to resemble a complimentary comment that could be directly posted under the image  on Instagram. If the caption does not depict work posted by a barber, please respond with the word ```AWESOME`` enclosed in triple backticks return in json format the rephrased caption 'generated_text': rephrased_caption, caption is as follows: {resp.json()['captioned_text']} "})
                         if resp_.status_code == 200:
                             comment = json.loads(resp_.json()['choices'][0]['message']['content']).get('generated_text')
                             break
