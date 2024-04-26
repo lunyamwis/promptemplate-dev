@@ -87,6 +87,7 @@ class InstagramUser(BaseModel):
     outsourced_id = models.CharField(max_length=255,null=True,blank=True)
     outsourced_id_pointer = models.BooleanField(default=False)
     qualified_keywords = models.TextField(null=True, blank=True)
+    qualified = models.BooleanField(default=False)
     cursor = models.TextField(null=True,blank=True)
     attached_salesrep = models.CharField(max_length=255,null=True,blank=True)
 

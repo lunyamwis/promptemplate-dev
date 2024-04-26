@@ -7,6 +7,7 @@ import re
 import random
 import logging
 import pandas as pd
+import requests
 current_dir = os.getcwd()
 
 
@@ -18,6 +19,7 @@ import concurrent.futures
 from .helpers.instagram_login_helper import login_user
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.conf import settings
 from urllib.parse import urlparse
 from kafka import KafkaProducer
 from collections import ChainMap
@@ -153,6 +155,27 @@ class InstagramSpider:
         result = client.private_request(url, params=params)
         self.store(result[return_val])    
         return result[return_val]
+    
+    def generate_comment(self, media):
+        comment = None
+        if media.thumbnail_url: # to handle a single image
+            
+            resp = requests.post(url=settings.AI_MICROSERVICE_URL+"blipInference/", data = {'media_url':media.thumbnail_url.strip()})
+            if resp.status_code == 200:
+                resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"make the following caption in tripple backticks to sound more friendly compliment and real like from a human being ```{resp.json()['captioned_text']}``` return in json format the text as follows 'generated_text':text"})
+                if resp_.status_code == 200:
+                    comment = json.loads(resp_.json()['choices'][0]['message']['content']).get('generated_text')
+
+        else:
+            for resource in media.resources: # to handle a reel or many images
+                if resource.thumbnail_url:
+                    resp = requests.post(url=settings.AI_MICROSERVICE_URL+"blipInference/", data = {'media_url':resource.thumbnail_url.strip()})
+                    if resp.status_code == 200:
+                        resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"make the following caption in tripple backticks to sound more friendly compliment and real like from a human being ```{resp.json()['captioned_text']}``` return in json format the text as follows 'generated_text':text"})
+                        if resp_.status_code == 200:
+                            comment = json.loads(resp_.json()['choices'][0]['message']['content']).get('generated_text')
+                            break
+        return comment
    
     def scrap_info(self,delay_before_requests,delay_after_requests,step,accounts,round,index=0):
         scouts = Scout.objects.filter(available=True)
@@ -186,6 +209,8 @@ class InstagramSpider:
                     info_dict = client.user_info_by_username(user.username).dict()
                     try:
                         user_medias = client.user_medias(info_dict.get("pk"),amount=1)
+                        comment = self.generate_comment(user_medias[0])
+                        info_dict.update({"media_comment":comment})
                         info_dict.update({"media_id":user_medias[0].id})
                     except Exception as error:
                         info_dict.update({"media_id":""})
@@ -290,7 +315,7 @@ class InstagramSpider:
                     result = connection.execute(crontab_statement)
                     crontab_id = result.fetchone()
                     if crontab_id:
-                        periodic_data = {'name':f"SendFirstCompliment-{client_info['username']}",'task':'instagram.tasks.send_first_compliment','crontab_id':crontab_id['id'],
+                        periodic_data = {'name':f"SendFirstCompliment-{client_info['username']}-workflow",'task':'instagram.tasks.send_first_compliment','crontab_id':crontab_id['id'],
                                         'args':json.dumps([client_info['username']]),'kwargs':json.dumps({}),'enabled':True,'one_off':True,'total_run_count':0,'date_changed':datetime.now(),
                                         'description':'test','headers':json.dumps({})}
                         periodic_task_statement = self.django_celery_beat_periodictask_table.insert().values(periodic_data)
@@ -357,6 +382,7 @@ class InstagramSpider:
                             if qualified:
                                 filtered_dict = {key: value for key, value in keyword_counts.items() if value >= 2}
                                 instagram_user.qualified_keywords = str(filtered_dict)
+                                instagram_user.qualified = True
                                 instagram_user.save()
                                 self.assign_salesreps(instagram_user.username, i)
 

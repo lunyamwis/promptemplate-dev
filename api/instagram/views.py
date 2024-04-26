@@ -15,6 +15,7 @@ from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich,scra
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
 from boostedchatScrapper.spiders.helpers.thecut_helper import scrap_the_cut
+from django.db.models import Q
 from .models import InstagramUser
 
 from rest_framework import viewsets
@@ -237,7 +238,7 @@ class GetMediaIds(APIView):
         chain = request.data.get("chain")
         
         datasets = []
-        for user in InstagramUser.objects.filter(round=round_):
+        for user in InstagramUser.objects.filter(Q(round=round_) & Q(qualified=True)):
             resp = requests.post(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data={"username":user.username})
             print(resp.status_code)
             if resp.status_code == 200:
@@ -266,7 +267,7 @@ class GetMediaComments(APIView):
         chain = request.data.get("chain")
         
         datasets = []
-        for user in InstagramUser.objects.filter(round=round_):
+        for user in InstagramUser.objects.filter(Q(round=round_) & Q(qualified=True)):
             resp = requests.post(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data={"username":user.username})
             print(resp.status_code)
             if resp.status_code == 200:
@@ -278,7 +279,7 @@ class GetMediaComments(APIView):
                     print(resp.json())
                     dataset = {
                         "mediaId": user.info.get("media_id"),
-                        "comment": "cool stuff!",
+                        "comment": user.info.get("media_comment"),
                         "username_from": resp.json()['salesrep'].get('username','')
                     }
                     datasets.append(dataset)
@@ -296,7 +297,7 @@ class GetAccounts(APIView):
         chain = request.data.get("chain")
         
         datasets = []
-        for user in InstagramUser.objects.filter(round=round_):
+        for user in InstagramUser.objects.filter(Q(round=round_) & Q(qualified=True)):
             resp = requests.post(f"https://api.{os.environ.get('DOMAIN1', '')}.boostedchat.com/v1/instagram/has-client-responded/",data={"username":user.username})
             print(resp.status_code)
             if resp.status_code == 200:
