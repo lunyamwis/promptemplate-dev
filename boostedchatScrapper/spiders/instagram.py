@@ -156,13 +156,13 @@ class InstagramSpider:
         self.store(result[return_val])    
         return result[return_val]
     
-    def generate_comment(self, media):
+    def generate_comment(self, media, username):
         comment = None
         if media.thumbnail_url: # to handle a single image
             
             resp = requests.post(url=settings.AI_MICROSERVICE_URL+"blipInference/", data = {'media_url':media.thumbnail_url.strip()})
             if resp.status_code == 200:
-                resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"Please carefully examine the caption provided to determine if it showcases the work of a barber. If it appears to be a presentation of a barber’s work, rephrase the caption to resemble a complimentary comment that could be directly posted under the image  on Instagram. If the caption does not depict work posted by a barber, please respond with the word ```AWESOME`` enclosed in triple backticks return in json format the rephrased caption 'generated_text': rephrased_caption, caption is as follows: {resp.json()['captioned_text']} "})
+                resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"Please carefully examine the caption provided to determine if it showcases the work of a barber known as {username}. If it appears to be a presentation of the barber's work, rephrase the caption to resemble a complimentary comment that could be directly posted under the image  on Instagram. If the caption does not depict work posted by the barber, please respond with the word ```AWESOME`` enclosed in triple backticks return in json format the rephrased caption 'generated_text': rephrased_caption, caption is as follows: {resp.json()['captioned_text']} "})
                 if resp_.status_code == 200:
                     comment = json.loads(resp_.json()['choices'][0]['message']['content']).get('generated_text')
 
@@ -171,7 +171,7 @@ class InstagramSpider:
                 if resource.thumbnail_url:
                     resp = requests.post(url=settings.AI_MICROSERVICE_URL+"blipInference/", data = {'media_url':resource.thumbnail_url.strip()})
                     if resp.status_code == 200:
-                        resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"Please carefully examine the caption provided to determine if it showcases the work of a barber. If it appears to be a presentation of a barber’s work, rephrase the caption to resemble a complimentary comment that could be directly posted under the image  on Instagram. If the caption does not depict work posted by a barber, please respond with the word ```AWESOME`` enclosed in triple backticks return in json format the rephrased caption 'generated_text': rephrased_caption, caption is as follows: {resp.json()['captioned_text']} "})
+                        resp_ =  requests.post(url=settings.AI_MICROSERVICE_URL+"gptInference/",data={'prompt':f"Please carefully examine the caption provided to determine if it showcases the work of a barber known as {username}. If it appears to be a presentation of the barber's work, rephrase the caption to resemble a complimentary comment that could be directly posted under the image  on Instagram. If the caption does not depict work posted by the barber, please respond with the word ```AWESOME`` enclosed in triple backticks return in json format the rephrased caption 'generated_text': rephrased_caption, caption is as follows: {resp.json()['captioned_text']} "})
                         if resp_.status_code == 200:
                             comment = json.loads(resp_.json()['choices'][0]['message']['content']).get('generated_text')
                             break
@@ -209,7 +209,7 @@ class InstagramSpider:
                     info_dict = client.user_info_by_username(user.username).dict()
                     try:
                         user_medias = client.user_medias(info_dict.get("pk"),amount=1)
-                        comment = self.generate_comment(user_medias[0])
+                        comment = self.generate_comment(user_medias[0],user.username)
                         info_dict.update({"media_comment":comment})
                         info_dict.update({"media_id":user_medias[0].id})
                     except Exception as error:
