@@ -102,7 +102,7 @@ process_response_{{i}}_task = PythonOperator(
     python_callable=process_json_response_{{i}},
     provide_context=True,
     retries=3,  # Override the retries for this task
-    retry_delay=timedelta(minutes=2), 
+    retry_delay=timedelta(minutes=420), 
     dag=dag
 )
 
