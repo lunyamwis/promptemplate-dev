@@ -104,6 +104,7 @@ class InstagramSpider:
         scouts = Scout.objects.filter(available=True)
         scout_index = 0
         initial_scout = scouts[scout_index]
+        
         client = login_user(scout=initial_scout)
         for i,user in enumerate(query[index:]):
             time.sleep(random.randint(4,8))
@@ -304,7 +305,7 @@ class InstagramSpider:
                     keyword_counts[keyword] += str(value).lower().count(keyword.lower())
 
             # Check if any keyword has more than two occurrences
-            keyword_found = any(count >= 2 for count in keyword_counts.values())
+            keyword_found = any(count >= 1 for count in keyword_counts.values())
 
             if keyword_found:
                 with self.engine.connect() as connection:
