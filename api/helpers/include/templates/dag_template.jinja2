@@ -91,6 +91,8 @@ def process_json_response_{{i}}(**context):
                     
                         # Wait for 20 seconds before sending the next chunk
                         time.sleep(7)
+            else:
+                raise Exception("the dataset is empty")
                 
             
         
