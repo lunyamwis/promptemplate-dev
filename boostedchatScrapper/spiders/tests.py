@@ -20,8 +20,8 @@ def insert_and_enrich(keywords_to_check, round_number):
                     existing_username = connection.execute(existing_username_query).fetchone()
                     print(existing_username)
                     if existing_username:
-                        pass
-                    else:
+                    #     pass
+                    # else:
                         insert_statement = instagram_account_table.insert().values(
                             id=str(uuid.uuid4()),
                             created_at=timezone.now(),
@@ -49,8 +49,10 @@ def insert_and_enrich(keywords_to_check, round_number):
                         record = connection.execute(insert_statement).fetchone()
                         qualified,keyword_counts = inst.qualify(record[0], keywords_to_check, datetime.now() + timedelta(hours=hour))
                         if qualified:
+                            print("--------------------------------------------------------wewe--------------------------------------")
                             filtered_dict = {key: value for key, value in keyword_counts.items() if value >= 1}
                             instagram_user.qualified_keywords = str(filtered_dict)
+                            instagram_user.qualified = True
                             instagram_user.save()
                             inst.assign_salesreps(instagram_user.username, i)
 
