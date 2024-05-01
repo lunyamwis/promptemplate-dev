@@ -27,3 +27,4 @@ scrapeops-scrapy
 scrapy-djangoitem
 paramiko
 requests
+tenacity

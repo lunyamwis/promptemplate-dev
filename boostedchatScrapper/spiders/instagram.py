@@ -8,13 +8,13 @@ import random
 import logging
 import pandas as pd
 import requests
-current_dir = os.getcwd()
+# current_dir = os.getcwd()
 
 
 
 
 # Add the current directory to sys.path
-sys.path.append(current_dir)
+# sys.path.append(current_dir)
 import concurrent.futures
 from .helpers.instagram_login_helper import login_user
 from datetime import datetime, timedelta

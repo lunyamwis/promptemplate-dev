@@ -3,21 +3,70 @@ import time
 from airflow import DAG
 from airflow.operators.http_operator import SimpleHttpOperator
 from airflow.operators.python_operator import PythonOperator  # Import PythonOperator
-from airflow.sensors.http_sensor import HttpSensor
 from airflow.sensors.time_delta import TimeDeltaSensor
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 from airflow.providers.slack.notifications.slack import send_slack_notification
+from airflow.utils.task_group import TaskGroup
+
 import json
+
+def check_api_response():
+    while True:
+        try:
+            response = requests.get('http://my-api-endpoint.com')
+            if response.status_code == 200:
+                response_json = response.json()
+                if response_json['status'] == 'true':
+                    response_status = True
+                    print('API response is true')
+                    break
+                else:
+                    print('API response is not true, retrying in 60 seconds...')
+                    time.sleep(60)
+            else:
+                print('API request failed with status code', response.status_code)
+                time.sleep(60)
+        except Exception as err:
+            time.sleep(60)
+            print(err)
+
+default_args = {
+    'owner': 'me',
+    'start_date': days_ago(1),
+    'retries': -1,  # Set to None for unlimited retries
+    'retry_delay': timedelta(seconds=30),
+}
 
 {% for dag_ in dag %}
 dag = DAG(
     "{{ dag_.dag_id }}",
-    schedule_interval="{{ dag_.schedule_interval }}",
-    start_date=days_ago(1),
-    catchup={{ dag_.catchup or False }},
+    default_args=default_args,
+    schedule_interval=timedelta(hours=1),
+    catchup={{ dag_.catchup or False }}
 )
 {% endfor %}
+
+def task_success_callback(**context):
+    """
+    Callback function to check the task's state and decide whether to retry or not.
+    """
+    task_instance = context['task_instance']
+    task_state = task_instance.current_state()
+    if task_state == "success":
+        return True
+    else:
+        return False
+
+check_api = PythonOperator(
+    task_id='check_api',
+    python_callable=check_api_response,
+    dag=dag
+    # retries=0,  # Set to 0, as we are handling retries manually
+    # retry_delay=timedelta(seconds=30),  # Delay between retries
+    # Callback function to decide whether to retry or not
+)
+
 
 {% set delay_durations = data_seconds %}
 duration_data = {{ data_seconds }}
@@ -53,6 +102,26 @@ http_tasks.append(http_task_1)
 
 # Downstream task to retrieve XCom value
 {% if i >= 1 %}
+# Define the HTTP operator
+http_task_{{ i + 1 }} = SimpleHttpOperator(
+    task_id="{{ operators[i].task_id }}",
+    http_conn_id="{{ operators[i].http_conn_id }}",
+    endpoint="{{ operators[i].endpoint }}",
+    method="{{ operators[i].method }}",
+    headers={{ operators[i].headers | tojson }},  # Assuming headers is a dictionary, convert it to JSON
+    data=json.dumps({{ operators[i].data }}),
+    log_response={{ operators[i].log_response }},
+    do_xcom_push=True,  # Enable pushing response to XCom
+    dag=dag,
+    on_failure_callback=[
+        send_slack_notification(
+            text="The task {{ operators[i].task_id }} failed",
+            channel="#airflow-error",
+            username="airflow",
+        )
+    ],
+)
+http_tasks.append(http_task_{{ i + 1 }})
 def process_json_response_{{i}}(**context):
     ti = context['task_instance']
     prev_json_data = ti.xcom_pull(task_ids='process_response_{{i-1}}_task', key='json_response')
@@ -103,31 +172,11 @@ process_response_{{i}}_task = PythonOperator(
     task_id='process_response_{{ operators[i].task_id }}',
     python_callable=process_json_response_{{i}},
     provide_context=True,
-    retries=3,  # Override the retries for this task
-    retry_delay=timedelta(minutes=2), 
+    retries=1,  # Override the retries for this task
+    retry_delay=timedelta(minutes=1), 
     dag=dag
 )
 
-# Define the HTTP operator
-http_task_{{ i + 1 }} = SimpleHttpOperator(
-    task_id="{{ operators[i].task_id }}",
-    http_conn_id="{{ operators[i].http_conn_id }}",
-    endpoint="{{ operators[i].endpoint }}",
-    method="{{ operators[i].method }}",
-    headers={{ operators[i].headers | tojson }},  # Assuming headers is a dictionary, convert it to JSON
-    data=json.dumps({{ operators[i].data }}),
-    log_response={{ operators[i].log_response }},
-    do_xcom_push=True,  # Enable pushing response to XCom
-    dag=dag,
-    on_failure_callback=[
-        send_slack_notification(
-            text="The task {{ operators[i].task_id }} failed",
-            channel="#airflow-error",
-            username="airflow",
-        )
-    ],
-)
-http_tasks.append(http_task_{{ i + 1 }})
 
 {% endif %}
 
@@ -140,7 +189,7 @@ delay_task_{{ loop.index }} = TimeDeltaSensor(
     mode='reschedule',
     dag=dag,
 )
-http_task_{{ loop.index - 1 }} >> delay_task_{{ loop.index }} >> http_task_{{ loop.index }}
+check_api >> http_task_{{ loop.index - 1 }} >> delay_task_{{ loop.index }} >> http_task_{{ loop.index }}
 {% elif loop.index > 1 and operators[loop.index].data is not none %}
 http_task_{{ loop.index - 1 }} >> http_task_{{ loop.index }}
 {% elif loop.index|string in delay_durations and loop.index > 1 and operators[loop.index].data is none  %}
