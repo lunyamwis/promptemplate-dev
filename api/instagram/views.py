@@ -311,6 +311,7 @@ class GetAccounts(APIView):
                         "mediaId": user.info.get("media_id"),
                         "comment": user.info.get("media_comment"),
                         "usernames_to": user.info.get("username"),
+                        "username": user.info.get("username"),
                         "username_from": resp.json()['salesrep'].get('username','')
                     }
                     datasets.append(dataset)

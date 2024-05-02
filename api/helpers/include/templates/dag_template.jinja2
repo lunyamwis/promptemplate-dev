@@ -103,6 +103,7 @@ http_tasks.append(http_task_1)
 # Downstream task to retrieve XCom value
 {% if i >= 1 %}
 # Define the HTTP operator
+{% if operators[i].urls is none %}
 http_task_{{ i + 1 }} = SimpleHttpOperator(
     task_id="{{ operators[i].task_id }}",
     http_conn_id="{{ operators[i].http_conn_id }}",
@@ -121,12 +122,16 @@ http_task_{{ i + 1 }} = SimpleHttpOperator(
         )
     ],
 )
+
 http_tasks.append(http_task_{{ i + 1 }})
+{% endif %}
+
 {% if operators[i].urls is not none %}
 
 def process_json_response_{{i}}(**context):
     ti = context['task_instance']
     prev_json_data = ti.xcom_pull(task_ids='{{ operators[i-1].task_id }}', key='return_value')
+    time_counter = 0
     chunk_size = 1
     if prev_json_data:
         response = None
@@ -135,23 +140,42 @@ def process_json_response_{{i}}(**context):
             print(json.loads(prev_json_data).get("data", []))
             data_list = json.loads(prev_json_data).get("data", [])  # Get the list of dictionaries under "data" key
             if data_list:
+                
                 for i in range(0, len(data_list), chunk_size):
-                    for url_ in [json.loads(url_data) for url_data in {{operators[i].urls}}]:
-                        chunk = data_list[i:i + chunk_size]
-                        print(chunk)
-                        # Send the chunk of requests
-                        response = requests.post(url=url_['url'], json=chunk)
+                    for set_of_urls in [json.loads(url_data) for url_data in {{operators[i].urls}}]:
+                        #print(set_of_urls)
+                        for k,v in set_of_urls.items():
+                            if k == "delay":
+                                time.sleep(int(v))
+                            #print(set_of_urls['set_of_urls'])
+                            if isinstance(v,list):
+                                for index in v:
+                                    if "conditional_url" in index:
+                                        print("condition being tested")
+                                        chunk = data_list[i:i + chunk_size]
+                                        response = requests.post(url=index['conditional_url'], json=chunk)
+                                        if response.status_code == 200:
+                                            if response.json()['has_responded']:
+                                                break
+
+                                    else:
+                                        print(index['url'])
+                                        chunk = data_list[i:i + chunk_size]
+                                        print(chunk)
+                                        # Send the chunk of requests
+                                        response = requests.post(url=index['url'], json=chunk)
+                                    
+                                        # Check the response status code
+                                        if response.status_code == 200:
+                                            print(response.json())
+                                            json_data = response.json()
+                                            # context['task_instance'].xcom_push(key='json_response', value=json_data)
+                                        else:
+                                            print(f'Request failed with status code {response.status_code}')
+                                    
+                                        # Wait for 20 seconds before sending the next chunk
+                                        time.sleep(int(index['delay']))
                     
-                        # Check the response status code
-                        if response.status_code == 200:
-                            print(response.json())
-                            json_data = response.json()
-                            # context['task_instance'].xcom_push(key='json_response', value=json_data)
-                        else:
-                            print(f'Request failed with status code {response.status_code}')
-                    
-                        # Wait for 20 seconds before sending the next chunk
-                        time.sleep(int(url_['delay']))
             else:
                 raise Exception("the dataset is empty")
                 
@@ -166,7 +190,14 @@ process_response_{{i}}_task = PythonOperator(
     provide_context=True,
     retries=1,  # Override the retries for this task
     retry_delay=timedelta(minutes=1), 
-    dag=dag
+    dag=dag,
+    on_failure_callback=[
+        send_slack_notification(
+            text="The task {{ operators[i].task_id }} failed",
+            channel="#airflow-error",
+            username="airflow",
+        )
+    ],
 )
 
     
