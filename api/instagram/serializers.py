@@ -82,6 +82,8 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
         workflow = super().create(validated_data)
 
         for simplehttpoperator_data in simplehttpoperators_data:
+            if "urls" in simplehttpoperator_data:
+                simplehttpoperator_data['urls'] = [json.dumps(urls_data) for urls_data in simplehttpoperator_data['urls']] 
             simplehttpoperator, _ = SimpleHttpOperatorModel.objects.get_or_create(**simplehttpoperator_data)
             workflow.simplehttpoperators.add(simplehttpoperator)
 

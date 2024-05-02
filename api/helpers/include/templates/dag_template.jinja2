@@ -14,10 +14,10 @@ import json
 def check_api_response():
     while True:
         try:
-            response = requests.get('http://my-api-endpoint.com')
+            response = requests.get('https://httpbin.org/get')
             if response.status_code == 200:
                 response_json = response.json()
-                if response_json['status'] == 'true':
+                if response_json['url'] == 'https://httpbin.org/get':
                     response_status = True
                     print('API response is true')
                     break
@@ -122,33 +122,25 @@ http_task_{{ i + 1 }} = SimpleHttpOperator(
     ],
 )
 http_tasks.append(http_task_{{ i + 1 }})
+{% if operators[i].urls is not none %}
+
 def process_json_response_{{i}}(**context):
     ti = context['task_instance']
-    prev_json_data = ti.xcom_pull(task_ids='process_response_{{i-1}}_task', key='json_response')
+    prev_json_data = ti.xcom_pull(task_ids='{{ operators[i-1].task_id }}', key='return_value')
     chunk_size = 1
     if prev_json_data:
-        response = None  
-        if "data" in prev_json_data:
-            response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data['data']))
-        else:
-            response = requests.post(url = "{{operators[i].url}}", data=json.dumps(prev_json_data))
-        
-        json_data = response.json()
-    
-        context['task_instance'].xcom_push(key='json_response', value=json_data)
-    else:
-        prev_json_data = ti.xcom_pull(task_ids='{{ operators[i-1].task_id }}', key='return_value')
         response = None
         print(prev_json_data)
         if "data" in prev_json_data:
             print(json.loads(prev_json_data).get("data", []))
             data_list = json.loads(prev_json_data).get("data", [])  # Get the list of dictionaries under "data" key
             if data_list:
-                    for i in range(0, len(data_list), chunk_size):
+                for i in range(0, len(data_list), chunk_size):
+                    for url_ in [json.loads(url_data) for url_data in {{operators[i].urls}}]:
                         chunk = data_list[i:i + chunk_size]
                         print(chunk)
                         # Send the chunk of requests
-                        response = requests.post(url="{{operators[i].url}}", json=chunk)
+                        response = requests.post(url=url_['url'], json=chunk)
                     
                         # Check the response status code
                         if response.status_code == 200:
@@ -159,7 +151,7 @@ def process_json_response_{{i}}(**context):
                             print(f'Request failed with status code {response.status_code}')
                     
                         # Wait for 20 seconds before sending the next chunk
-                        time.sleep(7)
+                        time.sleep(int(url_['delay']))
             else:
                 raise Exception("the dataset is empty")
                 
@@ -177,6 +169,9 @@ process_response_{{i}}_task = PythonOperator(
     dag=dag
 )
 
+    
+{% endif %}
+
 
 {% endif %}
 
@@ -192,10 +187,8 @@ delay_task_{{ loop.index }} = TimeDeltaSensor(
 check_api >> http_task_{{ loop.index - 1 }} >> delay_task_{{ loop.index }} >> http_task_{{ loop.index }}
 {% elif loop.index > 1 and operators[loop.index].data is not none %}
 http_task_{{ loop.index - 1 }} >> http_task_{{ loop.index }}
-{% elif loop.index|string in delay_durations and loop.index > 1 and operators[loop.index].data is none  %}
-process_response_{{loop.index-1}}_task >> delay_task_{{ loop.index }} >> process_response_{{loop.index}}_task 
 {% elif loop.index|string not in delay_durations and loop.index > 1 and operators[loop.index].data is none %}
-process_response_{{loop.index}}_task 
+http_task_{{ loop.index }} >> process_response_{{loop.index}}_task 
 {% endif %}
 
 {% endfor %}

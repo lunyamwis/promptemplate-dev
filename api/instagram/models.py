@@ -151,7 +151,7 @@ class SimpleHttpOperatorModel(BaseModel):
     extra_options = models.JSONField(null=True,blank=True)
     xcom_push = models.BooleanField(default=True)
     log_response = models.BooleanField(default=False)
-    url = models.URLField(null=True, blank=True)
+    urls = ArrayField(models.JSONField(null=True, blank=True), blank=True, null=True)
     
     def __str__(self) -> str:
         return self.endpoint

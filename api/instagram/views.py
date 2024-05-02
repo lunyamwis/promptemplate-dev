@@ -308,6 +308,8 @@ class GetAccounts(APIView):
                 if resp.status_code == 200:
                     print(resp.json())
                     dataset = {
+                        "mediaId": user.info.get("media_id"),
+                        "comment": user.info.get("media_comment"),
                         "usernames_to": user.info.get("username"),
                         "username_from": resp.json()['salesrep'].get('username','')
                     }
