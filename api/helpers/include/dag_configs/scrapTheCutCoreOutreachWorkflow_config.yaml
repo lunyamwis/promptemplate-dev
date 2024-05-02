@@ -3,7 +3,7 @@ dag:
   auto_register: false
   catchup: false
   concurrency: null
-  created_at: 2024-05-02 10:55:40.645943+00:00
+  created_at: 2024-05-02 11:24:10.069352+00:00
   dag_id: scrapTheCutCoreOutreachWorkflow
   dagrun_timeout: null
   default_args: null
@@ -14,7 +14,7 @@ dag:
   end_date: null
   fail_stop: false
   full_filepath: ''
-  id: -NwswWEzF2A11A-63kc1
+  id: -Nwt21Z4XFdb_TpPoosm
   is_paused_upon_creation: false
   jinja_environment_kwargs: null
   max_active_runs: null
@@ -33,13 +33,13 @@ dag:
   template_searchpath: ''
   template_undefined: ''
   timetable: ''
-  updated_at: 2024-05-02 10:55:40.646006+00:00
+  updated_at: 2024-05-02 11:24:10.069366+00:00
   user_defined_filters: null
   user_defined_macros: null
 data_seconds:
   '2': 720.0
 operators:
-- created_at: 2024-05-02 10:55:27.521177+00:00
+- created_at: 2024-05-02 11:23:56.958241+00:00
   data:
     chain: true
     index: 0
@@ -52,15 +52,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NwswT0aojWJiPjY8qyl
+  id: -Nwt1zMHEvHuT1SHcd11
   log_response: true
   method: POST
   response_check: ''
   task_id: getUsers
-  updated_at: 2024-05-02 10:55:27.521214+00:00
+  updated_at: 2024-05-02 11:23:56.958279+00:00
   urls: null
   xcom_push: false
-- created_at: 2024-05-02 10:55:29.996330+00:00
+- created_at: 2024-05-02 11:23:59.415845+00:00
   data:
     accounts: 18
     chain: true
@@ -75,15 +75,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NwswTd_hEcJb8ad1T79
+  id: -Nwt1zz82kixqhDGFoTv
   log_response: true
   method: POST
   response_check: ''
   task_id: getInfo
-  updated_at: 2024-05-02 10:55:29.996368+00:00
+  updated_at: 2024-05-02 11:23:59.415899+00:00
   urls: null
   xcom_push: false
-- created_at: 2024-05-02 10:55:32.555611+00:00
+- created_at: 2024-05-02 11:24:02.180682+00:00
   data:
     chain: true
     keywords_to_check:
@@ -153,15 +153,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NwswUG_gqKPKfC1F05P
+  id: -Nwt2-bM5613j0JT3Y2Z
   log_response: true
   method: POST
   response_check: ''
   task_id: enrich
-  updated_at: 2024-05-02 10:55:32.555647+00:00
+  updated_at: 2024-05-02 11:24:02.180717+00:00
   urls: null
   xcom_push: false
-- created_at: 2024-05-02 10:55:35.218973+00:00
+- created_at: 2024-05-02 11:24:04.835014+00:00
   data:
     chain: true
     index: 0
@@ -172,15 +172,15 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NwswUvC9lq87csxUNWQ
+  id: -Nwt20J45GURVYU1kyoA
   log_response: true
   method: POST
   response_check: ''
   task_id: getAccounts
-  updated_at: 2024-05-02 10:55:35.218986+00:00
+  updated_at: 2024-05-02 11:24:04.835033+00:00
   urls: null
   xcom_push: false
-- created_at: 2024-05-02 10:55:37.952597+00:00
+- created_at: 2024-05-02 11:24:07.396532+00:00
   data: null
   deleted_at: null
   endpoint: instagram/scrapInfo/
@@ -188,12 +188,12 @@ operators:
   headers:
     Content-Type: application/json
   http_conn_id: your_http_connection
-  id: -NwswVa5BGtPFw1qerZg
+  id: -Nwt20uTyE751gMR0B-6
   log_response: true
   method: POST
   response_check: ''
   task_id: reactToStory
-  updated_at: 2024-05-02 10:55:37.952632+00:00
+  updated_at: 2024-05-02 11:24:07.396570+00:00
   urls:
   - '{"set_of_urls": [{"url": "https://mqtt.booksy.us.boostedchat.com/like", "delay":
     105}, {"url": "https://mqtt.booksy.us.boostedchat.com/comment", "delay": 60}],

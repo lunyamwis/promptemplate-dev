@@ -34,7 +34,7 @@ def check_api_response():
 default_args = {
     'owner': 'me',
     'start_date': days_ago(1),
-    'retries': -1,  # Set to None for unlimited retries
+    'retries': 0,  # Set to None for unlimited retries
     'retry_delay': timedelta(seconds=30),
 }
 
@@ -219,7 +219,7 @@ check_api >> http_task_{{ loop.index - 1 }} >> delay_task_{{ loop.index }} >> ht
 {% elif loop.index > 1 and operators[loop.index].data is not none %}
 http_task_{{ loop.index - 1 }} >> http_task_{{ loop.index }}
 {% elif loop.index|string not in delay_durations and loop.index > 1 and operators[loop.index].data is none %}
-http_task_{{ loop.index }} >> process_response_{{loop.index}}_task 
+http_task_{{ loop.index - 1 }} >> http_task_{{ loop.index }} >> process_response_{{loop.index}}_task 
 {% endif %}
 
 {% endfor %}
