@@ -78,6 +78,7 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         simplehttpoperators_data = validated_data.pop('simplehttpoperators', [])
         dag_data = validated_data.pop('dag', None)
+        data = None
 
         workflow = super().create(validated_data)
 
@@ -92,12 +93,22 @@ class WorkflowModelSerializer(serializers.ModelSerializer):
             workflow.dag = dag
             workflow.save()
 
+        if "trigger_url" in dag_data:
         
-        data = {
-            "dag":[entry for entry in DagModel.objects.filter(id = workflow.dag.id).values()],
-            "operators":[entry for entry in workflow.simplehttpoperators.values()],
-            "data_seconds":workflow.delay_durations
-        }
+            data = {
+                "dag":[entry for entry in DagModel.objects.filter(id = workflow.dag.id).values()],
+                "operators":[entry for entry in workflow.simplehttpoperators.values()],
+                "data_seconds":workflow.delay_durations,
+                "trigger_url":dag_data.get("trigger_url"),
+                "trigger_url_expected_response":dag_data.get("trigger_url_expected_response")
+            }
+        else:
+            data = {
+                "dag":[entry for entry in DagModel.objects.filter(id = workflow.dag.id).values()],
+                "operators":[entry for entry in workflow.simplehttpoperators.values()],
+                "data_seconds":workflow.delay_durations
+            }
+
         
         # Write the dictionary to a YAML file
         yaml_file_path = os.path.join(settings.BASE_DIR, 'api', 'helpers', 'include', 'dag_configs', f"{workflow.dag.dag_id}_config.yaml")

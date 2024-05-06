@@ -14,10 +14,10 @@ import json
 def check_api_response():
     while True:
         try:
-            response = requests.get('https://httpbin.org/get')
+            response = requests.get(url='{{trigger_url}}')
             if response.status_code == 200:
                 response_json = response.json()
-                if response_json['url'] == 'https://httpbin.org/get':
+                if response_json['url'] == '{{trigger_url_expected_response}}':
                     response_status = True
                     print('API response is true')
                     break

@@ -131,6 +131,8 @@ class DagModel(BaseModel):
     owner_links = models.JSONField(null=True,blank=True)
     auto_register = models.BooleanField(default=False)
     fail_stop = models.BooleanField(default=False)
+    trigger_url = models.URLField(null=True, blank=True)
+    trigger_url_expected_response = models.TextField(null=True,blank=True)
 
     def __str__(self) -> str:
         return self.dag_id
