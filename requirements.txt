@@ -17,4 +17,6 @@ langchain-community
 langchain-openai
 langchain[docarray]
 chromadb
-
+torch
+transformers
+sentence-transformers
