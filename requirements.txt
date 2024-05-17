@@ -8,3 +8,13 @@ google-api-python-client
 google-auth-httplib2 
 google-auth-oauthlib
 numpy
+langchain
+ipython
+python-dotenv
+pydantic==1.10.8
+panel
+langchain-community
+langchain-openai
+langchain[docarray]
+chromadb
+

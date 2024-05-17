@@ -9,6 +9,32 @@ from prompt.serializers import CreatePromptSerializer, CreateRoleSerializer, Pro
 from .factory import PromptFactory
 from .models import Prompt, Role
 from .forms import PromptForm
+import os
+import openai
+import base64
+import chromadb
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+
+from dotenv import load_dotenv, find_dotenv
+from langchain.tools import tool
+import requests
+from pydantic import BaseModel, Field
+from langchain.schema.runnable import RunnablePassthrough
+from langchain.schema.output_parser import StrOutputParser
+from langchain.prompts import MessagesPlaceholder
+import datetime
+import wikipedia
+from langchain_openai.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain_core.utils.function_calling import convert_to_openai_function
+from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import DocArrayInMemorySearch
+from langchain.schema.runnable import RunnableMap
+from langchain.memory import ConversationBufferMemory
+from langchain.agents.format_scratchpad import format_to_openai_functions
+from langchain.agents import AgentExecutor
+from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 
 
 def index(request):
@@ -68,6 +94,84 @@ class saveResponse(APIView):
         return Response({
             "success": True,
         }, status=status.HTTP_200_OK)
+
+def retrieve_prompt(userInput):
+    resp = requests.get("https://promptemplate.booksy.us.boostedchat.com/prompts/")
+    prompts = [prompt['text_data'] for prompt in resp.json()]
+    character_splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n", ". ", " ", ""],
+        chunk_size=1000,
+        chunk_overlap=0
+    )
+    character_split_texts = character_splitter.split_text('\n\n'.join(prompts))
+    token_splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=0, tokens_per_chunk=256)
+
+    token_split_texts = []
+    for text in character_split_texts:
+        token_split_texts += token_splitter.split_text(text)
+
+    embedding_function = SentenceTransformerEmbeddingFunction()
+    chroma_client = chromadb.Client()
+    chroma_collection = chroma_client.create_collection(f"prompts-{base64.b64encode(userInput.encode('utf-8')).decode('utf-8')}", embedding_function=embedding_function)
+
+    ids = [str(i) for i in range(len(token_split_texts))]
+
+    chroma_collection.add(ids=ids, documents=token_split_texts)
+    chroma_collection.count()
+    results = chroma_collection.query(query_texts=[userInput], n_results=5)
+    retrieved_documents = results['documents'][0]
+    return retrieved_documents
+
+def model_with_extra_info(data):
+    template = """Answer the user based only on the following context and information:
+            {context}
+        information: {information}
+        userInput: {question}
+        """
+    prompt = ChatPromptTemplate.from_template(template)
+    model = ChatOpenAI(temperature=0)
+    output_parser = StrOutputParser()
+    chain = RunnableMap({
+        "context": lambda x: retrieve_prompt(x["userInput"]),
+        "userInput": lambda x: x["userInput"],
+        "information": lambda x: x["information"]
+    }) | prompt | model | output_parser
+    result = chain.invoke(**data)
+    return {
+        "result":result,
+        "prompt":prompt,
+        "model":model
+    }
+
+@tool
+def get_sales_representative_data(userInput):
+    """this function returns the sales representative data and information about their role"""
+    resp = requests.get("https://promptemplate.booksy.us.boostedchat.com/roles/-NmvqgR8ySgPtYKXiQ1c/")
+    result = model_with_extra_info({"userInput":userInput,"information":resp.json()['description']})
+    return result['result']
+
+class generateResponse(APIView):
+    def post(self,request):
+        userInput = request.data.get("userInput")
+        tools = [get_sales_representative_data]
+        functions = [convert_to_openai_function(f) for f in tools]
+        result = model_with_extra_info({"userInput":userInput,"information":"Conceal that you are not a robot"})
+        final_prompt = ChatPromptTemplate.from_messages([
+            ("system", result['prompt']),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{userInput}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad")
+        ])
+        memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
+        model = ChatOpenAI(temperature=0).bind(functions=functions)
+        chain = RunnablePassthrough.assign(
+            agent_scratchpad=lambda x: format_to_openai_functions(x["intermediate_steps"])
+        ) | final_prompt | model | OpenAIFunctionsAgentOutputParser()
+        qa = AgentExecutor(agent=chain, tools=tools, verbose=False, memory=memory)
+        return Response({
+            "response":qa.invoke({"userInput":userInput})
+        }, status=status.HTTP_200_OK)
+
 
 
 class getPrompt(APIView):
