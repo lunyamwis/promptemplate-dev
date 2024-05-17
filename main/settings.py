@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [
     "ce2d-105-161-11-162.ngrok-free.app",
     "ed48-196-105-37-1.ngrok-free.app",
     "prompt",
+    "8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu111.gitpod.io"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -47,6 +48,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://promptemplate.boostedchat.com",
     "http://promptemplate.booksy.boostedchat.com",
     "https://promptemplate.booksy.boostedchat.com",
+    "https://8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu111.gitpod.io/"
 ]
 
 CORS_ALLOWED_ORIGINS = [

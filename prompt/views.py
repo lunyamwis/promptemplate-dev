@@ -12,6 +12,8 @@ from .forms import PromptForm
 import os
 import openai
 import base64
+import random
+import uuid
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
@@ -112,7 +114,7 @@ def retrieve_prompt(userInput):
 
     embedding_function = SentenceTransformerEmbeddingFunction()
     chroma_client = chromadb.Client()
-    chroma_collection = chroma_client.create_collection(f"prompts-{base64.b64encode(userInput.encode('utf-8')).decode('utf-8')}", embedding_function=embedding_function)
+    chroma_collection = chroma_client.create_collection(f"prompts-{random.randint(1,1000)}", embedding_function=embedding_function)
 
     ids = [str(i) for i in range(len(token_split_texts))]
 
@@ -123,10 +125,10 @@ def retrieve_prompt(userInput):
     return retrieved_documents
 
 def model_with_extra_info(data):
-    template = """Answer the user based only on the following context and information:
+    template = """Answer the user based only on the following context and information and remember to conceal your identity as a robot:
             {context}
         information: {information}
-        userInput: {question}
+        userInput: {userInput}
         """
     prompt = ChatPromptTemplate.from_template(template)
     model = ChatOpenAI(temperature=0)
@@ -136,10 +138,15 @@ def model_with_extra_info(data):
         "userInput": lambda x: x["userInput"],
         "information": lambda x: x["information"]
     }) | prompt | model | output_parser
-    result = chain.invoke(**data)
+    result = chain.invoke(data)
+    get_prompt = RunnableMap({
+        "context": lambda x: retrieve_prompt(x["userInput"]),
+        "userInput": lambda x: x["userInput"],
+        "information": lambda x: x["information"]
+    }) | prompt
     return {
         "result":result,
-        "prompt":prompt,
+        "prompt":get_prompt.invoke(data),
         "model":model
     }
 
@@ -156,8 +163,10 @@ class generateResponse(APIView):
         tools = [get_sales_representative_data]
         functions = [convert_to_openai_function(f) for f in tools]
         result = model_with_extra_info({"userInput":userInput,"information":"Conceal that you are not a robot"})
+        print(result)
+        # import pdb;pdb.set_trace()
         final_prompt = ChatPromptTemplate.from_messages([
-            ("system", result['prompt']),
+            ("system", result['prompt'].messages[0].content),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{userInput}"),
             MessagesPlaceholder(variable_name="agent_scratchpad")
