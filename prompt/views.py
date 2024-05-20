@@ -25,7 +25,6 @@ from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
 from langchain.prompts import MessagesPlaceholder
 import datetime
-import wikipedia
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.utils.function_calling import convert_to_openai_function
@@ -125,7 +124,7 @@ def retrieve_prompt(userInput):
     return retrieved_documents
 
 def model_with_extra_info(data):
-    template = """Answer the user based only on the following context and information and remember to conceal your identity as a robot:
+    template = """Answer the user based only on the following context and information and remember to conceal your identity as a robot, you are a sales representative:
             {context}
         information: {information}
         userInput: {userInput}
@@ -150,6 +149,46 @@ def model_with_extra_info(data):
         "model":model
     }
 
+import string
+
+def remove_punctuation(sentence):
+    punctuation_to_keep = {'.', ',', '\''}
+    punctuation_to_remove = ''.join(p for p in string.punctuation if p not in punctuation_to_keep) + '{}[]'
+    table = str.maketrans('', '', punctuation_to_remove)
+    return sentence.translate(table)
+
+import sqlite3
+
+# Initialize SQLite database
+def init_db():
+    conn = sqlite3.connect('conversation_history.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS chat_history (
+        id INTEGER PRIMARY KEY,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL
+    )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+def save_message(role, content):
+    conn = sqlite3.connect('conversation_history.db')
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO chat_history (role, content) VALUES (?, ?)', (role, content))
+    conn.commit()
+    conn.close()
+
+def load_messages():
+    conn = sqlite3.connect('conversation_history.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT role, content FROM chat_history')
+    messages = cursor.fetchall()
+    conn.close()
+    return messages
+
 @tool
 def get_sales_representative_data(userInput):
     """this function returns the sales representative data and information about their role"""
@@ -158,28 +197,62 @@ def get_sales_representative_data(userInput):
     return result['result']
 
 class generateResponse(APIView):
-    def post(self,request):
+    def post(self, request):
         userInput = request.data.get("userInput")
         tools = [get_sales_representative_data]
         functions = [convert_to_openai_function(f) for f in tools]
-        result = model_with_extra_info({"userInput":userInput,"information":"Conceal that you are not a robot"})
+        # model_with_extra_info = ChatOpenAI(temperature=0).bind(functions=functions)
+        
+        # Load existing conversation history
+        chat_history = load_messages()
+        print(chat_history)
+        
+        # Initialize memory
+        memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
+
+        # Add loaded messages to memory
+        for role, content in chat_history:
+            if role == 'user':
+                memory.chat_memory.add_user_message(content)
+            elif role == 'assistant':
+                memory.chat_memory.add_ai_message(content)
+
+        # Construct the initial result with extra information
+        result = model_with_extra_info({"userInput": userInput, "information": "Conceal your identity as a robot, you are a sales representative"})
         print(result)
-        # import pdb;pdb.set_trace()
+        
         final_prompt = ChatPromptTemplate.from_messages([
-            ("system", result['prompt'].messages[0].content),
+            ("system", remove_punctuation(result['prompt'].messages[0].content)),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{userInput}"),
             MessagesPlaceholder(variable_name="agent_scratchpad")
         ])
-        memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
+
+        # Create the chain
         model = ChatOpenAI(temperature=0).bind(functions=functions)
+        
         chain = RunnablePassthrough.assign(
             agent_scratchpad=lambda x: format_to_openai_functions(x["intermediate_steps"])
         ) | final_prompt | model | OpenAIFunctionsAgentOutputParser()
+        
+        # Create the agent executor with memory integration
         qa = AgentExecutor(agent=chain, tools=tools, verbose=False, memory=memory)
+        
+        # Invoke the chain and get the response
+        response = qa.invoke({"userInput": userInput})
+        
+        # Save user input and AI response to SQLite
+        save_message('user', userInput)
+        save_message('assistant', response['output'])
+        
+        # Save the updated memory context
+        memory.save_context({"input": userInput}, {"output": response['output']})
+        
         return Response({
-            "response":qa.invoke({"userInput":userInput})
+            "response": response
         }, status=status.HTTP_200_OK)
+
+    
 
 
 
