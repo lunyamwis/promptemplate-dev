@@ -7,7 +7,7 @@ from django.shortcuts import redirect, get_object_or_404
 from product.models import Product, Company
 from prompt.serializers import CreatePromptSerializer, CreateRoleSerializer, PromptSerializer, RoleSerializer
 from .factory import PromptFactory
-from .models import Prompt, Role
+from .models import Prompt, Role, ChatHistory
 from .forms import PromptForm
 import os
 import openai
@@ -204,7 +204,7 @@ class generateResponse(APIView):
         # model_with_extra_info = ChatOpenAI(temperature=0).bind(functions=functions)
         
         # Load existing conversation history
-        chat_history = load_messages()
+        chat_history = ChatHistory.objects.all()
         print(chat_history)
         
         # Initialize memory
@@ -242,8 +242,8 @@ class generateResponse(APIView):
         response = qa.invoke({"userInput": userInput})
         
         # Save user input and AI response to SQLite
-        save_message('user', userInput)
-        save_message('assistant', response['output'])
+        ChatHistory.objects.create(role='user', content=userInput)
+        ChatHistory.objects.create(role='assistant',content= response['output'])
         
         # Save the updated memory context
         memory.save_context({"input": userInput}, {"output": response['output']})

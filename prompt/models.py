@@ -97,3 +97,8 @@ class Query(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+class ChatHistory(BaseModel):
+    role = models.CharField(max_length=255)
+    content = models.TextField()
