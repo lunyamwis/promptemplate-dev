@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render
+from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -199,12 +200,14 @@ def get_sales_representative_data(userInput):
 class generateResponse(APIView):
     def post(self, request):
         userInput = request.data.get("userInput")
+        username_from_id = request.data.get("username_from_id","")
+        username_to_id = request.data.get("username_to_id","")
         tools = [get_sales_representative_data]
         functions = [convert_to_openai_function(f) for f in tools]
         # model_with_extra_info = ChatOpenAI(temperature=0).bind(functions=functions)
         
         # Load existing conversation history
-        chat_history = ChatHistory.objects.all()
+        chat_history = ChatHistory.objects.filter(Q(username_from_id=username_from_id)&Q(username_to_id=username_to_id))
         print(chat_history)
         
         # Initialize memory
@@ -242,8 +245,8 @@ class generateResponse(APIView):
         response = qa.invoke({"userInput": userInput})
         
         # Save user input and AI response to SQLite
-        ChatHistory.objects.create(role='user', content=userInput)
-        ChatHistory.objects.create(role='assistant',content= response['output'])
+        ChatHistory.objects.create(role='user', content=userInput,username_from_id=username_from_id,username_to_id=username_to_id)
+        ChatHistory.objects.create(role='assistant',content= response['output'],username_from_id=username_from_id,username_to_id=username_to_id)
         
         # Save the updated memory context
         memory.save_context({"input": userInput}, {"output": response['output']})

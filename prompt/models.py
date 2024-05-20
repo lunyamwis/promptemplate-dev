@@ -101,4 +101,6 @@ class Query(BaseModel):
 
 class ChatHistory(BaseModel):
     role = models.CharField(max_length=255)
+    username_from_id  = models.CharField(max_length=255)
+    username_to_id = models.CharField(max_length=255)
     content = models.TextField()
