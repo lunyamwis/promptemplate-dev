@@ -211,11 +211,11 @@ class generateResponse(APIView):
         memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
 
         # Add loaded messages to memory
-        for role, content in chat_history:
-            if role == 'user':
-                memory.chat_memory.add_user_message(content)
-            elif role == 'assistant':
-                memory.chat_memory.add_ai_message(content)
+        for chat in chat_history:
+            if chat.role == 'user':
+                memory.chat_memory.add_user_message(chat.content)
+            elif chat.role == 'assistant':
+                memory.chat_memory.add_ai_message(chat.content)
 
         # Construct the initial result with extra information
         result = model_with_extra_info({"userInput": userInput, "information": "Conceal your identity as a robot, you are a sales representative"})
