@@ -23,7 +23,6 @@ class ToneOfVoice(BaseModel):
     def __str__(self) -> str:
         return self.name
 
-
 class Prompt(BaseModel):
     name = models.CharField(max_length=50)
     data = models.JSONField(default=dict)
@@ -87,6 +86,35 @@ class Prompt(BaseModel):
                                                                                   solution.gsheet_formula,
                                                                                   spreadsheet_id=sheet.spreadsheet_id)})
         return solution_values
+
+class Tool(BaseModel):
+    name = models.CharField(max_length=255)
+    is_agent = models.BooleanField(default=False)
+    workflow = models.CharField(max_length=255)
+
+class Agent(BaseModel):
+    name = models.CharField(max_length=255)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, blank=True)
+    goal = models.TextField(null=True, blank=True)
+    prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
+    tools = models.ManyToManyField(Tool)
+    workflow = models.CharField(max_length=255)
+
+
+class Task(BaseModel):
+    name = models.CharField(max_length=255)
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True, blank=True)
+    prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
+    tools = models.ManyToManyField(Tool)
+    expected_output = models.TextField()
+    workflow = models.CharField(max_length=255)
+
+class Crew(BaseModel):
+    tasks = models.ManyToManyField(Task)
+    agents = models.ManyToManyField(Agent)
+    memory = models.BooleanField(default=True)
+    prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
+
 
 
 class Query(BaseModel):
