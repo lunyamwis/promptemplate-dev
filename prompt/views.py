@@ -291,24 +291,25 @@ TOOLS = {
 class agentSetup(APIView):
     def post(self,request):
         workflow = request.data.get("workflow")
-        agent_tools = []
-        task_tools = []
-        for tool in Tool.objects.filter(workflow=workflow):
-            if tool.is_agent:
-                agent_tools.append(TOOLS.get(tool.name))
-            else:
-                task_tools.append(TOOLS.get(tool.name))
-
         agents = []
         for agent in AgentModel.objects.filter(workflow=workflow):
-            agents.append(Agent(
-                role=agent.role.description,
-                goal=agent.goal,
-                backstory=agent.prompt.text_data,
-                tools = agent_tools if agent_tools else None,
-                allow_delegation=False,
-                verbose=True
-            ))
+            if agent.tools.filter().exists():
+                agents.append(Agent(
+                    role=agent.role.description,
+                    goal=agent.goal,
+                    backstory=agent.prompt.text_data,
+                    tools = [TOOLS.get(tool.name) for tool in agent.tools.all()],
+                    allow_delegation=False,
+                    verbose=True
+                ))
+            else:
+                agents.append(Agent(
+                    role=agent.role.description,
+                    goal=agent.goal,
+                    backstory=agent.prompt.text_data,
+                    allow_delegation=False,
+                    verbose=True
+                ))
             
         tasks = []
         
@@ -318,12 +319,20 @@ class agentSetup(APIView):
                 if task.agent.goal == agent.goal:
                     agent_ = agent
             if  agent_:
-                tasks.append(Task(
-                    description=task.prompt.text_data,
-                    expected_output=task.expected_output,
-                    tools=task_tools if task_tools else None,
-                    agent=agent_,
-                ))
+                if task.tools.filter().exists():
+                    tasks.append(Task(
+                        description=task.prompt.text_data,
+                        expected_output=task.expected_output,
+                        tools=[TOOLS.get(tool.name) for tool in task.tools.all()],
+                        agent=agent_,
+                    ))
+                else:
+                    tasks.append(Task(
+                        description=task.prompt.text_data,
+                        expected_output=task.expected_output,
+                        agent=agent_,
+                    ))
+                
             
         
         crew = Crew(

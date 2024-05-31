@@ -92,26 +92,36 @@ class Tool(BaseModel):
     is_agent = models.BooleanField(default=False)
     workflow = models.CharField(max_length=255)
 
+    def __str__(self):
+        return self.name
+
 class Agent(BaseModel):
     name = models.CharField(max_length=255)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, blank=True)
     goal = models.TextField(null=True, blank=True)
     prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
-    tools = models.ManyToManyField(Tool)
+    tools = models.ManyToManyField(Tool,blank=True)
     workflow = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 
 
 class Task(BaseModel):
     name = models.CharField(max_length=255)
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True, blank=True)
     prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
-    tools = models.ManyToManyField(Tool)
+    tools = models.ManyToManyField(Tool, blank=True)
     expected_output = models.TextField()
     workflow = models.CharField(max_length=255)
 
+    def __str__(self):
+        return self.name
+
 class Crew(BaseModel):
-    tasks = models.ManyToManyField(Task)
-    agents = models.ManyToManyField(Agent)
+    tasks = models.ManyToManyField(Task,blank=True)
+    agents = models.ManyToManyField(Agent,blank=True)
     memory = models.BooleanField(default=True)
     prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
 
