@@ -275,8 +275,41 @@ class SentimentAnalysisTool(BaseTool):
         return "positive"
     
 class WorkflowTool(BaseTool):
-    name: str
-    endpoints: List[str]
+    name: str = "workflow_tool"
+    description: str = ("Allows the composition of workflows "
+         "in order to create as many workflows as possible")
+    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
+
+    def _run(self, workflow_data: dict, **kwargs) -> str:
+        print('==========here is workflow data==========')
+        print(workflow_data)
+        print('==========here is workflow data==========')
+        """
+        Sends a POST request to the specified endpoint with the provided workflow data and API key.
+        """
+        headers = {"Content-Type": "application/json"}
+        
+        response = requests.post(self.endpoint, data=json.dumps(workflow_data), headers=headers)
+        print('we are here------------',response)
+        if response.status_code not in [200,201]:
+            raise ValueError(f"Failed to send workflow data: {response.text}")
+
+        return response.status_code
+
+    def _arun(self, workflow_data: dict, **kwargs) -> str:
+        """
+        Sends an asynchronous POST request to the specified endpoint with the provided workflow data and API key.
+        """
+        print('==========here is async workflow data==========')
+        print(workflow_data)
+        print('==========here is async workflow data==========')
+        headers = {"Content-Type": "application/json"}
+        
+        response = requests.post(self.endpoint, data=json.dumps(workflow_data), headers=headers)
+        print('we are here asynchronously------------',response)
+        if response.status_code not in [200,201]:
+            raise ValueError(f"Failed to send workflow data: {response.text}")
+        return response.text
     
 
 TOOLS = {
@@ -285,11 +318,12 @@ TOOLS = {
     "file_read_tool": FileReadTool(),
     "search_tool" : SerperDevTool(),
     "sentiment_analysis_tool" : SentimentAnalysisTool(),
-    "workflow_tool" : WorkflowTool
+    "workflow_tool" : WorkflowTool()
 }
 
 class agentSetup(APIView):
     def post(self,request):
+        workflow_data = request.data.get("workflow_data")
         workflow = request.data.get("workflow")
         agents = []
         for agent in AgentModel.objects.filter(workflow=workflow):
@@ -344,6 +378,10 @@ class agentSetup(APIView):
             memory=True
         )
         inputs = request.data.get("inputs")
+        if workflow_data:
+            workflow_tool = TOOLS.get("workflow_tool")
+            response = workflow_tool._run(workflow_data)
+            # inputs.update({"workflow_data":workflow_data})
 
         result = crew.kickoff(inputs=inputs)
         return Response({"result":result})
