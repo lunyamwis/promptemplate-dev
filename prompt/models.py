@@ -99,7 +99,8 @@ class Agent(BaseModel):
     name = models.CharField(max_length=255)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, blank=True)
     goal = models.TextField(null=True, blank=True)
-    prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
+    # prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
+    prompt = models.ManyToManyField(Prompt,blank=True)
     tools = models.ManyToManyField(Tool,blank=True)
     workflow = models.CharField(max_length=255)
 
@@ -111,7 +112,8 @@ class Agent(BaseModel):
 class Task(BaseModel):
     name = models.CharField(max_length=255)
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True, blank=True)
-    prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
+    # prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
+    prompt = models.ManyToManyField(Prompt, blank=True)
     tools = models.ManyToManyField(Tool, blank=True)
     expected_output = models.TextField()
     workflow = models.CharField(max_length=255)

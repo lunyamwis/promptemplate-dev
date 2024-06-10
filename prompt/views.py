@@ -323,9 +323,10 @@ TOOLS = {
 
 class agentSetup(APIView):
     def post(self,request):
-        workflow_data = request.data.get("workflow_data")
+        # workflow_data = request.data.get("workflow_data")
         workflow = request.data.get("workflow")
         agents = []
+        # import pdb;pdb.set_trace()
         for agent in AgentModel.objects.filter(workflow=workflow):
             if agent.tools.filter().exists():
                 agents.append(Agent(
@@ -367,7 +368,7 @@ class agentSetup(APIView):
                         agent=agent_,
                     ))
                 
-            
+          
         
         crew = Crew(
             agents=agents,
@@ -378,9 +379,9 @@ class agentSetup(APIView):
             memory=True
         )
         inputs = request.data.get("inputs")
-        if workflow_data:
-            workflow_tool = TOOLS.get("workflow_tool")
-            response = workflow_tool._run(workflow_data)
+        # if workflow_data:
+            # workflow_tool = TOOLS.get("workflow_tool")
+            # response = workflow_tool._run(workflow_data)
             # inputs.update({"workflow_data":workflow_data})
 
         result = crew.kickoff(inputs=inputs)
