@@ -39,7 +39,7 @@ from langchain.agents import AgentExecutor
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
 from crewai import Agent, Task, Crew
-from .models import Agent as AgentModel,Task as TaskModel,Tool,Crew as CrewModel
+from .models import Agent as AgentModel,Task as TaskModel,Tool, Department
 import os
 from typing import List
 
@@ -324,15 +324,20 @@ TOOLS = {
 class agentSetup(APIView):
     def post(self,request):
         # workflow_data = request.data.get("workflow_data")
-        workflow = request.data.get("workflow")
-        agents = []
-        # import pdb;pdb.set_trace()
-        for agent in AgentModel.objects.filter(workflow=workflow):
+        workflow = None
+        department = Department.objects.filter(name = request.data.get("workflow")).last()
+
+        info = request.data.get(department.baton.start_key)
+        
+        
+        for agent in department.agents.all():
+            print(agent)
+            # import pdb;pdb.set_trace()
             if agent.tools.filter().exists():
                 agents.append(Agent(
                     role=agent.role.description,
                     goal=agent.goal,
-                    backstory=agent.prompt.text_data,
+                    backstory=agent.prompt.last().text_data,
                     tools = [TOOLS.get(tool.name) for tool in agent.tools.all()],
                     allow_delegation=False,
                     verbose=True
@@ -341,14 +346,15 @@ class agentSetup(APIView):
                 agents.append(Agent(
                     role=agent.role.description,
                     goal=agent.goal,
-                    backstory=agent.prompt.text_data,
+                    backstory=agent.prompt.last().text_data,
                     allow_delegation=False,
                     verbose=True
                 ))
             
         tasks = []
         
-        for task in TaskModel.objects.filter(workflow=workflow):
+        for task in department.tasks.all():
+            print(task)
             agent_ = None
             for agent in agents:
                 if task.agent.goal == agent.goal:
@@ -356,14 +362,14 @@ class agentSetup(APIView):
             if  agent_:
                 if task.tools.filter().exists():
                     tasks.append(Task(
-                        description=task.prompt.text_data,
+                        description=task.prompt.last().text_data if task.prompt.exists() else "perform agents task",
                         expected_output=task.expected_output,
                         tools=[TOOLS.get(tool.name) for tool in task.tools.all()],
                         agent=agent_,
                     ))
                 else:
                     tasks.append(Task(
-                        description=task.prompt.text_data,
+                        description=task.prompt.last().text_data if task.prompt.exists() else "perform agents task",
                         expected_output=task.expected_output,
                         agent=agent_,
                     ))
@@ -378,13 +384,29 @@ class agentSetup(APIView):
             verbose=2,
             memory=True
         )
-        inputs = request.data.get("inputs")
+        
         # if workflow_data:
             # workflow_tool = TOOLS.get("workflow_tool")
             # response = workflow_tool._run(workflow_data)
             # inputs.update({"workflow_data":workflow_data})
+        # import pdb;pdb.set_trace()
 
-        result = crew.kickoff(inputs=inputs)
+        result = crew.kickoff(inputs={department.baton.start_key:info})
+        results = eval(result)
+        if department.baton.end_key in results.keys():
+            # import pdb;pdb.set_trace()
+            # update qualified info and new properties
+            endpoints = department.baton.endpoints.all()
+
+            remainder = None
+            for endpoint in endpoints:
+                requests.Request(method=endpoint.method,url=endpoint.url,data=eval(endpoint.data),params=eval(endpoint.params))
+            # resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/users/update-info",data={"outsourced_info":results})
+
+            
+            # kickstart new workflow
+            workflow_data = department.next_department
+            resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/workflows/",data=workflow_data)
         return Response({"result":result})
 
 class getPrompt(APIView):

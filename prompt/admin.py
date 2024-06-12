@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Prompt,Query, ToneOfVoice, Role,Crew,Task,Agent,Tool
+from .models import Prompt,Query, ToneOfVoice, Role,Department,Task,Agent,Tool,Baton, Endpoint
 # Register your models here.
 
 @admin.register(Prompt)
@@ -33,16 +33,22 @@ class QueryAdmin(admin.ModelAdmin):
         return form
 
 
-@admin.register(Crew)
-class CrewAdmin(admin.ModelAdmin):
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         self.exclude = ("id",)
-        form = super(CrewAdmin, self).get_form(request, obj, **kwargs)
+        form = super(DepartmentAdmin, self).get_form(request, obj, **kwargs)
         return form
 
 
 @admin.register(Agent)
 class AgentAdmin(admin.ModelAdmin):
+    list_display = ('name','get_tasks',)
+    
+    @admin.display(description='Tasks')
+    def get_tasks(self, obj):
+        return [task.name for task in obj.task_set.all()]
+
     def get_form(self, request, obj=None, **kwargs):
         self.exclude = ("id",)
         form = super(AgentAdmin, self).get_form(request, obj, **kwargs)
@@ -62,4 +68,20 @@ class ToolAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         self.exclude = ("id",)
         form = super(ToolAdmin, self).get_form(request, obj, **kwargs)
+        return form
+
+
+@admin.register(Baton)
+class BatonAdmin(admin.ModelAdmin):
+    def get_form(self, request, obj=None, **kwargs):
+        self.exclude = ("id",)
+        form = super(BatonAdmin, self).get_form(request, obj, **kwargs)
+        return form
+
+
+@admin.register(Endpoint)
+class EndpointAdmin(admin.ModelAdmin):
+    def get_form(self, request, obj=None, **kwargs):
+        self.exclude = ("id",)
+        form = super(EndpointAdmin, self).get_form(request, obj, **kwargs)
         return form

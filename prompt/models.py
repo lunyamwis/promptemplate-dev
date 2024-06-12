@@ -103,7 +103,7 @@ class Agent(BaseModel):
     prompt = models.ManyToManyField(Prompt,blank=True)
     tools = models.ManyToManyField(Tool,blank=True)
     workflow = models.CharField(max_length=255)
-
+    
     def __str__(self):
         return self.name
 
@@ -121,14 +121,38 @@ class Task(BaseModel):
     def __str__(self):
         return self.name
 
-class Crew(BaseModel):
+class Endpoint(BaseModel):
+    METHODS = (
+        ('GET','GET'),
+        ('POST','POST'),
+        ('PUT','PUT')
+    )
+    url = models.URLField()
+    method = models.CharField(max_length=255,choices=METHODS, default='GET')
+    params = models.TextField(null=True, blank=True)
+    headers = models.JSONField(null=True, blank=True)
+    data = models.TextField(null=True, blank=True)
+    
+    def __str__(self):
+        return self.url
+
+class Baton(BaseModel):
+    start_key = models.CharField(max_length=255)
+    end_key = models.CharField(max_length=255)
+    endpoints = models.ManyToManyField(Endpoint)
+
+    def __str__(self):
+        return self.key
+
+class Department(BaseModel):
+    name = models.CharField(max_length=255)
     tasks = models.ManyToManyField(Task,blank=True)
     agents = models.ManyToManyField(Agent,blank=True)
     memory = models.BooleanField(default=True)
     prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
-
-
-
+    next_department = models.JSONField(null=True,blank=True)
+    baton = models.ForeignKey(Baton, on_delete=models.CASCADE, null=True, blank=True)
+    
 class Query(BaseModel):
     name = models.CharField(max_length=255)
     query = models.TextField()

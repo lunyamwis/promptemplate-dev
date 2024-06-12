@@ -36,7 +36,9 @@ ALLOWED_HOSTS = [
     "6c71-35-195-79-196.ngrok-free.app",
     "prompt",
     "8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu111.gitpod.io",
-    "8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu114.gitpod.io"
+    "8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu114.gitpod.io",
+    "e098-34-78-218-130.ngrok-free.app",
+    "e39e-104-155-20-129.ngrok-free.app"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -53,6 +55,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu111.gitpod.io/",
     "https://8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu114.gitpod.io",
     "https://6c71-35-195-79-196.ngrok-free.app/",
+    "https://e098-34-78-218-130.ngrok-free.app",
+    "https://e39e-104-155-20-129.ngrok-free.app"
 ]
 
 CORS_ALLOWED_ORIGINS = [
