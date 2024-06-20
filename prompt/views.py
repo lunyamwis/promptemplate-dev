@@ -21,6 +21,7 @@ from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunct
 from dotenv import load_dotenv, find_dotenv
 from langchain.tools import tool
 import requests
+import re
 from pydantic import BaseModel, Field
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
@@ -41,7 +42,7 @@ from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
 from crewai import Agent, Task, Crew
 from .models import Agent as AgentModel,Task as TaskModel,Tool, Department
 import os
-from typing import List
+from typing import List,Optional
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
 os.environ["OPENAI_MODEL_NAME"] = 'gpt-3.5-turbo'
@@ -274,6 +275,110 @@ class SentimentAnalysisTool(BaseTool):
         # Your custom code tool goes here
         return "positive"
     
+
+class ScrappingTheCutTool(BaseTool):
+    name: str = "scrapping_thecut_tool"
+    description: str = """Allows one to be able to scrap from the cut effectively either,
+                        per single or multiple records"""
+    # number_of_leads: Optional[str] = None
+    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/scrapTheCut/"
+
+
+    def _run(self,number_of_leads):
+        # import pdb;pdb.set_trace()
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "chain":True,
+            "round":134,
+            "index":0,
+            "record":None,
+            "refresh":False,
+            "number_of_leads":number_of_leads
+        }
+        # import pdb;pdb.set_trace()
+        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+        return response.json()
+
+class InstagramSearchingUserTool(BaseTool):
+    name: str = "search_instagram_tool"
+    description: str = """Allows one to be able to scrap from instagram effectively either,
+                        per single or multiple records"""
+    # number_of_leads: Optional[str] = None
+    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/scrapUsers/"
+
+    def _run(self,**kwargs):
+        # import pdb;pdb.set_trace()
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "chain":True,
+            "round":134,
+            "index":0,
+            "query":None
+        }
+        # import pdb;pdb.set_trace()
+        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+        return response.json()
+
+class InstagramScrapingProfileTool(BaseTool):
+    name: str = "scrapping_instagram_profile_tool"
+    description: str = """Allows one to be able to scrap from instagram effectively either,
+                        per single or multiple records"""
+    # number_of_leads: Optional[str] = None
+    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/scrapInfo/"
+
+    def _run(self,**kwargs):
+        # import pdb;pdb.set_trace()
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "chain":True,
+            "round":134,
+            "index":0,
+            "delay_before_requests":18,
+            "delay_after_requests":4,
+            "step":3,
+            "accounts":18,
+        }
+        # import pdb;pdb.set_trace()
+        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+        return response.json()
+
+class LeadScreeningTool(BaseTool):
+    name: str = "fetch_leads"
+    description: str = """Allows one to be able to fetch sorted leads that meet certain
+                        criterion"""
+    # number_of_leads: Optional[str] = None
+    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/getAccounts/"
+
+    def _run(self,**kwargs):
+        # import pdb;pdb.set_trace()
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "chain":True,
+            "round":134
+        }
+        # import pdb;pdb.set_trace()
+        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+        return response.json()
+
+class FetchLeadTool(BaseTool):
+    name: str = "fetch_lead"
+    description: str = """Allows one to be able to fetch a lead that meet certain
+                        criterion"""
+    # number_of_leads: Optional[str] = None
+    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/getAccount/"
+
+    def _run(self,**kwargs):
+        # import pdb;pdb.set_trace()
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "chain":True,
+            "round":134
+        }
+        # import pdb;pdb.set_trace()
+        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+        return response.json()
+
+
 class WorkflowTool(BaseTool):
     name: str = "workflow_tool"
     description: str = ("Allows the composition of workflows "
@@ -296,46 +401,38 @@ class WorkflowTool(BaseTool):
 
         return response.status_code
 
-    def _arun(self, workflow_data: dict, **kwargs) -> str:
-        """
-        Sends an asynchronous POST request to the specified endpoint with the provided workflow data and API key.
-        """
-        print('==========here is async workflow data==========')
-        print(workflow_data)
-        print('==========here is async workflow data==========')
-        headers = {"Content-Type": "application/json"}
-        
-        response = requests.post(self.endpoint, data=json.dumps(workflow_data), headers=headers)
-        print('we are here asynchronously------------',response)
-        if response.status_code not in [200,201]:
-            raise ValueError(f"Failed to send workflow data: {response.text}")
-        return response.text
+    
     
 
 TOOLS = {
-
     "directory_read_tool": DirectoryReadTool(directory='prompt/instructions'),
     "file_read_tool": FileReadTool(),
-    "search_tool" : SerperDevTool(),
+    "search_internet_tool" : SerperDevTool(),
     "sentiment_analysis_tool" : SentimentAnalysisTool(),
-    "workflow_tool" : WorkflowTool()
+    "workflow_tool" : WorkflowTool(),
+    "scrapping_thecut_tool" : ScrappingTheCutTool(),
+    "fetch_lead_tool":FetchLeadTool(),
+    "lead_screening_tool":LeadScreeningTool(),
+    "search_instagram_tool":InstagramSearchingUserTool(),
+    "instagram_profile_tool":InstagramScrapingProfileTool()
 }
 
 class agentSetup(APIView):
     def post(self,request):
         # workflow_data = request.data.get("workflow_data")
         workflow = None
-        department = Department.objects.filter(name = request.data.get("workflow")).last()
+        department = Department.objects.filter(name = request.data.get("department")).last()
 
         info = request.data.get(department.baton.start_key)
-        
+        agents = []
+        tasks = []
         
         for agent in department.agents.all():
             print(agent)
             # import pdb;pdb.set_trace()
             if agent.tools.filter().exists():
                 agents.append(Agent(
-                    role=agent.role.description,
+                    role=agent.role.description if agent.role else department.name,
                     goal=agent.goal,
                     backstory=agent.prompt.last().text_data,
                     tools = [TOOLS.get(tool.name) for tool in agent.tools.all()],
@@ -344,7 +441,7 @@ class agentSetup(APIView):
                 ))
             else:
                 agents.append(Agent(
-                    role=agent.role.description,
+                    role=agent.role.description if agent.role else department.name,
                     goal=agent.goal,
                     backstory=agent.prompt.last().text_data,
                     allow_delegation=False,
@@ -353,7 +450,7 @@ class agentSetup(APIView):
             
         tasks = []
         
-        for task in department.tasks.all():
+        for task in department.tasks.all().order_by('index'):
             print(task)
             agent_ = None
             for agent in agents:
@@ -382,7 +479,8 @@ class agentSetup(APIView):
             tasks=tasks,
             
             verbose=2,
-            memory=True
+            memory=True,
+            # output_log_file='scrappinglogs.txt'
         )
         
         # if workflow_data:
@@ -390,24 +488,35 @@ class agentSetup(APIView):
             # response = workflow_tool._run(workflow_data)
             # inputs.update({"workflow_data":workflow_data})
         # import pdb;pdb.set_trace()
+        
+        result = crew.kickoff(inputs=info)
 
-        result = crew.kickoff(inputs={department.baton.start_key:info})
-        results = eval(result)
-        if department.baton.end_key in results.keys():
-            # import pdb;pdb.set_trace()
-            # update qualified info and new properties
-            endpoints = department.baton.endpoints.all()
+        # import pdb;pdb.set_trace()
+        if isinstance(result, dict):
+            # results = eval(result)
+            if department.baton.end_key in result.keys():
+                # import pdb;pdb.set_trace()
+                # update qualified info and new properties
+                endpoints = department.baton.endpoints.all()
 
-            remainder = None
-            for endpoint in endpoints:
-                requests.Request(method=endpoint.method,url=endpoint.url,data=eval(endpoint.data),params=eval(endpoint.params))
-            # resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/users/update-info",data={"outsourced_info":results})
+                remainder = None
+                for endpoint in endpoints:
+                    requests.Request(method=endpoint.method,url=endpoint.url,data=eval(endpoint.data),params=eval(endpoint.params))
+                # resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/users/update-info",data={"outsourced_info":result})
 
-            
-            # kickstart new workflow
+                
+                # kickstart new workflow
+                workflow_data = department.next_department
+                resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/workflows/",data=workflow_data)
+            return Response({"result":result})
+        else:
             workflow_data = department.next_department
-            resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/workflows/",data=workflow_data)
-        return Response({"result":result})
+            # import pdb;pdb.set_trace()
+            headers = {"Content-Type": "application/json"}
+            resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/workflows/",data=json.dumps(workflow_data),headers=headers)
+            if resp.status_code in [200,201]:
+                print(resp.json())
+            return Response({"result":result})
 
 class getPrompt(APIView):
 

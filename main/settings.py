@@ -38,7 +38,18 @@ ALLOWED_HOSTS = [
     "8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu111.gitpod.io",
     "8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu114.gitpod.io",
     "e098-34-78-218-130.ngrok-free.app",
-    "e39e-104-155-20-129.ngrok-free.app"
+    "e39e-104-155-20-129.ngrok-free.app",
+    "0610-34-38-36-1.ngrok-free.app",
+    "77a3-34-38-36-1.ngrok-free.app",
+    "c15f-34-38-194-170.ngrok-free.app",
+    "2f6d-35-195-206-126.ngrok-free.app",
+    "6f38-35-187-11-61.ngrok-free.app",
+    "a306-34-79-189-161.ngrok-free.app",
+    "e210-34-38-191-203.ngrok-free.app",
+    "5249-34-38-191-203.ngrok-free.app",
+    "7779-34-140-43-49.ngrok-free.app",
+    "d7c9-34-79-50-211.ngrok-free.app",
+    "42b8-104-199-87-142.ngrok-free.app"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -56,7 +67,19 @@ CSRF_TRUSTED_ORIGINS = [
     "https://8000-lunyamwidev-promptempla-4xgxd6dimeq.ws-eu114.gitpod.io",
     "https://6c71-35-195-79-196.ngrok-free.app/",
     "https://e098-34-78-218-130.ngrok-free.app",
-    "https://e39e-104-155-20-129.ngrok-free.app"
+    "https://e39e-104-155-20-129.ngrok-free.app",
+    "https://0610-34-38-36-1.ngrok-free.app",
+    "https://77a3-34-38-36-1.ngrok-free.app",
+    "https://c15f-34-38-194-170.ngrok-free.app",
+    "https://2f6d-35-195-206-126.ngrok-free.app",
+    "https://6f38-35-187-11-61.ngrok-free.app",
+    "https://a306-34-79-189-161.ngrok-free.app",
+    "https://a306-34-79-189-161.ngrok-free.app",
+    "https://e210-34-38-191-203.ngrok-free.app",
+    "https://5249-34-38-191-203.ngrok-free.app",
+    "https://7779-34-140-43-49.ngrok-free.app",
+    "https://d7c9-34-79-50-211.ngrok-free.app",
+    "https://42b8-104-199-87-142.ngrok-free.app",
 ]
 
 CORS_ALLOWED_ORIGINS = [

@@ -24,68 +24,68 @@ class ToneOfVoice(BaseModel):
         return self.name
 
 class Prompt(BaseModel):
-    name = models.CharField(max_length=50)
-    data = models.JSONField(default=dict)
+    name = models.CharField(max_length=1024)
+    # data = models.JSONField(default=dict)
     text_data = models.TextField(default='')
-    tone_of_voice = models.ForeignKey(ToneOfVoice, on_delete=models.CASCADE,
-                                      null=True, blank=True)
+    # tone_of_voice = models.ForeignKey(ToneOfVoice, on_delete=models.CASCADE,
+    #                                   null=True, blank=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE,
                              null=True, blank=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,
-                                null=True, blank=True)
-    index = models.IntegerField(default=1)
+    # product = models.ForeignKey(Product, on_delete=models.CASCADE,
+    #                             null=True, blank=True)
+    # index = models.IntegerField(default=1)
 
     def __str__(self):
         return self.name
 
-    @property
-    def querying_info(self):
-        queries = Query.objects.filter(prompt=self)
-        querying_info = []
-        for query_ in queries:
-            company = get_object_or_404(Company, id=self.product.company.id)
-            connect_to_external_database(company)
-            with connections[company.name].cursor() as cursor:
-                cursor.execute(query_.query)
-                results = cursor.fetchall()
+    # @property
+    # def querying_info(self):
+    #     queries = Query.objects.filter(prompt=self)
+    #     querying_info = []
+    #     for query_ in queries:
+    #         company = get_object_or_404(Company, id=self.product.company.id)
+    #         connect_to_external_database(company)
+    #         with connections[company.name].cursor() as cursor:
+    #             cursor.execute(query_.query)
+    #             results = cursor.fetchall()
 
-            query_data = {
-                query_.name: results if results else query_.query
-            }
-            querying_info.append(query_data)
+    #         query_data = {
+    #             query_.name: results if results else query_.query
+    #         }
+    #         querying_info.append(query_data)
 
-        return querying_info
+    #     return querying_info
 
-    @property
-    def get_problems(self):
-        problems = Problem.objects.filter(product=self.product)
-        sheet = GsheetSetting.objects.filter(
-            company=self.product.company).last()
-        problem_values = []
-        if problems.exists():
-            for problem in problems:
-                problem_values.append({problem.name: execute_gsheet_formula(problem.gsheet_range,
-                                                                            problem.gsheet_formula,
-                                                                            spreadsheet_id=sheet.spreadsheet_id)})
+    # @property
+    # def get_problems(self):
+    #     problems = Problem.objects.filter(product=self.product)
+    #     sheet = GsheetSetting.objects.filter(
+    #         company=self.product.company).last()
+    #     problem_values = []
+    #     if problems.exists():
+    #         for problem in problems:
+    #             problem_values.append({problem.name: execute_gsheet_formula(problem.gsheet_range,
+    #                                                                         problem.gsheet_formula,
+    #                                                                         spreadsheet_id=sheet.spreadsheet_id)})
 
-        return problem_values
+    #     return problem_values
 
-    @property
-    def get_solutions(self):
-        problems = Problem.objects.filter(product=self.product)
-        sheet = GsheetSetting.objects.filter(
-            company=self.product.company).last()
+    # @property
+    # def get_solutions(self):
+    #     problems = Problem.objects.filter(product=self.product)
+    #     sheet = GsheetSetting.objects.filter(
+    #         company=self.product.company).last()
 
-        solution_values = []
-        for problem in problems:
+    #     solution_values = []
+    #     for problem in problems:
 
-            solutions = Solution.objects.filter(problem=problem)
-            if solutions.exists():
-                for solution in solutions:
-                    solution_values.append({solution.name: execute_gsheet_formula(solution.gsheet_range,
-                                                                                  solution.gsheet_formula,
-                                                                                  spreadsheet_id=sheet.spreadsheet_id)})
-        return solution_values
+    #         solutions = Solution.objects.filter(problem=problem)
+    #         if solutions.exists():
+    #             for solution in solutions:
+    #                 solution_values.append({solution.name: execute_gsheet_formula(solution.gsheet_range,
+    #                                                                               solution.gsheet_formula,
+    #                                                                               spreadsheet_id=sheet.spreadsheet_id)})
+    #     return solution_values
 
 class Tool(BaseModel):
     name = models.CharField(max_length=255)
@@ -96,7 +96,7 @@ class Tool(BaseModel):
         return self.name
 
 class Agent(BaseModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=1024)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, blank=True)
     goal = models.TextField(null=True, blank=True)
     # prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
@@ -110,13 +110,14 @@ class Agent(BaseModel):
 
 
 class Task(BaseModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=1024)
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True, blank=True)
     # prompt = models.ForeignKey(Prompt,on_delete=models.CASCADE, null=True, blank=True)
     prompt = models.ManyToManyField(Prompt, blank=True)
     tools = models.ManyToManyField(Tool, blank=True)
     expected_output = models.TextField()
     workflow = models.CharField(max_length=255)
+    index = models.IntegerField(null=True,blank=True)
 
     def __str__(self):
         return self.name
@@ -142,10 +143,10 @@ class Baton(BaseModel):
     endpoints = models.ManyToManyField(Endpoint)
 
     def __str__(self):
-        return self.key
+        return self.start_key+"======>"+self.end_key
 
 class Department(BaseModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=1024)
     tasks = models.ManyToManyField(Task,blank=True)
     agents = models.ManyToManyField(Agent,blank=True)
     memory = models.BooleanField(default=True)
@@ -153,6 +154,9 @@ class Department(BaseModel):
     next_department = models.JSONField(null=True,blank=True)
     baton = models.ForeignKey(Baton, on_delete=models.CASCADE, null=True, blank=True)
     
+
+    def __str__(self):
+        return self.name
 class Query(BaseModel):
     name = models.CharField(max_length=255)
     query = models.TextField()
