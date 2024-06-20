@@ -71,9 +71,20 @@ class ScrapTheCut(APIView):
         chain = request.data.get("chain")
         round_ = request.data.get("round")
         index = request.data.get("index")
+        record = request.data.get("record", None)
+        refresh = request.data.get("refresh", False)
+        number_of_leads = request.data.get("number_of_leads",0)
         try:
-            scrap_the_cut(round_number=round_)
-            users = ScrappedData.objects.filter(round_number=round_)
+            users = None
+            if refresh:
+                scrap_the_cut(round_number=round_)
+            if refresh and record:
+                scrap_the_cut(round_number=round_,record=record)
+            if not record:
+                users = ScrappedData.objects.filter(round_number=round_)[index:index+number_of_leads]
+            else:
+                users = ScrappedData.objects.filter(round_number=round_)
+
             if users.exists():
                 if chain:
                     for user in users:

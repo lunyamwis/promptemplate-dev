@@ -17,6 +17,7 @@ class ScrappedData(models.Model):
     sitemap_key = models.CharField(max_length=255,null=True, blank=True,unique=True)
     response = models.JSONField()
     round_number = models.IntegerField(null=True, blank=True)
+    
 
     def __str__(self) -> str:
         return self.name

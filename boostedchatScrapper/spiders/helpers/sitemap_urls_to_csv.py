@@ -35,3 +35,17 @@ if all_links:
     print('All links saved to all_links.csv')
 else:
     print('No links found in the XML files.')
+
+
+import pandas as pd
+
+df = pd.read_csv("all_links.csv")
+# First, we'll clean the links to remove the trailing newline character
+df['links'] = df['Link'].str.rstrip()
+
+# Then, we'll extract the locations
+df['location'] = df['links'].str.extract(r'https://www.mindbodyonline.com/explore/locations/(.*)')
+
+# Now, we'll filter the DataFrame to only include rows where 'location' is not NaN
+df = df.loc[df['location'].notna()]
+df.to_csv("all_links_cleaned.csv")
