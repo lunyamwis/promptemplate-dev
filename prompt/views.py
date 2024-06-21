@@ -40,6 +40,7 @@ from langchain.agents import AgentExecutor
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
 from crewai import Agent, Task, Crew
+from django.core.mail import send_mail
 from .models import Agent as AgentModel,Task as TaskModel,Tool, Department
 import os
 from typing import List,Optional
@@ -281,7 +282,7 @@ class ScrappingTheCutTool(BaseTool):
     description: str = """Allows one to be able to scrap from the cut effectively either,
                         per single or multiple records"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/scrapTheCut/"
+    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/scrapTheCut/"
 
 
     def _run(self,number_of_leads):
@@ -304,7 +305,7 @@ class InstagramSearchingUserTool(BaseTool):
     description: str = """Allows one to be able to scrap from instagram effectively either,
                         per single or multiple records"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/scrapUsers/"
+    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/scrapUsers/"
 
     def _run(self,**kwargs):
         # import pdb;pdb.set_trace()
@@ -324,7 +325,7 @@ class InstagramScrapingProfileTool(BaseTool):
     description: str = """Allows one to be able to scrap from instagram effectively either,
                         per single or multiple records"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/scrapInfo/"
+    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/scrapInfo/"
 
     def _run(self,**kwargs):
         # import pdb;pdb.set_trace()
@@ -347,7 +348,7 @@ class LeadScreeningTool(BaseTool):
     description: str = """Allows one to be able to fetch sorted leads that meet certain
                         criterion"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/getAccounts/"
+    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/getAccounts/"
 
     def _run(self,**kwargs):
         # import pdb;pdb.set_trace()
@@ -365,7 +366,7 @@ class FetchLeadTool(BaseTool):
     description: str = """Allows one to be able to fetch a lead that meet certain
                         criterion"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://0b1a-104-199-39-159.ngrok-free.app/instagram/getAccount/"
+    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/getAccount/"
 
     def _run(self,**kwargs):
         # import pdb;pdb.set_trace()
@@ -374,6 +375,45 @@ class FetchLeadTool(BaseTool):
             "chain":True,
             "round":134
         }
+        # import pdb;pdb.set_trace()
+        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+        return response.json()
+
+
+class SlackTool(BaseTool):
+    name: str = "slack_tool"
+    description: str = """This tool triggers slacks message"""
+
+    def _run(self, message, **kwargs):
+        # send the message to the following email -- chat-quality-aaaamvba2tskkthmspu2nrq5bu@boostedchat.slack.com
+        send_mail(subject="Scrapping Monitoring Agent Summary",message=message,from_email="lutherlunyamwi@gmail.com",recipient_list=["chat-quality-aaaamvba2tskkthmspu2nrq5bu@boostedchat.slack.com"])
+        return "sent message"
+
+class AssignSalesRepTool(BaseTool):
+    name: str = "assign_sales_rep_tool"
+    description: str = """This tool will assign a lead to a salesrepresentative"""
+
+    endpoint: str = "https://8000-lunyamwidev-boostedchat-4qp4oxj8hjx.ws-eu114.gitpod.io/v1/sales/rep/assign-salesrep"
+
+    def _run(self,**kwargs):
+        # import pdb;pdb.set_trace()
+        headers = {"Content-Type": "application/json"}
+        payload = {}
+        # import pdb;pdb.set_trace()
+        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+        return response.json()
+
+
+class AssignInfluencerTool(BaseTool):
+    name: str = "assign_influencer_tool"
+    description: str = """This tool will assign a lead to an influencer"""
+
+    endpoint: str = "https://8000-lunyamwidev-boostedchat-4qp4oxj8hjx.ws-eu114.gitpod.io/v1/sales/rep/assign-influencer"
+
+    def _run(self,**kwargs):
+        # import pdb;pdb.set_trace()
+        headers = {"Content-Type": "application/json"}
+        payload = {}
         # import pdb;pdb.set_trace()
         response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
         return response.json()
@@ -414,7 +454,11 @@ TOOLS = {
     "fetch_lead_tool":FetchLeadTool(),
     "lead_screening_tool":LeadScreeningTool(),
     "search_instagram_tool":InstagramSearchingUserTool(),
-    "instagram_profile_tool":InstagramScrapingProfileTool()
+    "instagram_profile_tool":InstagramScrapingProfileTool(),
+    "slack_tool":SlackTool(),
+    "assign_salesrep_tool":AssignSalesRepTool(),
+    "assign_influencer_tool":AssignInfluencerTool()
+
 }
 
 class agentSetup(APIView):
