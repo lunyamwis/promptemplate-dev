@@ -16,10 +16,12 @@ from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
 from boostedchatScrapper.spiders.helpers.thecut_helper import scrap_the_cut
 from django.db.models import Q
+
 from .models import InstagramUser
 
 from rest_framework import viewsets
 from boostedchatScrapper.models import ScrappedData
+
 from .models import Score, QualificationAlgorithm, Scheduler, LeadSource,DagModel,SimpleHttpOperatorModel,WorkflowModel
 from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer, SimpleHttpOperatorModelSerializer, WorkflowModelSerializer
 
