@@ -418,6 +418,45 @@ class AssignInfluencerTool(BaseTool):
         response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
         return response.json()
 
+class FetchDirectPendingInboxTool(BaseTool):
+    name: str = "fetch_direct_inbox_tool"
+    description: str = ("Allows fetching of inbox pending requests in instagram")
+    endpoint: str = "http://localhost:3000"
+
+    def run(self, **kwargs):
+
+        # Set the username for which to fetch the pending inbox
+        username = 'blendscrafters'
+        
+        # Send a POST request to the fetchPendingInbox endpoint
+        response = requests.post(f'{self.endpoint}/fetchPendingInbox', json={'username_from': username})
+        
+        # Check the status code of the response
+        if response.status_code == 200:
+            # Print the response JSON
+            print("all is well")
+            print(json.dumps(response.json(), indent=2))
+        else:
+            print(f'Request failed with status code {response.status_code}')
+        return response.json()
+
+class ApproveRequestTool(BaseTool):  
+    name: str = "approve_request_tol"
+    description: str = ("Allows approval of requests from pending requests in instagram")
+    endpoint: str = "http://localhost:3000"
+
+    def run(self, **kwargs):
+        # Send a POST request to the approve endpoint
+        username = 'blendscrafters'
+        thread_id = '340282366841710301244259591739503476453'
+        response = requests.post(f'{self.endpoint}/approve', json={'username_from': username,'thread_id':thread_id})
+        
+        # Check the status code of the response
+        if response.status_code == 200:
+            print('Request approved')
+        else:
+            print(f'Request failed with status code {response.status_code}')
+        return response.json()
 
 class WorkflowTool(BaseTool):
     name: str = "workflow_tool"
@@ -457,7 +496,9 @@ TOOLS = {
     "instagram_profile_tool":InstagramScrapingProfileTool(),
     "slack_tool":SlackTool(),
     "assign_salesrep_tool":AssignSalesRepTool(),
-    "assign_influencer_tool":AssignInfluencerTool()
+    "assign_influencer_tool":AssignInfluencerTool(),
+    "fetch_pending_inbox_tool":FetchDirectPendingInboxTool(),
+    "approve_requests_tool":ApproveRequestTool(),
 
 }
 
@@ -506,7 +547,8 @@ class agentSetup(APIView):
                         description=task.prompt.last().text_data if task.prompt.exists() else "perform agents task",
                         expected_output=task.expected_output,
                         tools=[TOOLS.get(tool.name) for tool in task.tools.all()],
-                        agent=agent_,
+ 
+                       agent=agent_,
                     ))
                 else:
                     tasks.append(Task(
@@ -561,6 +603,11 @@ class agentSetup(APIView):
             if resp.status_code in [200,201]:
                 print(resp.json())
             return Response({"result":result})
+
+# class agentSetup(APIView):
+#     def get(self, request):
+#         pass
+
 
 class getPrompt(APIView):
 
