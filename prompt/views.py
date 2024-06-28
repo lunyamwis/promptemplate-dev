@@ -421,7 +421,7 @@ class AssignInfluencerTool(BaseTool):
 class FetchDirectPendingInboxTool(BaseTool):
     name: str = "fetch_direct_inbox_tool"
     description: str = ("Allows fetching of inbox pending requests in instagram")
-    endpoint: str = "http://localhost:3000"
+    endpoint: str = "https://fd8d-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app"
 
     def _run(self, **kwargs):
 
@@ -443,7 +443,7 @@ class FetchDirectPendingInboxTool(BaseTool):
 class ApproveRequestTool(BaseTool):  
     name: str = "approve_request_tol"
     description: str = ("Allows approval of requests from pending requests in instagram")
-    endpoint: str = "http://localhost:3000"
+    endpoint: str = "https://fd8d-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app"
 
     def _run(self, **kwargs):
         # Send a POST request to the approve endpoint
