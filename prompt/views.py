@@ -393,12 +393,12 @@ class AssignSalesRepTool(BaseTool):
     name: str = "assign_sales_rep_tool"
     description: str = """This tool will assign a lead to a salesrepresentative"""
 
-    endpoint: str = "https://8000-lunyamwidev-boostedchat-4qp4oxj8hjx.ws-eu114.gitpod.io/v1/sales/rep/assign-salesrep"
+    endpoint: str = "https://03bc-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app/v1/sales/rep/assign-salesrep"
 
-    def _run(self,**kwargs):
+    def _run(self,username, **kwargs):
         # import pdb;pdb.set_trace()
         headers = {"Content-Type": "application/json"}
-        payload = {}
+        payload = {"username":username}
         # import pdb;pdb.set_trace()
         response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
         return response.json()
@@ -408,12 +408,12 @@ class AssignInfluencerTool(BaseTool):
     name: str = "assign_influencer_tool"
     description: str = """This tool will assign a lead to an influencer"""
 
-    endpoint: str = "https://8000-lunyamwidev-boostedchat-4qp4oxj8hjx.ws-eu114.gitpod.io/v1/sales/rep/assign-influencer"
+    endpoint: str = "https://03bc-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app/v1/sales/rep/assign-influencer"
 
-    def _run(self,**kwargs):
+    def _run(self,username,**kwargs):
         # import pdb;pdb.set_trace()
         headers = {"Content-Type": "application/json"}
-        payload = {}
+        payload = {"username":username}
         # import pdb;pdb.set_trace()
         response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
         return response.json()
