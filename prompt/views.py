@@ -423,7 +423,7 @@ class FetchDirectPendingInboxTool(BaseTool):
     description: str = ("Allows fetching of inbox pending requests in instagram")
     endpoint: str = "http://localhost:3000"
 
-    def run(self, **kwargs):
+    def _run(self, **kwargs):
 
         # Set the username for which to fetch the pending inbox
         username = 'blendscrafters'
@@ -445,7 +445,7 @@ class ApproveRequestTool(BaseTool):
     description: str = ("Allows approval of requests from pending requests in instagram")
     endpoint: str = "http://localhost:3000"
 
-    def run(self, **kwargs):
+    def _run(self, **kwargs):
         # Send a POST request to the approve endpoint
         username = 'blendscrafters'
         thread_id = '340282366841710301244259591739503476453'
