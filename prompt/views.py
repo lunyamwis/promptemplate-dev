@@ -419,9 +419,46 @@ class AssignInfluencerTool(BaseTool):
         return response.json()
 
 class FetchDirectPendingInboxTool(BaseTool):
-    name: str = "fetch_direct_inbox_tool"
+    name: str = "fetch_pending_inbox_tool"
     description: str = ("Allows fetching of inbox pending requests in instagram")
     endpoint: str = "https://fd8d-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app"
+
+    def extract_inbox_data(self, data):
+        inbox = data.get('inbox', {})
+        threads = inbox.get('threads', [])
+
+        result = []
+
+        for thread in threads:
+            users = thread.get('users', [])
+            for user in users:
+                username = user.get('username')
+                thread_id = thread.get('thread_id')
+                items = thread.get('items', [])
+
+                for item in items:
+                    item_id = item.get('item_id')
+                    user_id = item.get('user_id')
+                    item_type = item.get('item_type')
+                    timestamp = item.get('timestamp')
+                    message = item.get('text')
+
+                    data_dict = {
+                        'username': username,
+                        'thread_id': thread_id,
+                        'item_id': item_id,
+                        'user_id': user_id,
+                        'item_type': item_type,
+                        'timestamp': timestamp
+                    }
+
+                    if item_type == 'text':
+                        data_dict['message'] = message
+
+                    result.append(data_dict)
+
+        return result
+
 
     def _run(self, **kwargs):
 
@@ -436,6 +473,10 @@ class FetchDirectPendingInboxTool(BaseTool):
             # Print the response JSON
             print("all is well")
             print(json.dumps(response.json(), indent=2))
+            inbox_data = response.json()
+            inbox_dataset = self.extract_inbox_data(inbox_data)
+            print(inbox_dataset)
+            
         else:
             print(f'Request failed with status code {response.status_code}')
         return response.json()
