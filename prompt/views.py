@@ -393,7 +393,7 @@ class AssignSalesRepTool(BaseTool):
     name: str = "assign_sales_rep_tool"
     description: str = """This tool will assign a lead to a salesrepresentative"""
 
-    endpoint: str = "https://03bc-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app/v1/sales/rep/assign-salesrep"
+    endpoint: str = "https://9ccf-2c0f-2a80-10e3-6910-17d0-37c3-e0d3-185a.ngrok-free.app/v1/sales/rep/assign-salesrep"
 
     def _run(self,username, **kwargs):
         # import pdb;pdb.set_trace()
@@ -408,7 +408,7 @@ class AssignInfluencerTool(BaseTool):
     name: str = "assign_influencer_tool"
     description: str = """This tool will assign a lead to an influencer"""
 
-    endpoint: str = "https://03bc-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app/v1/sales/rep/assign-influencer"
+    endpoint: str = "https://9ccf-2c0f-2a80-10e3-6910-17d0-37c3-e0d3-185a.ngrok-free.app/v1/sales/rep/assign-influencer"
 
     def _run(self,username,**kwargs):
         # import pdb;pdb.set_trace()
