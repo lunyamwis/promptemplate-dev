@@ -553,7 +553,13 @@ class agentSetup(APIView):
         agents = []
         tasks = []
         
-        for agent in department.agents.all():
+        department_agents = None
+        if department.agents.filter(name = info['relevant_information']['assigned_engagement_agent']).exists():
+            department_agents = department.agents.filter(name = info['relevant_information']['assigned_engagement_agent'])
+        else:
+            department_agents = department.agents.all()
+            
+        for agent in department_agents:
             print(agent)
             # import pdb;pdb.set_trace()
             if agent.tools.filter().exists():
