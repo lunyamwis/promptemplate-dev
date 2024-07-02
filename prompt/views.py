@@ -46,7 +46,7 @@ import os
 from typing import List,Optional
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
-os.environ["OPENAI_MODEL_NAME"] = 'gpt-3.5-turbo'
+os.environ["OPENAI_MODEL_NAME"] = 'gpt-4-1106-preview'
 os.environ["SERPER_API_KEY"] = os.getenv('SERPER_API_KEY')
 
 
@@ -582,7 +582,7 @@ class agentSetup(APIView):
             
         tasks = []
         
-        for task in department.tasks.all().order_by('index'):
+        for task in department.tasks.filter(agent__name = info['relevant_information']['assigned_engagement_agent']).order_by('index'):
             print(task)
             agent_ = None
             for agent in agents:

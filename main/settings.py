@@ -51,7 +51,11 @@ ALLOWED_HOSTS = [
     "d7c9-34-79-50-211.ngrok-free.app",
     "42b8-104-199-87-142.ngrok-free.app",
     "62cf-2c0f-2a80-10e1-4210-ef30-78b8-6588-64e2.ngrok-free.app",
-    "1624-195-26-252-153.ngrok-free.app"
+    "1624-195-26-252-153.ngrok-free.app",
+    "f929-195-26-252-153.ngrok-free.app",
+    "0060-195-26-252-153.ngrok-free.app",
+    "f604-195-26-252-153.ngrok-free.app",
+    "89b9-195-26-252-153.ngrok-free.app"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -83,7 +87,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://d7c9-34-79-50-211.ngrok-free.app",
     "https://42b8-104-199-87-142.ngrok-free.app",
     "https://62cf-2c0f-2a80-10e1-4210-ef30-78b8-6588-64e2.ngrok-free.app",
-    "https://1624-195-26-252-153.ngrok-free.app"
+    "https://1624-195-26-252-153.ngrok-free.app",
+    "https://f929-195-26-252-153.ngrok-free.app",
+    "https://0060-195-26-252-153.ngrok-free.app",
+    "https://f604-195-26-252-153.ngrok-free.app",
+    "https://89b9-195-26-252-153.ngrok-free.app"
 ]
 
 CORS_ALLOWED_ORIGINS = [
