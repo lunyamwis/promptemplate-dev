@@ -88,8 +88,15 @@ class InstagramUser(BaseModel):
     outsourced_id_pointer = models.BooleanField(default=False)
     qualified_keywords = models.TextField(null=True, blank=True)
     qualified = models.BooleanField(default=False)
+    influencer_source_key = models.CharField(max_length=255,null=True,blank=True)
+    thread_id = models.CharField(max_length=255,null=True,blank=True)
+    item_id = models.CharField(max_length=255,null=True,blank=True)
+    user_id = models.CharField(max_length=255,null=True,blank=True)
+    item_type = models.CharField(max_length=255,null=True,blank=True)
+    timestamp = models.CharField(max_length=255,null=True,blank=True)
     cursor = models.TextField(null=True,blank=True)
     attached_salesrep = models.CharField(max_length=255,null=True,blank=True)
+    
 
     def __str__(self) -> str:
 

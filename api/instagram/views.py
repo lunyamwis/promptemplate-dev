@@ -8,13 +8,15 @@ import subprocess
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from .tasks import scrap_followers,scrap_info,scrap_users,insert_and_enrich,scrap_mbo
 from api.helpers.dag_generator import generate_dag
 from api.helpers.date_helper import datetime_to_cron_expression
-from boostedchatScrapper.spiders.helpers.thecut_helper import scrap_the_cut
+from boostedchatScrapper.spiders.helpers.thecut_scrapper import scrap_the_cut
+from boostedchatScrapper.spiders.helpers.instagram_helper import fetch_pending_inbox,approve_inbox_requests,send_direct_answer
 from django.db.models import Q
 
 from .models import InstagramUser
@@ -22,8 +24,19 @@ from .models import InstagramUser
 from rest_framework import viewsets
 from boostedchatScrapper.models import ScrappedData
 
-from .models import Score, QualificationAlgorithm, Scheduler, LeadSource,DagModel,SimpleHttpOperatorModel,WorkflowModel
-from .serializers import ScoreSerializer, QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer, SimpleHttpOperatorModelSerializer, WorkflowModelSerializer
+from .models import Score, QualificationAlgorithm, Scheduler, InstagramUser, LeadSource,DagModel,SimpleHttpOperatorModel,WorkflowModel
+from .serializers import ScoreSerializer, InstagramLeadSerializer,  QualificationAlgorithmSerializer, SchedulerSerializer, LeadSourceSerializer, SimpleHttpOperatorModelSerializer, WorkflowModelSerializer
+
+class PaginationClass(PageNumberPagination):
+    page_size = 20  # Set the number of items per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class InstagramLeadViewSet(viewsets.ModelViewSet):
+    queryset = InstagramUser.objects.all()
+    serializer_class = InstagramLeadSerializer
+    pagination_class = PaginationClass
 
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
@@ -335,3 +348,21 @@ class GetAccounts(APIView):
         else:
             return Response({"error":"There is an error fetching medias"}, status=400)
         
+
+
+class FetchPendingInbox(APIView):
+    def post(self, request):
+        inbox_dataset = fetch_pending_inbox(session_id=request.data.get("session_id"))
+        return Response({"data":inbox_dataset},status=status.HTTP_200_OK)
+    
+class ApproveRequest(APIView):
+    def post(self, request):
+        approved_datasets = approve_inbox_requests(session_id=request.data.get("session_id"))
+        return Response({"data":approved_datasets},status=status.HTTP_200_OK)
+
+class SendDirectAnswer(APIView):
+    def post(self, request):
+        send_direct_answer(session_id=request.data.get("session_id"),
+                           thread_id=request.data.get("thread_id"),
+                           message=request.data.get("message"))
+        return Response({"success":True},status=status.HTTP_200_OK)
