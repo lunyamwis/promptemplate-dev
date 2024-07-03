@@ -445,16 +445,40 @@ class FetchDirectPendingInboxTool(BaseTool):
 
                     data_dict = {
                         'username': username,
-                        'thread_id': thread_id,
                         'item_id': item_id,
                         'user_id': user_id,
                         'item_type': item_type,
                         'timestamp': timestamp
                     }
 
+                    # save the lead information to the lead database
+                    response = requests.post("http://127.0.0.1:8000/instagram/instagramLead/",data=data)
+                    if response.status_code in [200,201]:
+                        print("right track")
                     if item_type == 'text':
-                        data_dict['message'] = message
 
+                        # save the message 
+                        # create an account for it
+                        account_dict = {
+                            "igname": username
+                        }
+                        response = requests.post("http://127.0.0.1:8000/v1/instagram/account/",data=account_dict)
+                        # create a thread and store the message
+                        data_dict['thread_id'] = thread_id
+                        data_dict['message'] = message
+                        thread_dict = {
+                            "thread_id": thread_id,
+                        }
+                        response = requests.post("http://127.0.0.1:8000/v1/instagram/dm/",data=thread_dict)
+
+                        thread_pk = response.json()['id']
+                        message_dict = {
+                            "content": message,
+                            "sent_by": "Client",
+                            "thread": thread_pk,
+                            "sent_on": datetime.now()
+                        }
+                        response = requests.post("http://127.0.0.1:8000/v1/instagram/message/",data=message_dict)
                     result.append(data_dict)
 
         return result
