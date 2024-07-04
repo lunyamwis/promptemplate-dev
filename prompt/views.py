@@ -4,6 +4,7 @@ from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
 from django.shortcuts import redirect, get_object_or_404
 from product.models import Product, Company
 from prompt.serializers import CreatePromptSerializer, CreateRoleSerializer, PromptSerializer, RoleSerializer
@@ -35,12 +36,19 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import DocArrayInMemorySearch
 from langchain.schema.runnable import RunnableMap
 from langchain.memory import ConversationBufferMemory
+from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.agents.format_scratchpad import format_to_openai_functions
 from langchain.agents import AgentExecutor
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
+from langchain_community.agent_toolkits import create_sql_agent
+from langchain_openai import ChatOpenAI
+from .constants import MSSQL_AGENT_FORMAT_INSTRUCTIONS,MSSQL_AGENT_PREFIX,QUESTION_SUFFIX
+
+
 from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
 from crewai import Agent, Task, Crew
 from django.core.mail import send_mail
+
 from .models import Agent as AgentModel,Task as TaskModel,Tool, Department
 import os
 from typing import List,Optional
@@ -48,7 +56,7 @@ from typing import List,Optional
 openai_api_key = os.getenv('OPENAI_API_KEY')
 os.environ["OPENAI_MODEL_NAME"] = 'gpt-4-1106-preview'
 os.environ["SERPER_API_KEY"] = os.getenv('SERPER_API_KEY')
-
+db_url = f"postgresql://{os.getenv('POSTGRES_USERNAME')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DBNAME')}"
 
 def index(request):
     prompts = Prompt.objects.all()
@@ -282,7 +290,7 @@ class ScrappingTheCutTool(BaseTool):
     description: str = """Allows one to be able to scrap from the cut effectively either,
                         per single or multiple records"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/scrapTheCut/"
+    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/scrapTheCut/"
 
 
     def _run(self,number_of_leads):
@@ -305,7 +313,7 @@ class InstagramSearchingUserTool(BaseTool):
     description: str = """Allows one to be able to scrap from instagram effectively either,
                         per single or multiple records"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/scrapUsers/"
+    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/scrapUsers/"
 
     def _run(self,**kwargs):
         # import pdb;pdb.set_trace()
@@ -325,7 +333,7 @@ class InstagramScrapingProfileTool(BaseTool):
     description: str = """Allows one to be able to scrap from instagram effectively either,
                         per single or multiple records"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/scrapInfo/"
+    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/scrapInfo/"
 
     def _run(self,**kwargs):
         # import pdb;pdb.set_trace()
@@ -347,26 +355,27 @@ class LeadScreeningTool(BaseTool):
     name: str = "fetch_leads"
     description: str = """Allows one to be able to fetch sorted leads that meet certain
                         criterion"""
-    # number_of_leads: Optional[str] = None
-    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/getAccounts/"
+    
+    def _run(self,question,**kwargs):
+        # import pdb;pdb.set_trace()
+        db = SQLDatabase.from_uri(db_url)
 
-    def _run(self,**kwargs):
-        # import pdb;pdb.set_trace()
-        headers = {"Content-Type": "application/json"}
-        payload = {
-            "chain":True,
-            "round":134
-        }
-        # import pdb;pdb.set_trace()
-        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
-        return response.json()
+        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+
+        agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", 
+                                        verbose=True,prefix=MSSQL_AGENT_PREFIX, 
+                                        format_instructions=MSSQL_AGENT_FORMAT_INSTRUCTIONS)
+
+        result = agent_executor.invoke(question)
+        return Response({"message":result.get("output","")},status=status.HTTP_200_OK)
+        
 
 class FetchLeadTool(BaseTool):
     name: str = "fetch_lead"
     description: str = """Allows one to be able to fetch a lead that meet certain
                         criterion"""
     # number_of_leads: Optional[str] = None
-    endpoint: str = "https://e405-35-189-218-230.ngrok-free.app/instagram/getAccount/"
+    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/getAccount/"
 
     def _run(self,**kwargs):
         # import pdb;pdb.set_trace()
@@ -386,14 +395,23 @@ class SlackTool(BaseTool):
 
     def _run(self, message, **kwargs):
         # send the message to the following email -- chat-quality-aaaamvba2tskkthmspu2nrq5bu@boostedchat.slack.com
-        send_mail(subject="Scrapping Monitoring Agent Summary",message=message,from_email="lutherlunyamwi@gmail.com",recipient_list=["chat-quality-aaaamvba2tskkthmspu2nrq5bu@boostedchat.slack.com"])
-        return "sent message"
+        db = SQLDatabase.from_uri(db_url)
+
+        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+
+        agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", 
+                                        verbose=True,prefix=MSSQL_AGENT_PREFIX, 
+                                        format_instructions=MSSQL_AGENT_FORMAT_INSTRUCTIONS)
+
+        result = agent_executor.invoke(message)
+        send_mail(subject="Scrapping Monitoring Agent Summary",message=result.get("output",""),from_email="lutherlunyamwi@gmail.com",recipient_list=["chat-quality-aaaamvba2tskkthmspu2nrq5bu@boostedchat.slack.com"])
+        return Response({"message":result.get("output","")},status=status.HTTP_200_OK)
 
 class AssignSalesRepTool(BaseTool):
     name: str = "assign_sales_rep_tool"
     description: str = """This tool will assign a lead to a salesrepresentative"""
 
-    endpoint: str = "https://9ccf-2c0f-2a80-10e3-6910-17d0-37c3-e0d3-185a.ngrok-free.app/v1/sales/rep/assign-salesrep"
+    endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/rep/assign-salesrep"
 
     def _run(self,username, **kwargs):
         # import pdb;pdb.set_trace()
@@ -408,7 +426,7 @@ class AssignInfluencerTool(BaseTool):
     name: str = "assign_influencer_tool"
     description: str = """This tool will assign a lead to an influencer"""
 
-    endpoint: str = "https://9ccf-2c0f-2a80-10e3-6910-17d0-37c3-e0d3-185a.ngrok-free.app/v1/sales/rep/assign-influencer"
+    endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/rep/assign-influencer"
 
     def _run(self,username,**kwargs):
         # import pdb;pdb.set_trace()
@@ -421,7 +439,7 @@ class AssignInfluencerTool(BaseTool):
 class FetchDirectPendingInboxTool(BaseTool):
     name: str = "fetch_pending_inbox_tool"
     description: str = ("Allows fetching of inbox pending requests in instagram")
-    endpoint: str = "https://fd8d-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app"
+    endpoint: str = "https://mqtt.booksy.us.boostedchat.com"
 
     def extract_inbox_data(self, data):
         inbox = data.get('inbox', {})
@@ -451,34 +469,51 @@ class FetchDirectPendingInboxTool(BaseTool):
                         'timestamp': timestamp
                     }
 
-                    # save the lead information to the lead database
-                    response = requests.post("http://127.0.0.1:8000/instagram/instagramLead/",data=data)
+                    # save the lead information to the lead database - scrapping microservice
+                    response = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/",data=data)
                     if response.status_code in [200,201]:
                         print("right track")
                     if item_type == 'text':
 
                         # save the message 
-                        # create an account for it
+                        # create an account for it/ also equally save outsourced info for it
                         account_dict = {
                             "igname": username
                         }
-                        response = requests.post("http://127.0.0.1:8000/v1/instagram/account/",data=account_dict)
+                        # save account data
+                        response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/account/",data=account_dict)
+                        account = response.json()
+                        # save outsourced data
+                        outsourced_dict = {
+                            "results":{
+                                "username":username
+                            },
+                            "source":"instagram"
+                        }
+                        response = requests.post(f"https://api.booksy.us.boostedchat.com/v1/instagram/account/{account['id']}/add-outsourced/",data=outsourced_dict)
                         # create a thread and store the message
                         data_dict['thread_id'] = thread_id
                         data_dict['message'] = message
+                        
                         thread_dict = {
-                            "thread_id": thread_id,
+                            "thread_id":thread_id,
+                            "account_id":account['id'],
+                            "unread_message_count":0,
+                            "last_message_content":message,
+                            "last_message_at":datetime.utcnow()
                         }
-                        response = requests.post("http://127.0.0.1:8000/v1/instagram/dm/",data=thread_dict)
+                        response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/dm/create-with-account/",data=thread_dict)
 
                         thread_pk = response.json()['id']
+
+                        # save the message in the thread
                         message_dict = {
                             "content": message,
                             "sent_by": "Client",
                             "thread": thread_pk,
                             "sent_on": datetime.now()
                         }
-                        response = requests.post("http://127.0.0.1:8000/v1/instagram/message/",data=message_dict)
+                        response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/message/",data=message_dict)
                     result.append(data_dict)
 
         return result
@@ -508,12 +543,12 @@ class FetchDirectPendingInboxTool(BaseTool):
 class ApproveRequestTool(BaseTool):  
     name: str = "approve_request_tol"
     description: str = ("Allows approval of requests from pending requests in instagram")
-    endpoint: str = "https://fd8d-2c0f-2a80-10e1-4210-817-bada-7f30-a73c.ngrok-free.app"
+    endpoint: str = "https://mqtt.booksy.us.boostedchat.com"
 
-    def _run(self, **kwargs):
+    def _run(self, username, thread_id, **kwargs):
         # Send a POST request to the approve endpoint
-        username = 'blendscrafters'
-        thread_id = '340282366841710301244259591739503476453'
+        username = username
+        thread_id = thread_id
         response = requests.post(f'{self.endpoint}/approve', json={'username_from': username,'thread_id':thread_id})
         
         # Check the status code of the response
@@ -522,6 +557,47 @@ class ApproveRequestTool(BaseTool):
         else:
             print(f'Request failed with status code {response.status_code}')
         return response.json()
+    
+
+class LeadQualifierTool(BaseTool):
+    name: str = "lead_qualify_tool"
+    description: str = ("Switches the qualifying flag to true for qualified leads")
+    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
+
+    def _run(self, username, qualify_flag:bool,**kwargs):
+        # outbound qualifying
+        outbound_qualifying_data={
+            "username": username,
+            "qualify_flag": qualify_flag
+        }
+        response = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/qualify-account/",data=outbound_qualifying_data)
+        if response.status_code in [200,201]:
+            print("good")
+        # inbound qualifying
+        inbound_qualify_data = {
+            "username": username,
+            "qualify_flag": qualify_flag
+        }
+        response = requests.post("https://scrapper.booksy.us.boostedchat.com/v1/instagram/account/qualify-account/",data=inbound_qualify_data)
+        if response.status_code in [200,201]:
+            print("best")
+        return response.json()
+
+class HumanTakeOverTool(BaseTool):
+    name: str = "human_takeover_tool"
+    description: str = ("Perform a human takeover when the respondent feels that they are conversing with a robot")
+    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
+
+    def _run(self, thread_id:bool,**kwargs):
+        data = {
+            "thread_id":thread_id,
+            "assigned_to": "Human"
+        }
+        response = requests.post(f"https://127.0.0.1:8000/v1/instagram/dm/fallback/{thread_id}/assign-operator/",data=data)
+        if response.status_code in [201,200]:
+            print(response)
+        return "assigned to human"
+
 
 class WorkflowTool(BaseTool):
     name: str = "workflow_tool"
@@ -564,6 +640,7 @@ TOOLS = {
     "assign_influencer_tool":AssignInfluencerTool(),
     "fetch_pending_inbox_tool":FetchDirectPendingInboxTool(),
     "approve_requests_tool":ApproveRequestTool(),
+    "qualifying_tool":LeadQualifierTool(),
 
 }
 
@@ -578,8 +655,8 @@ class agentSetup(APIView):
         tasks = []
         
         department_agents = None
-        if department.agents.filter(name = info['relevant_information']['assigned_engagement_agent']).exists():
-            department_agents = department.agents.filter(name = info['relevant_information']['assigned_engagement_agent'])
+        if department.agents.filter(name = request.data.get('agent_name','agent')).exists():
+            department_agents = department.agents.filter(name = request.data.get('agent_name'))
         else:
             department_agents = department.agents.all()
             
@@ -605,8 +682,13 @@ class agentSetup(APIView):
                 ))
             
         tasks = []
+        department_agent_tasks = None
+        if department.tasks.filter(agent__name = request.data.get('agent_name')).order_by('index'):
+            department_agent_tasks = department.tasks.filter(agent__name = request.data.get('agent_name')).order_by('index')
+        else:
+            department_agent_tasks = department.tasks.all()
         
-        for task in department.tasks.filter(agent__name = info['relevant_information']['assigned_engagement_agent']).order_by('index'):
+        for task in department_agent_tasks:
             print(task)
             agent_ = None
             for agent in agents:
@@ -648,36 +730,13 @@ class agentSetup(APIView):
         
         result = crew.kickoff(inputs=info)
 
-        # import pdb;pdb.set_trace()
         if isinstance(result, dict):
-            # results = eval(result)
-            if department.baton.end_key in result.keys():
-                # import pdb;pdb.set_trace()
-                # update qualified info and new properties
-                endpoints = department.baton.endpoints.all()
-
-                remainder = None
-                for endpoint in endpoints:
-                    requests.Request(method=endpoint.method,url=endpoint.url,data=eval(endpoint.data),params=eval(endpoint.params))
-                # resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/users/update-info",data={"outsourced_info":result})
-
+            # kickstart new workflow
                 
-                # kickstart new workflow
-                workflow_data = department.next_department
-                resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/workflows/",data=workflow_data)
             return Response({"result":result})
         else:
-            workflow_data = department.next_department
-            # import pdb;pdb.set_trace()
-            headers = {"Content-Type": "application/json"}
-            resp = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/workflows/",data=json.dumps(workflow_data),headers=headers)
-            if resp.status_code in [200,201]:
-                print(resp.json())
             return Response({"result":result})
 
-# class agentSetup(APIView):
-#     def get(self, request):
-#         pass
 
 
 class getPrompt(APIView):
