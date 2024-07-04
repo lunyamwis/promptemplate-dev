@@ -30,4 +30,6 @@ urlpatterns = [
     path('fetchPendingInbox/',views.FetchPendingInbox.as_view()),
     path('approveRequests/',views.ApproveRequest.as_view()),
     path('sendDirectAnswer/',views.SendDirectAnswer.as_view()),
+    path('qualifyingPayload/',views.PayloadQualifyingAgent.as_view()),
+    path('assignmentPayload/',views.PayloadAssignmentAgent.as_view()),
 ]
