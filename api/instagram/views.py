@@ -390,3 +390,54 @@ class SendDirectAnswer(APIView):
                            thread_id=request.data.get("thread_id"),
                            message=request.data.get("message"))
         return Response({"success":True},status=status.HTTP_200_OK)
+    
+
+class PayloadQualifyingAgent(APIView):
+    def post(self, request):
+        round_ = request.data.get("round")
+        scrapped_users = InstagramUser.objects.filter(round=round_)
+        payloads = []
+        for user in scrapped_users:
+            payload = {
+                "department":"Qualifying Department",
+                "Scraped":{
+                    "username":user.username,
+                    "relevant_information":{
+                        "dummy":"dummy"
+                    },
+                    "Relevant Information":{
+                        "dummy":"dummy"
+                    },
+                    "outsourced_info":user.info
+                }
+            }
+            payloads.append(payload)
+        return Response({"data":payloads}, status=status.HTTP_200_OK)
+
+
+class PayloadAssignmentAgent(APIView):
+    def post(self, request):
+        round_ = request.data.get("round")
+        qualified_users = InstagramUser.objects.filter(Q(round=round_) & Q(qualified=True))
+        payloads = []
+        for user in qualified_users:
+            payload =  {
+                "department":"Assignment Department",
+                "Qualified":{
+                    "username":user.username,
+                    "salesrep_capacity":2,
+                    "Influencer":"",
+                    "outsourced_information":user.info,
+                    "relevant_Information":{
+                        "dummy":"dummy"
+                    },
+                    "Relevant Information":{
+                        "dummy":"dummy"
+                    },
+                    "relevant_information":user.info
+                }
+            }
+            payloads.append(payload)
+        return Response({"data":payloads}, status=status.HTTP_200_OK)
+
+
