@@ -42,7 +42,7 @@ from langchain.agents import AgentExecutor
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_openai import ChatOpenAI
-from .constants import MSSQL_AGENT_FORMAT_INSTRUCTIONS,MSSQL_AGENT_PREFIX,QUESTION_SUFFIX
+from .constants import MSSQL_AGENT_FORMAT_INSTRUCTIONS,MSSQL_AGENT_PREFIX
 
 
 from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
@@ -57,6 +57,7 @@ openai_api_key = os.getenv('OPENAI_API_KEY')
 os.environ["OPENAI_MODEL_NAME"] = 'gpt-4-1106-preview'
 os.environ["SERPER_API_KEY"] = os.getenv('SERPER_API_KEY')
 db_url = f"postgresql://{os.getenv('POSTGRES_USERNAME')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DBNAME')}"
+print(db_url)
 
 def index(request):
     prompts = Prompt.objects.all()
