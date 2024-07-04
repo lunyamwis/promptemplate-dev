@@ -417,6 +417,7 @@ class PayloadQualifyingAgent(APIView):
 
 class PayloadAssignmentAgent(APIView):
     def post(self, request):
+        "this payload helps"
         round_ = request.data.get("round",1209)
         qualified_users = InstagramUser.objects.filter(Q(round=round_) & Q(qualified=True))
         payloads = []
