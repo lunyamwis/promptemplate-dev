@@ -394,7 +394,7 @@ class SendDirectAnswer(APIView):
 
 class PayloadQualifyingAgent(APIView):
     def post(self, request):
-        round_ = request.data.get("round")
+        round_ = request.data.get("round",1209)
         scrapped_users = InstagramUser.objects.filter(round=round_)
         payloads = []
         for user in scrapped_users:
@@ -417,7 +417,7 @@ class PayloadQualifyingAgent(APIView):
 
 class PayloadAssignmentAgent(APIView):
     def post(self, request):
-        round_ = request.data.get("round")
+        round_ = request.data.get("round",1209)
         qualified_users = InstagramUser.objects.filter(Q(round=round_) & Q(qualified=True))
         payloads = []
         for user in qualified_users:
