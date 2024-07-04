@@ -8,6 +8,7 @@ import subprocess
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from django.conf import settings
@@ -38,6 +39,26 @@ class InstagramLeadViewSet(viewsets.ModelViewSet):
     serializer_class = InstagramLeadSerializer
     pagination_class = PaginationClass
 
+    @action(detail=False,methods=['post'],url_path='qualify-account')
+    def qualify_account(self, request, pk=None):
+        accounts = InstagramUser.objects.filter(username = request.data.get('username'))
+        accounts_qualified = []
+        if accounts.exists():
+            for account in accounts:
+                if account.info:
+                    account.qualified = request.data.get('qualify_flag')
+                    account.save()
+                    accounts_qualified.append(
+                        {
+                            "qualified":account.qualified,
+                            "account_id":account.id
+                        }
+                    )
+                else:
+                    return Response({"message":"user has not outsourced information"})
+        
+        return Response(accounts_qualified, status=status.HTTP_200_OK)
+
 class ScoreViewSet(viewsets.ModelViewSet):
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
@@ -59,9 +80,12 @@ class SimpleHttpOperatorViewSet(viewsets.ModelViewSet):
     queryset = SimpleHttpOperatorModel.objects.all()
     serializer_class = SimpleHttpOperatorModelSerializer
 
+
+
 class WorkflowViewSet(viewsets.ModelViewSet):
     queryset = WorkflowModel.objects.all()
     serializer_class = WorkflowModelSerializer
+    pagination_class = PaginationClass
 
     
 class ScrapFollowers(APIView):

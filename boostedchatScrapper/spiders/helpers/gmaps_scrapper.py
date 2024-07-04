@@ -255,6 +255,7 @@ class GmapsScrapper:
 
     def save_item(self, item):
         # Save the item to the database
+        print(item)
         ScrappedData.objects.create(
             **item
         )
