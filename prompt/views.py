@@ -4,6 +4,7 @@ from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from datetime import datetime
 
 from django.shortcuts import redirect, get_object_or_404
 from product.models import Product, Company
@@ -442,10 +443,13 @@ class FetchDirectPendingInboxTool(BaseTool):
     description: str = ("Allows fetching of inbox pending requests in instagram")
     endpoint: str = "https://mqtt.booksy.us.boostedchat.com"
 
-    def extract_inbox_data(self, data):
-        inbox = data.get('inbox', {})
-        threads = inbox.get('threads', [])
 
+    def extract_inbox_data(self, data):
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        
+        threads = data
         result = []
 
         for thread in threads:
@@ -468,57 +472,80 @@ class FetchDirectPendingInboxTool(BaseTool):
                         'user_id': user_id,
                         'item_type': item_type,
                         'timestamp': timestamp,
-                        'round':1908
+                        'round': 1908,
+                        'pending': True
                     }
 
-                    # save the lead information to the lead database - scrapping microservice
-                    response = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/",data=data)
-                    if response.status_code in [200,201]:
+                    # Save the lead information to the lead database - scrapping microservice
+                    response = requests.post(
+                        "https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/",
+                        headers=headers,
+                        data=json.dumps(data_dict)
+                    )
+                    if response.status_code in [200, 201]:
                         print("right track")
-                    if item_type == 'text':
 
-                        # save the message 
-                        # create an account for it/ also equally save outsourced info for it
+                    if item_type == 'text':
+                        # Save the message
+                        # Create an account for it/ also equally save outsourced info for it
                         account_dict = {
                             "igname": username
                         }
-                        # save account data
-                        response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/account/",data=account_dict)
+                        # Save account data
+                        response = requests.post(
+                            "https://api.booksy.us.boostedchat.com/v1/instagram/account/",
+                            headers=headers,
+                            data=json.dumps(account_dict)
+                        )
                         account = response.json()
-                        # save outsourced data
+                        # Save outsourced data
                         outsourced_dict = {
-                            "results":{
-                                "username":username
+                            "results": {
+                                "username": username
                             },
-                            "source":"instagram"
+                            "source": "instagram"
                         }
-                        response = requests.post(f"https://api.booksy.us.boostedchat.com/v1/instagram/account/{account['id']}/add-outsourced/",data=outsourced_dict)
-                        # create a thread and store the message
+                        response = requests.post(
+                            f"https://api.booksy.us.boostedchat.com/v1/instagram/account/{account['id']}/add-outsourced/",
+                            headers=headers,
+                            data=json.dumps(outsourced_dict)
+                        )
+                        # Create a thread and store the message
                         data_dict['thread_id'] = thread_id
                         data_dict['message'] = message
                         
                         thread_dict = {
-                            "thread_id":thread_id,
-                            "account_id":account['id'],
-                            "unread_message_count":0,
-                            "last_message_content":message,
-                            "last_message_at":datetime.utcnow()
+                            "thread_id": thread_id,
+                            "account_id": account['id'],
+                            "unread_message_count": 0,
+                            "last_message_content": message,
+                            "last_message_at": datetime.utcnow().isoformat()
                         }
-                        response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/dm/create-with-account/",data=thread_dict)
+                        response = requests.post(
+                            "https://api.booksy.us.boostedchat.com/v1/instagram/dm/create-with-account/",
+                            headers=headers,
+                            data=json.dumps(thread_dict)
+                        )
 
                         thread_pk = response.json()['id']
 
-                        # save the message in the thread
+                        # Save the message in the thread
                         message_dict = {
                             "content": message,
                             "sent_by": "Client",
                             "thread": thread_pk,
-                            "sent_on": datetime.now()
+                            "sent_on": datetime.utcnow().isoformat()
                         }
-                        response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/message/",data=message_dict)
+                        response = requests.post(
+                            "https://api.booksy.us.boostedchat.com/v1/instagram/message/",
+                            headers=headers,
+                            data=json.dumps(message_dict)
+                        )
+                    
                     result.append(data_dict)
 
         return result
+
 
 
     def _run(self, **kwargs):
