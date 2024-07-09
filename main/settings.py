@@ -99,6 +99,7 @@ CORS_ALLOWED_ORIGINS = [
     f"https://promptemplate.{os.environ.get('DOMAIN1', '')}.boostedchat.com",
     f"https://api.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
     f"https://promptemplate.{os.environ.get('DOMAIN2', '')}.boostedchat.com",
+    f"https://{os.environ.get('DOMAIN2', '')}.boostedchat.com",
     "http://localhost:5173",
     "http://34.121.32.131",
     "https://34.121.32.131",
