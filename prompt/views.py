@@ -413,7 +413,7 @@ class AssignSalesRepTool(BaseTool):
     name: str = "assign_sales_rep_tool"
     description: str = """This tool will assign a lead to a salesrepresentative"""
 
-    endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/rep/assign-salesrep"
+    endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/assign-salesrep/"
 
     def _run(self,username, **kwargs):
         # import pdb;pdb.set_trace()
@@ -428,7 +428,7 @@ class AssignInfluencerTool(BaseTool):
     name: str = "assign_influencer_tool"
     description: str = """This tool will assign a lead to an influencer"""
 
-    endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/rep/assign-influencer"
+    endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/assign-influencer/"
 
     def _run(self,username,**kwargs):
         # import pdb;pdb.set_trace()
