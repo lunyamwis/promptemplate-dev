@@ -694,7 +694,7 @@ class agentSetup(APIView):
             # import pdb;pdb.set_trace()
             if agent.tools.filter().exists():
                 agents.append(Agent(
-                    role=agent.role.description if agent.role else department.name,
+                    role=agent.role.description + " " + agent.role.tone_of_voice if agent.role else department.name,
                     goal=agent.goal,
                     backstory=agent.prompt.last().text_data,
                     tools = [TOOLS.get(tool.name) for tool in agent.tools.all()],
@@ -703,7 +703,7 @@ class agentSetup(APIView):
                 ))
             else:
                 agents.append(Agent(
-                    role=agent.role.description if agent.role else department.name,
+                    role=agent.role.description + " " + agent.role.tone_of_voice if agent.role else department.name,
                     goal=agent.goal,
                     backstory=agent.prompt.last().text_data,
                     allow_delegation=False,
