@@ -713,7 +713,7 @@ class agentSetup(APIView):
         tasks = []
         department_agent_tasks = None
         if department.tasks.filter(agent__name = request.data.get('agent_name')).order_by('index'):
-            department_agent_tasks = department.tasks.filter(agent__name = request.data.get('agent_name')).order_by('index')
+            department_agent_tasks = department.tasks.filter(name = request.data.get('agent_task')).order_by('index')
         else:
             department_agent_tasks = department.tasks.all()
         
