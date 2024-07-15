@@ -770,14 +770,8 @@ class agentSetup(APIView):
 
 class getAgent(APIView):
     def post(self, request, *args,**kwargs):
-        template = """
-        Return the appropriate task that matches the user input based on the information given below only:
-        information: {information}
-        userInput: {userInput}, 
-        return a json with key "agent_task" as the name of the task discovered and "agent_name" with the name of the 
-        agent discovered
-
-        """
+        transition_prompt = Prompt.objects.filter(name="ED_Stage_Transition_P").latest('created_at')
+        template = transition_prompt.text_data
         all_tasks = [{"task_name":task.name,"task_description":task.prompt.last().text_data,"agent_name":task.agent.name,"agent_goal":task.agent.goal} for task in Department.objects.get(name="Engagement Department").tasks.filter(name__icontains="influencer").exclude(name__icontains="quality")]
         prompt = ChatPromptTemplate.from_template(template)
         model = ChatOpenAI(temperature=0)
@@ -786,7 +780,8 @@ class getAgent(APIView):
                 "userInput": lambda x: x["userInput"],
                 "information": lambda x: x["information"]
             }) | prompt | model | output_parser
-        data = {"information":all_tasks,"userInput":request.data.get("message")}
+        
+        data = {"information":all_tasks+request.data.get("conversations",""),"userInput":request.data.get("message")}
         chain.invoke(data)
         result = chain.invoke(data)
 
