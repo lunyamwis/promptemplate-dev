@@ -781,7 +781,7 @@ class getAgent(APIView):
                 "information": lambda x: x["information"]
             }) | prompt | model | output_parser
         
-        data = {"information":all_tasks+request.data.get("conversations",""),"userInput":request.data.get("message")}
+        data = {"information":all_tasks+[request.data.get("conversations","")],"userInput":request.data.get("message")}
         chain.invoke(data)
         result = chain.invoke(data)
 
