@@ -726,7 +726,7 @@ class agentSetup(APIView):
             if  agent_:
                 if task.tools.filter().exists():
                     tasks.append(Task(
-                        description=task.prompt.last().text_data if task.prompt.exists() else "perform agents task",
+                        description=task.prompt.last().text_data + f"conversation history: {request.data.get('conversations','')}" if task.prompt.exists() else "perform agents task",
                         expected_output=task.expected_output,
                         tools=[TOOLS.get(tool.name) for tool in task.tools.all()],
  
@@ -734,7 +734,7 @@ class agentSetup(APIView):
                     ))
                 else:
                     tasks.append(Task(
-                        description=task.prompt.last().text_data if task.prompt.exists() else "perform agents task",
+                        description=task.prompt.last().text_data + f"conversation history: {request.data.get('conversations','')}" if task.prompt.exists() else "perform agents task",
                         expected_output=task.expected_output,
                         agent=agent_,
                     ))
