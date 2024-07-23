@@ -615,14 +615,13 @@ class LeadQualifierTool(BaseTool):
 class HumanTakeOverTool(BaseTool):
     name: str = "human_takeover_tool"
     description: str = ("Perform a human takeover when the respondent feels that they are conversing with a robot")
-    endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
-
+    
     def _run(self, thread_id:bool,**kwargs):
         data = {
             "thread_id":thread_id,
             "assigned_to": "Human"
         }
-        response = requests.post(f"https://127.0.0.1:8000/v1/instagram/dm/fallback/{thread_id}/assign-operator/",data=data)
+        response = requests.post(f"https://api.booksy.us.boostedchat.com/v1/instagram/fallback/{thread_id}/assign-operator/",data=data)
         if response.status_code in [201,200]:
             print(response)
         return "assigned to human"
@@ -670,6 +669,7 @@ TOOLS = {
     "fetch_pending_inbox_tool":FetchDirectPendingInboxTool(),
     "approve_requests_tool":ApproveRequestTool(),
     "qualifying_tool":LeadQualifierTool(),
+    "human_takeover_tool":HumanTakeOverTool()
 
 }
 
