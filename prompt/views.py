@@ -616,12 +616,12 @@ class HumanTakeOverTool(BaseTool):
     name: str = "human_takeover_tool"
     description: str = ("Perform a human takeover when the respondent feels that they are conversing with a robot")
     
-    def _run(self, thread_id:bool,**kwargs):
+    def _run(self, username:bool,**kwargs):
         data = {
-            "thread_id":thread_id,
+            "username":username,
             "assigned_to": "Human"
         }
-        response = requests.post(f"https://api.booksy.us.boostedchat.com/v1/instagram/fallback/{thread_id}/assign-operator/",data=data)
+        response = requests.post(f"https://api.booksy.us.boostedchat.com/v1/instagram/fallback/{username}/assign-operator/",data=data)
         if response.status_code in [201,200]:
             print(response)
         return "assigned to human"
