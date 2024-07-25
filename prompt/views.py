@@ -519,7 +519,7 @@ class FetchDirectPendingInboxTool(BaseTool):
                             "account_id": account['id'],
                             "unread_message_count": 0,
                             "last_message_content": message,
-                            "last_message_at": datetime.now()
+                            "last_message_at": datetime.now().isoformat()
                         }
                         response = requests.post(
                             "https://api.booksy.us.boostedchat.com/v1/instagram/dm/create-with-account/",
@@ -534,7 +534,7 @@ class FetchDirectPendingInboxTool(BaseTool):
                             "content": message,
                             "sent_by": "Client",
                             "thread": thread_pk,
-                            "sent_on": datetime.now()
+                            "sent_on": datetime.now().isoformat()
                         }
                         response = requests.post(
                             "https://api.booksy.us.boostedchat.com/v1/instagram/message/",
