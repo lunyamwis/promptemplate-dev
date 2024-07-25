@@ -472,7 +472,8 @@ class FetchDirectPendingInboxTool(BaseTool):
                         'item_type': item_type,
                         'timestamp': timestamp,
                         'round': 1908,
-                        'pending': True
+                        'pending': True,
+                        'info': {**user}
                     }
 
                     # Save the lead information to the lead database - scrapping microservice
