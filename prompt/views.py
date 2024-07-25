@@ -716,7 +716,7 @@ class agentSetup(APIView):
         if department.tasks.filter(agent__name = request.data.get('agent_name')).order_by('index'):
             department_agent_tasks = department.tasks.filter(name = request.data.get('agent_task')).order_by('index')
         else:
-            department_agent_tasks = department.tasks.exclude(name__icontains='monitoring')
+            department_agent_tasks = department.tasks.exclude(name__icontains='monitoring').order_by('index')
         
         for task in department_agent_tasks:
             print(task)
