@@ -28,7 +28,6 @@ from pydantic import BaseModel, Field
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
 from langchain.prompts import MessagesPlaceholder
-import datetime
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.utils.function_calling import convert_to_openai_function
