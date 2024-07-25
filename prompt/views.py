@@ -489,6 +489,7 @@ class FetchDirectPendingInboxTool(BaseTool):
                         # Save the message
                         # Create an account for it/ also equally save outsourced info for it
                         account_dict = {
+
                             "igname": username
                         }
                         # Save account data
@@ -501,7 +502,7 @@ class FetchDirectPendingInboxTool(BaseTool):
                         # Save outsourced data
                         outsourced_dict = {
                             "results": {
-                                "username": username
+                                **user
                             },
                             "source": "instagram"
                         }
