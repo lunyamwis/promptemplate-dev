@@ -594,11 +594,13 @@ class LeadQualifierTool(BaseTool):
     description: str = ("Switches the qualifying flag to true for qualified leads")
     endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
 
-    def _run(self, username, qualify_flag:bool,**kwargs):
+    def _run(self, username, qualify_flag:bool, relevant_information,**kwargs):
         # outbound qualifying
         outbound_qualifying_data={
             "username": username,
-            "qualify_flag": qualify_flag
+            "qualify_flag": qualify_flag,
+            "relevant_information": relevant_information,
+            "scraped":True
         }
         response = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/qualify-account/",data=outbound_qualifying_data)
         if response.status_code in [200,201]:
@@ -606,7 +608,9 @@ class LeadQualifierTool(BaseTool):
         # inbound qualifying
         inbound_qualify_data = {
             "username": username,
-            "qualify_flag": qualify_flag
+            "qualify_flag": qualify_flag,
+            "relevant_information": relevant_information,
+            "scraped":True
         }
         response = requests.post("https://scrapper.booksy.us.boostedchat.com/v1/instagram/account/qualify-account/",data=inbound_qualify_data)
         if response.status_code in [200,201]:
