@@ -416,7 +416,7 @@ class AssignSalesRepTool(BaseTool):
 
     def _run(self,username, **kwargs):
         headers = {"Content-Type": "application/json"}
-        payload = {"username": username}
+        payload = kwargs
         try:
             response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
             response.raise_for_status()  # Raise an exception for HTTP errors
@@ -433,7 +433,7 @@ class AssignInfluencerTool(BaseTool):
 
     def _run(self,username,**kwargs):
         headers = {"Content-Type": "application/json"}
-        payload = {"username": username}
+        payload = kwargs
         try:
             response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
             response.raise_for_status()  # Raise an exception for HTTP errors
