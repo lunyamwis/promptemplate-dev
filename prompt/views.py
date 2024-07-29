@@ -415,12 +415,14 @@ class AssignSalesRepTool(BaseTool):
     endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/assign-salesrep/"
 
     def _run(self,username, **kwargs):
-        # import pdb;pdb.set_trace()
         headers = {"Content-Type": "application/json"}
-        payload = {"username":username}
-        # import pdb;pdb.set_trace()
-        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
-        return response.json()
+        payload = {"username": username}
+        try:
+            response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": str(e)}
 
 
 class AssignInfluencerTool(BaseTool):
@@ -430,12 +432,15 @@ class AssignInfluencerTool(BaseTool):
     endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/assign-influencer/"
 
     def _run(self,username,**kwargs):
-        # import pdb;pdb.set_trace()
         headers = {"Content-Type": "application/json"}
-        payload = {"username":username}
-        # import pdb;pdb.set_trace()
-        response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
-        return response.json()
+        payload = {"username": username}
+        try:
+            response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": str(e)}
+
 
 class FetchDirectPendingInboxTool(BaseTool):
     name: str = "fetch_pending_inbox_tool"
