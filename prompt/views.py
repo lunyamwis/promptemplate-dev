@@ -414,7 +414,7 @@ class AssignSalesRepTool(BaseTool):
 
     endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/assign-salesrep/"
 
-    def _run(self,username, **kwargs):
+    def _run(self, **kwargs):
         headers = {"Content-Type": "application/json"}
         payload = kwargs
         try:
@@ -431,7 +431,7 @@ class AssignInfluencerTool(BaseTool):
 
     endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/assign-influencer/"
 
-    def _run(self,username,**kwargs):
+    def _run(self,**kwargs):
         headers = {"Content-Type": "application/json"}
         payload = kwargs
         try:
