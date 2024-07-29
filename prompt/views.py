@@ -612,7 +612,7 @@ class LeadQualifierTool(BaseTool):
             "relevant_information": {**relevant_information},
             "scraped":True
         }
-        response = requests.post("https://scrapper.booksy.us.boostedchat.com/v1/instagram/account/qualify-account/",data=inbound_qualify_data)
+        response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/account/qualify-account/",data=inbound_qualify_data)
         if response.status_code in [200,201]:
             print("best")
         return response.json()
