@@ -414,10 +414,9 @@ class AssignSalesRepTool(BaseTool):
 
     endpoint: str = "https://api.booksy.us.boostedchat.com/v1/sales/assign-salesrep/"
 
-    def _run(self, **kwargs):
+    def _run(self,**kwargs):
         headers = {"Content-Type": "application/json"}
-        payload = kwargs
-        print(payload)
+        payload = {"username": ""}
         try:
             response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
             response.raise_for_status()  # Raise an exception for HTTP errors
@@ -434,8 +433,7 @@ class AssignInfluencerTool(BaseTool):
 
     def _run(self,**kwargs):
         headers = {"Content-Type": "application/json"}
-        payload = kwargs
-        print(payload)
+        payload = {"username": ""}
         try:
             response = requests.post(self.endpoint, data=json.dumps(payload), headers=headers)
             response.raise_for_status()  # Raise an exception for HTTP errors
