@@ -17,6 +17,7 @@ import openai
 import base64
 import random
 import uuid
+import logging
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
@@ -24,7 +25,7 @@ from dotenv import load_dotenv, find_dotenv
 from langchain.tools import tool
 import requests
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Type
 from pydantic import BaseModel, Field
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
@@ -441,6 +442,7 @@ class AssignInfluencerTool(BaseTool):
             response.raise_for_status()  # Raise an exception for HTTP errors
             return response.json()
         except requests.exceptions.RequestException as e:
+            logging.error(f"This error is because there is an issue with the endpoint and this is the issue:{str(e)}")
             return {"error": str(e)}
 
 
@@ -604,7 +606,7 @@ class LeadQualifierArgs(BaseModel):
     relevant_information:Dict[str, Any] = Field(..., description="A dictionary/json containing the relevant information about the lead that is needed")
 
 class LeadQualifierTool(BaseTool):
-    args_schema = LeadQualifierArgs
+    args_schema: Type[BaseModel] = LeadQualifierArgs
     name: str = "lead_qualify_tool"
     description: str = ("Switches the qualifying flag to true for qualified leads and false to unqualified leads")
     endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
