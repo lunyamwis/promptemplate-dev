@@ -22,7 +22,7 @@ import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 from dotenv import load_dotenv, find_dotenv
-#from langchain.tools import tool
+from langchain.tools import tool
 import requests
 import re
 from typing import Dict, Any, Type
@@ -48,7 +48,8 @@ from langchain_openai import ChatOpenAI
 from .constants import MSSQL_AGENT_FORMAT_INSTRUCTIONS,MSSQL_AGENT_PREFIX
 
 
-from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool,tool
+from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
+#from crewai_tools import tool
 from crewai import Agent, Task, Crew
 from django.core.mail import send_mail
 
@@ -613,18 +614,48 @@ class LeadQualifierTool():
     endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
 
 @tool
-def lead_qualify_tool(username:str, qualify_flag:bool, relevant_information):
-        # outbound qualifying
+#def lead_qualify_tool(*args,**kwargs):
+def lead_qualify_tool(payload):
         """
-        Switches the qualifying flag to true for qualified leads and false to unqualified leads and takes
-        the arguments: username:str, qualify_flag:bool, relevant_information
+Switches the qualifying flag to true for qualified leads and false to unqualified leads.
+
+:param payload: dict, a dictionary containing the following keys:
+
+    username: str, the username of the lead
+    qualify_flag: bool, a True/False flag showing if user is qualified or not
+    relevant_information: dict, a dictionary containing additional information about the lead. The dictionary can contain the following keys:
+
+        most_probable_name: str, the most probable name of the lead
+        most_probable_country_and_location: list of str, the most probable country and location of the lead
+        most_probable_venue/salon/barbershop&their_role: list of str, the most probable venue, salon, barbershop, and the lead's role
+        what_to_compliment_in_a_lead: list of str, what to compliment in the lead
+        other_relevant_insights: list of str, other relevant insights about the lead
+        persona: str, the persona of the lead
+        outreach_tactic: str, the outreach tactic for the lead
+
+example payload:
+{
+    "username": "tombarber",
+    "qualify_flag": True,
+    "relevant_information": {
+        "most_probable_name": "Jimmy",
+        "most_probable_country_and_location": ["USA", "Miami"],
+        "most_probable_venue/salon/barbershop&their_role": ["Top Barber Jimmy", "Owner/Barber"],
+        "what_to_compliment_in_a_lead": ["Dedication to craft", "Unique styling", "Positive customer reviews"],
+        "other_relevant_insights": ["Fully booked on weekends", "Available slots on weekdays", "Occasional last-minute cancellations", "Active engagement on social media platforms"],
+        "persona": "Top-tier Barber",
+        "outreach_tactic": "Personalized compliment on dedication and unique styling, highlighting collaboration opportunities on weekdays and promoting tools/products for top-tier barbers."
+    }
+}
         """
         endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
-
+        print(payload)
+        payload = json.dumps(payload)
+        print(json.loads(payload)['relevant_information'])
         outbound_qualifying_data={
-            "username": username,
-            "qualify_flag": qualify_flag,
-            "relevant_information": relevant_information,
+            "username": json.loads(payload)['username'],
+            "qualify_flag": json.loads(payload)['qualify_flag'],
+            "relevant_information": json.dumps(json.loads(payload)['relevant_information']),
             "scraped":True
         }
         response = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/qualify-account/",data=outbound_qualifying_data)
@@ -632,15 +663,15 @@ def lead_qualify_tool(username:str, qualify_flag:bool, relevant_information):
             print("good")
         # inbound qualifying
         inbound_qualify_data = {
-            "username": username,
-            "qualify_flag": qualify_flag,
-            "relevant_information": relevant_information,
+            "username": json.loads(payload)['username'],
+            "qualify_flag": json.loads(payload)['qualify_flag'],
+            "relevant_information": json.dumps(json.loads(payload)['relevant_information']),
             "scraped":True
         }
         response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/account/qualify-account/",data=inbound_qualify_data)
         if response.status_code in [200,201]:
             print("best")
-        return response.json()
+        return
 
 class HumanTakeOverTool(BaseTool):
     name: str = "human_takeover_tool"
