@@ -22,7 +22,7 @@ import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 from dotenv import load_dotenv, find_dotenv
-from langchain.tools import tool
+#from langchain.tools import tool
 import requests
 import re
 from typing import Dict, Any, Type
@@ -48,7 +48,7 @@ from langchain_openai import ChatOpenAI
 from .constants import MSSQL_AGENT_FORMAT_INSTRUCTIONS,MSSQL_AGENT_PREFIX
 
 
-from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
+from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool,tool
 from crewai import Agent, Task, Crew
 from django.core.mail import send_mail
 
@@ -605,19 +605,26 @@ class LeadQualifierArgs(BaseModel):
     qualify_flag: bool = Field(..., description="A boolean flag to qualify lead set to true/false")
     relevant_information:Dict[str, Any] = Field(..., description="A dictionary/json containing the relevant information about the lead that is needed")
 
-class LeadQualifierTool(BaseTool):
-    args_schema: Type[BaseModel] = LeadQualifierArgs
+#class LeadQualifierTool(BaseTool):
+class LeadQualifierTool():
+    #args_schema: Type[BaseModel] = LeadQualifierArgs
     name: str = "lead_qualify_tool"
     description: str = ("Switches the qualifying flag to true for qualified leads and false to unqualified leads")
     endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
 
-    # @tool("qualify leads")
-    def _run(self, args: LeadQualifierArgs):
+@tool
+def lead_qualify_tool(username:str, qualify_flag:bool, relevant_information):
         # outbound qualifying
+        """
+        Switches the qualifying flag to true for qualified leads and false to unqualified leads and takes
+        the arguments: username:str, qualify_flag:bool, relevant_information
+        """
+        endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
+
         outbound_qualifying_data={
-            "username": args.username,
-            "qualify_flag": args.qualify_flag,
-            "relevant_information": args.relevant_information,
+            "username": username,
+            "qualify_flag": qualify_flag,
+            "relevant_information": relevant_information,
             "scraped":True
         }
         response = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/qualify-account/",data=outbound_qualifying_data)
@@ -625,9 +632,9 @@ class LeadQualifierTool(BaseTool):
             print("good")
         # inbound qualifying
         inbound_qualify_data = {
-            "username": args.username,
-            "qualify_flag": args.qualify_flag,
-            "relevant_information": args.relevant_information,
+            "username": username,
+            "qualify_flag": qualify_flag,
+            "relevant_information": relevant_information,
             "scraped":True
         }
         response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/account/qualify-account/",data=inbound_qualify_data)
@@ -691,7 +698,7 @@ TOOLS = {
     "assign_influencer_tool":AssignInfluencerTool(),
     "fetch_pending_inbox_tool":FetchDirectPendingInboxTool(),
     "approve_requests_tool":ApproveRequestTool(),
-    "qualifying_tool":LeadQualifierTool(),
+    "qualifying_tool":lead_qualify_tool,
     "human_takeover_tool":HumanTakeOverTool()
 
 }
