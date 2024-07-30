@@ -24,6 +24,7 @@ from dotenv import load_dotenv, find_dotenv
 from langchain.tools import tool
 import requests
 import re
+from typing import Dict, Any
 from pydantic import BaseModel, Field
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
@@ -600,7 +601,7 @@ class LeadQualifierArgs(BaseModel):
     threshold: int = Field(10, description="A threshold value for processing")
     username: str = Field(..., description="The username of the lead")
     qualify_flag: bool = Field(..., description="A boolean flag to qualify lead set to true/false")
-    relevant_information:dict = Field(..., description="A dictionary/json containing the relevant information about the lead that is needed")
+    relevant_information:Dict[str, Any] = Field(..., description="A dictionary/json containing the relevant information about the lead that is needed")
 
 class LeadQualifierTool(BaseTool):
     args_schema = LeadQualifierArgs
