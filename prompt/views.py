@@ -36,6 +36,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import DocArrayInMemorySearch
 from langchain.schema.runnable import RunnableMap
 from langchain.memory import ConversationBufferMemory
+from langchain.tools import tool
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.agents.format_scratchpad import format_to_openai_functions
 from langchain.agents import AgentExecutor
@@ -594,17 +595,26 @@ class ApproveRequestTool(BaseTool):
         return response.json()
     
 
+class LeadQualifierArgs(BaseModel):
+    input_text: str = Field(..., description="The text to process")
+    threshold: int = Field(10, description="A threshold value for processing")
+    username: str = Field(..., description="The username of the lead")
+    qualify_flag: bool = Field(..., description="A boolean flag to qualify lead set to true/false")
+    relevant_information:dict = Field(..., description="A dictionary/json containing the relevant information about the lead that is needed")
+
 class LeadQualifierTool(BaseTool):
+    args_schema = LeadQualifierArgs
     name: str = "lead_qualify_tool"
-    description: str = ("Switches the qualifying flag to true for qualified leads")
+    description: str = ("Switches the qualifying flag to true for qualified leads and false to unqualified leads")
     endpoint: str = "https://scrapper.booksy.us.boostedchat.com/instagram/workflows/"
 
-    def _run(self, username, qualify_flag:bool, relevant_information,**kwargs):
+    # @tool("qualify leads")
+    def _run(self, args: LeadQualifierArgs):
         # outbound qualifying
         outbound_qualifying_data={
-            "username": username,
-            "qualify_flag": qualify_flag,
-            "relevant_information": {**relevant_information},
+            "username": args.username,
+            "qualify_flag": args.qualify_flag,
+            "relevant_information": args.relevant_information,
             "scraped":True
         }
         response = requests.post("https://scrapper.booksy.us.boostedchat.com/instagram/instagramLead/qualify-account/",data=outbound_qualifying_data)
@@ -612,9 +622,9 @@ class LeadQualifierTool(BaseTool):
             print("good")
         # inbound qualifying
         inbound_qualify_data = {
-            "username": username,
-            "qualify_flag": qualify_flag,
-            "relevant_information": {**relevant_information},
+            "username": args.username,
+            "qualify_flag": args.qualify_flag,
+            "relevant_information": args.relevant_information,
             "scraped":True
         }
         response = requests.post("https://api.booksy.us.boostedchat.com/v1/instagram/account/qualify-account/",data=inbound_qualify_data)
