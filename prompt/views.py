@@ -677,7 +677,7 @@ class HumanTakeOverTool(BaseTool):
     name: str = "human_takeover_tool"
     description: str = ("Perform a human takeover when the respondent feels that they are conversing with a robot")
     
-    def _run(self, username:bool,**kwargs):
+    def _run(self, username:str, **kwargs):
         data = {
             "username":username,
             "assigned_to": "Human"
