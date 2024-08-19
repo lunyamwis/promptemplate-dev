@@ -562,7 +562,7 @@ class FetchDirectPendingInboxTool(BaseTool):
     def _run(self, **kwargs):
 
         # Set the username for which to fetch the pending inbox
-        username = 'blendscrafters'
+        username = 'barbersince98'
         
         # Send a POST request to the fetchPendingInbox endpoint
         response = requests.post(f'{self.endpoint}/fetchPendingInbox', json={'username_from': username})
