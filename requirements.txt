@@ -117,7 +117,7 @@ ptyprocess
 pure-eval
 pyasn1
 pyasn1-modules
-pydantic==1.10.9
+pydantic==1.9
 pydantic_core
 Pygments
 pyparsing
