@@ -20,8 +20,8 @@ chromadb
 click
 coloredlogs
 contourpy
-crewai==0.35.0
-crewai-tools==0.4.0
+crewai
+crewai-tools
 dataclasses-json
 decorator
 Deprecated
