@@ -806,7 +806,7 @@ class agentSetup(APIView):
             agents=agents,
             
             tasks=tasks,
-            process=Process.sequential,
+            # process=Process.sequential,
             verbose=True,
             memory=True,
             # output_log_file='scrappinglogs.txt'
