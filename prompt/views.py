@@ -807,7 +807,7 @@ class agentSetup(APIView):
             
             tasks=tasks,
             
-            verbose=2,
+            verbose=True,
             memory=True,
             # output_log_file='scrappinglogs.txt'
         )
