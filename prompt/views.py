@@ -50,7 +50,7 @@ from .constants import MSSQL_AGENT_FORMAT_INSTRUCTIONS,MSSQL_AGENT_PREFIX
 
 from crewai_tools import DirectoryReadTool, FileReadTool, SerperDevTool,BaseTool
 #from crewai_tools import tool
-from crewai import Agent, Task, Crew
+from crewai import Agent, Task, Crew, Process
 from django.core.mail import send_mail
 
 from .models import Agent as AgentModel,Task as TaskModel,Tool, Department
@@ -806,7 +806,7 @@ class agentSetup(APIView):
             agents=agents,
             
             tasks=tasks,
-            
+            process=Process.sequential,
             verbose=True,
             memory=True,
             # output_log_file='scrappinglogs.txt'
