@@ -820,12 +820,12 @@ class agentSetup(APIView):
         
         result = crew.kickoff(inputs=info)
 
-        if isinstance(result, dict):
+        # if isinstance(result, dict):
             # kickstart new workflow
                 
-            return Response({"result":result})
-        else:
-            return Response({"result":result})
+        return Response({"result":result.raw})
+        # else:
+        #     return Response({"result":result})
 
 
 
