@@ -734,6 +734,13 @@ TOOLS = {
 
 }
 
+class GeneratedTextOutput(BaseModel):
+    text: str
+    active_stage: str
+    confirmed_problems: str
+    human_takeover: bool
+
+
 class agentSetup(APIView):
     def post(self,request):
         # workflow_data = request.data.get("workflow_data")
@@ -792,12 +799,14 @@ class agentSetup(APIView):
                         tools=[TOOLS.get(tool.name) for tool in task.tools.all()],
  
                        agent=agent_,
+                       output_json=GeneratedTextOutput
                     ))
                 else:
                     tasks.append(Task(
                         description=task.prompt.last().text_data if task.prompt.exists() else "perform agents task",
                         expected_output=task.expected_output,
                         agent=agent_,
+                        output_json=GeneratedTextOutput
                     ))
                 
           
@@ -823,7 +832,7 @@ class agentSetup(APIView):
         # if isinstance(result, dict):
             # kickstart new workflow
                 
-        return Response({"result":result.raw})
+        return Response({"result":result.json_dict})
         # else:
         #     return Response({"result":result})
 
